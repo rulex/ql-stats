@@ -1,0 +1,35 @@
+
+{
+  "name": "ql-stats",
+  "preferGlobal": false,
+  "version": "0.0.1",
+  "author": "rulex <rulex@anvianet.fi>",
+  "description": "Collects game stats from quakelive.com",
+  "contributors": [
+  ],
+  "scripts": {
+    "start": "node ./api.js",
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rulex/ql-stats.git"
+  },
+  "keywords": [
+    "quake",
+    "quakelive",
+    "statistics",
+    "http",
+    "server"
+  ],
+  "dependencies" : {
+    "express" :  "3.2.x",
+    "mysql"   :  "2.x.x",
+    "cheerio"   :  "0.12.x"
+  },
+  "license": "GPL",
+  "engines": {
+    "node": ">=0.10"
+  }
+}
+

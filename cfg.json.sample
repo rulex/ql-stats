@@ -1,0 +1,13 @@
+{
+	"mysql_db": {
+		"host":			"192.168.0.1",
+		"database": "qlstats",
+		"user":			"rulex",
+		"password": "mysecretpassword,lol"
+	},
+	"api": {
+		"port": 8585
+	}
+}
+
+
