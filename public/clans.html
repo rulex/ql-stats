@@ -1,0 +1,46 @@
+
+
+<div class="row-fluid">
+	<div class="span12 well">
+		<!--
+		<button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1"> Previous </button>
+		{{currentPage+1}}/{{numberOfPages()}}
+		<button ng-disabled="currentPage >= data.length/pageSize - 1" ng-click="currentPage=currentPage+1"> Next </button>
+		-->
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='PLAYER_CLAN'; ordertype=!ordertype">PLAYER_CLAN</a></th>
+					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
+					<th><a href="" ng-click="ordercolumn='WIN_PERCENT'; ordertype=!ordertype">WIN_PERCENT</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
+					<th><a href="" ng-click="ordercolumn='SCORE_SUM'; ordertype=!ordertype">SCORE_SUM</a></th>
+					<th><a href="" ng-click="ordercolumn='SCORE_AVG'; ordertype=!ordertype">SCORE_AVG</a></th>
+					<th><a href="" ng-click="ordercolumn='RATIO'; ordertype=!ordertype">RATIO</a></th>
+					<th><a href="" ng-click="ordercolumn='ACC_AVG'; ordertype=!ordertype">ACC_AVG</a></th>
+					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
+				</tr>
+			</thead>
+			<tbody>
+			<!-- | startForm:currentPage*pageSize | limitTo:pageSize  -->
+				<tr ng-repeat="z in clans.theclans | orderBy:ordercolumn:ordertype ">
+					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
+					<td>{{ z.MATCHES_PLAYED }}</td>
+					<td>{{ z.WIN_PERCENT | number }}</td>
+					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
+					<td>{{ z.SCORE_SUM | number }}</td>
+					<td>{{ z.SCORE_AVG | number }}</td>
+					<td>{{ z.RATIO | number }}</td>
+					<td>{{ z.ACC_AVG | number }}</td>
+					<td>{{ z.KILLS | number }}</td>
+				</tr>
+			</tbody>
+		</table>
+		<!--
+		<button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1"> Previous </button>
+		{{currentPage+1}}/{{numberOfPages()}}
+		<button ng-disabled="currentPage >= data.length/pageSize - 1" ng-click="currentPage=currentPage+1"> Next </button>
+		-->
+	</div>
+</div>
+

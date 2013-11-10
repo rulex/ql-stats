@@ -1,0 +1,81 @@
+
+
+<div class="row-fluid">
+
+	<div class="span12 well">
+
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">Nick</a></th>
+					<th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">Rank</a></th>
+					<th><a href="" ng-click="ordercolumn='TEAM'; ordertype=!ordertype">Team</a></th>
+					<th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">Score</a></th>
+					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">Kills</a></th>
+					<th><a href="" ng-click="ordercolumn='DEATHS'; ordertype=!ordertype">Deaths</a></th>
+					<th><a href="" ng-click="ordercolumn='IMPRESSIVE'; ordertype=!ordertype">Imp</a>/<a href="" ng-click="ordercolumn='EXCELLENT'; ordertype=!ordertype">Exc</a>/<a href="" ng-click="ordercolumn='HUMILIATION'; ordertype=!ordertype">Hum</a></th>
+					<th><a href="" ng-click="ordercolumn='TEAM_RANK'; ordertype=!ordertype">TeamRank</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PlayTime</a></th>
+					<th>Acc</th>
+					<th>RL(<a href="" ng-click="ordercolumn='RL_A'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RL_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RL_S'; ordertype=!ordertype">s</a>)</th>
+					<th>RG(<a href="" ng-click="ordercolumn='RG_A'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RG_S'; ordertype=!ordertype">s</a>)</th>
+					<th>LG(<a href="" ng-click="ordercolumn='LG_A'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='LG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='LG_S'; ordertype=!ordertype">s</a>)</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in game.players | orderBy: ordercolumn:ordertype">
+					<td><a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
+					<td>{{ z.RANK }}</td>
+					<td>{{ z.TEAM }}</td>
+					<td>{{ z.SCORE }}</td>
+					<td>{{ z.KILLS }}</td>
+					<td>{{ z.DEATHS }}</td>
+					<td>{{ z.IMPRESSIVE }} / {{ z.EXCELLENT }} / {{ z.HUMILIATION }}</td>
+					<td>{{ z.TEAM_RANK }}</td>
+					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
+					<td>{{ ( z.HITS / z.SHOTS )*100 | number }}</td>
+					<td>{{ z.RL_A | number }} / {{ z.RL_K | number }} / {{ z.RL_S | number }}</td>
+					<td>{{ z.RG_A | number }} / {{ z.RG_K | number }} / {{ z.RG_S | number }}</td>
+					<td>{{ z.LG_A | number }} / {{ z.LG_K | number }} / {{ z.LG_S | number }}</td>
+				</tr>
+			</tbody>
+		</table>
+
+	</div>
+
+</div>
+
+<div class="row-fluid">
+
+	<div class="span6 well" ng-repeat="z in game.teams">
+		<h3>{{ z.TEAM }}</h3>
+		<table class="table table-condensed table-striped table-hover">
+			<tbody>
+				<tr ng-repeat="(key,val) in z">
+					<td><b>{{ key }}</b></td>
+					<td>{{ val }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</div>
+
+<div class="row-fluid">
+
+	<div class="span6 well">
+		<h3>Game</h3>
+		<table class="table table-condensed table-striped table-hover">
+			<tbody>
+				<tr ng-repeat="(key,val) in game.game">
+					<td><b>{{ key }}</b></td>
+					<td>{{ val }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+
+</div>
+
+

@@ -1,0 +1,110 @@
+
+<div class="row-fluid">
+
+	<div class="span6 well">
+		<h3>{{ owner.sum[0].OWNER }} server owner</h3>
+		<table class="table table-condensed table-striped table-hover">
+			<tbody>
+				<tr ng-repeat="(key,val) in owner.sum[0]">
+					<td><b>{{ key }}</b></td>
+					<td>{{ val }}</td>
+				</tr>
+				<tr>
+					<td><b>UNIQUE_PLAYERS</b></td>
+					<td>{{ owner.asdf[0].UNIQUE_PLAYERS }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="span6 well">
+		<h3>Gametypes</h3>
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th>Type</th>
+					<th>Games</th>
+				</tr>
+			<thead>
+			<tbody>
+				<tr ng-repeat="z in owner.types">
+					<td><b>{{ z.GAME_TYPE }}</b></td>
+					<td>{{ z.MATCHES_PLAYED }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="span6 well">
+	<h3>Maps</h3>
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th>Map</th>
+					<th>Games</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in owner.maps">
+					<td>{{ z.MAP }}</td>
+					<td>{{ z.MATCHES_PLAYED }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</div>
+
+<div class="row-fluid">
+
+	<div class="span6 well">
+		<h3>Players</h3>
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">Player</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
+					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">Games</a></th>
+					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
+					<th><a href="" ng-click="ordercolumn='ACC'; ordertype=!ordertype">ACC</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in owner.players | orderBy:ordercolumn:ordertype">
+					<td><a href="#/player/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
+					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
+					<td>{{ z.KILLS | number }}</td>
+					<td>{{ z.ACC | number }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="span6 well">
+
+		<!--
+		<h3>Games</h3>
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">Player</a></th>
+					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">Games</a></th>
+					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
+					<th><a href="" ng-click="ordercolumn='ACC'; ordertype=!ordertype">ACC</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in owner.players | orderBy:ordercolumn:ordertype">
+					<td><a href="#/player/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
+					<td>{{ z.KILLS | number }}</td>
+					<td>{{ z.ACC | number }}</td>
+				</tr>
+			</tbody>
+		</table>
+		-->
+
+	</div>
+
+</div>

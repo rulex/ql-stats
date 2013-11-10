@@ -1,0 +1,59 @@
+
+
+
+<div class="row-fluid">
+
+	<div class="span12 well">
+		<div class="row-fluid"><h3>Players</h3> </div>
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
+					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
+					<th><a href="" ng-click="ordercolumn='WIN_PERCENT'; ordertype=!ordertype">WIN_PERCENT</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAY_TIME_SUM'; ordertype=!ordertype">PLAY_TIME</a></th>
+					<th><a href="" ng-click="ordercolumn='SCORE_SUM'; ordertype=!ordertype">SCORE_SUM</a></th>
+					<th><a href="" ng-click="ordercolumn='SCORE_AVG'; ordertype=!ordertype">SCORE_AVG</a></th>
+					<th><a href="" ng-click="ordercolumn='RATIO'; ordertype=!ordertype">RATIO</a></th>
+					<th><a href="" ng-click="ordercolumn='ACC_AVG'; ordertype=!ordertype">ACC_AVG</a></th>
+					<th><a href="" ng-click="ordercolumn='KILLS_SUM'; ordertype=!ordertype">KILLS</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in clan.theplayers | orderBy:ordercolumn:ordertype">
+					<td><a href="#/player/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
+					<td>{{ z.MATCHES_PLAYED }}</td>
+					<td>{{ z.WIN_PERCENT | number }}</td>
+					<td>{{ date-z.PLAY_TIME_SUM*1000 | timeago }}</td>
+					<td>{{ z.SCORE_SUM }}</td>
+					<td>{{ z.SCORE_AVG }}</td>
+					<td>{{ z.RATIO }}</td>
+					<td>{{ z.ACC_AVG }}</td>
+					<td>{{ z.KILLS_SUM }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</div>
+
+<div class="row-fluid">
+
+	<div class="span6 well">
+		<div class="row-fluid"><h3>All</h3> </div>
+		<table class="table table-condensed table-striped table-hover">
+			<tbody>
+				<tr ng-repeat="(key,val) in clan.theclan[0]">
+					<td>{{ key }}</td>
+					<td>{{ val }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+</div>
+
+<div class="row-fluid">
+</div>
+
+
