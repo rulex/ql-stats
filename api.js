@@ -9,6 +9,7 @@ app.enable( "jsonp callback" );
 var http = require( 'http' );
 var url = require( 'url' );
 var server = http.createServer( app );
+var zlib = require( 'zlib' );
 
 // read cfg.json
 var data = fs.readFileSync( __dirname + '/cfg.json' );
@@ -169,13 +170,20 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 						var j = JSON.parse( body );
 						// save to disk
 						if( j.UNAVAILABLE != 1 ) {
+							//
 							fs.writeFile( './games/' + j.PUBLIC_ID + '.json', body, function( err ) {
 								if( err ) { console.log( err ); }
 								else {
 									console.log( "saved " + j.PUBLIC_ID );
 									newgames.push( j.PUBLIC_ID );
+									var gzip = zlib.createGzip();
+									var inp = fs.createReadStream( './games/' + j.PUBLIC_ID + '.json' );
+									var out = fs.createWriteStream( './games/' + j.PUBLIC_ID + '.json.gz' );
+									inp.pipe( gzip ).pipe( out );
+									fs.unlink( './games/' + j.PUBLIC_ID + '.json' );
 								}
 							} );
+							//
 							var AVG_ACC = 0;
 							var MOST_ACCURATE_NICK = "";
 							var MOST_ACCURATE_NUM = 0;
