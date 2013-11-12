@@ -1,3 +1,4 @@
+-- INDEX... ?
 
 DROP TABLE IF EXISTS `Games`;
 CREATE TABLE `Games`(
@@ -57,45 +58,36 @@ CREATE TABLE `Players`(
 	`EXCELLENT` int(11),
 	`PLAY_TIME` int(11),
 
-	`G_A` float,
-	`G_H` float,
 	`G_K` float,
-	`G_S` float,
 
-	`GL_A` float,
 	`GL_H` float,
 	`GL_K` float,
 	`GL_S` float,
 
-	`LG_A` float,
 	`LG_H` float,
 	`LG_K` float,
 	`LG_S` float,
 
-	`MG_A` float,
 	`MG_H` float,
 	`MG_K` float,
 	`MG_S` float,
 
-	`PG_A` float,
 	`PG_H` float,
 	`PG_K` float,
 	`PG_S` float,
 
-	`RG_A` float,
 	`RG_H` float,
 	`RG_K` float,
 	`RG_S` float,
 
-	`RL_A` float,
 	`RL_H` float,
 	`RL_K` float,
 	`RL_S` float,
 
-	`SG_A` float,
 	`SG_H` float,
 	`SG_K` float,
 	`SG_S` float,
 
-	PRIMARY KEY( `PLAYER_NICK`, `PUBLIC_ID` )
+	PRIMARY KEY( `PLAYER_NICK`, `PUBLIC_ID` ),
+	CONSTRAINT fk_Games_PUBLIC_ID FOREIGN KEY( `PUBLIC_ID` ) REFERENCES Games( `PUBLIC_ID` ) ON UPDATE CASCADE
 );
