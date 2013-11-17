@@ -133,7 +133,7 @@ app.get( '/stats/player/*/games', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
 	var timer_start = process.hrtime();
 	var nick = mysql_real_escape_string( req.url.split( '/' )[3] );
-	var sql = 'select Games.PUBLIC_ID, Games.GAME_TIMESTAMP, Games.GAME_TYPE, Games.OWNER, Players.PLAYER_NICK from Games left join Players on Games.PUBLIC_ID=Players.PUBLIC_ID where Players.PLAYER_NICK="'+ nick +'" order by NULL';
+	var sql = 'select Games.PUBLIC_ID, Games.GAME_TIMESTAMP, Games.GAME_TYPE, Games.OWNER, Games.RULESET, Games.RANKED, Games.PREMIUM, Players.PLAYER_NICK from Games left join Players on Games.PUBLIC_ID=Players.PUBLIC_ID where Players.PLAYER_NICK="'+ nick +'" order by NULL';
 	//console.log( sql );
 	db.query( sql, function( err, rows, fields ) {
 		res.jsonp( { thegames: rows } );
@@ -163,12 +163,12 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 			res.jsonp( { player: nick, updated: 0, scanned: nrcallbacks, updated_games: lastgames } );
 			return;
 		}
-		console.log( nrcallbacks );
+		//console.log( nrcallbacks );
 		var requestCallback = new MyRequestsCompleted( {
 			numRequest: nrcallbacks,
 			singleCallback: function() {
 				//console.log( "I'm the callback" );
-				console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+				//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 				res.jsonp( { player: nick, updated: lastgames.length, scanned: nrcallbacks, updated_games: lastgames } );
 				res.end();
 			}
@@ -185,9 +185,9 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 				}
 				else {
 					request( url2 + lstg, function( err, resp, body ) {
-						console.log( );
-						console.log( body );
-						console.log( );
+						//console.log( );
+						//console.log( body );
+						//console.log( );
 						var j = JSON.parse( body );
 						// save to disk
 						if( j.UNAVAILABLE != 1 ) {
@@ -195,7 +195,7 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 							fs.writeFile( './games/' + j.PUBLIC_ID + '.json', body, function( err ) {
 								if( err ) { console.log( err ); }
 								else {
-									console.log( "saved " + j.PUBLIC_ID );
+									//console.log( "saved " + j.PUBLIC_ID );
 									newgames.push( j.PUBLIC_ID );
 									var gzip = zlib.createGzip();
 									var inp = fs.createReadStream( './games/' + j.PUBLIC_ID + '.json' );
@@ -311,8 +311,8 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 								'\"' + MOST_ACCURATE_NICK + '\",' +
 								'' + MOST_ACCURATE_NUM +
 								')';
-							console.log( sql1 );
-							console.log( sql2 );
+							//console.log( sql1 );
+							//console.log( sql2 );
 							db.query( sql1 + sql2, function( err, rows, fields ) {
 								if( err ) { throw err; }
 								else {
@@ -414,8 +414,8 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 									'' + p.SHOTGUN_KILLS + ',' +
 									'' + p.SHOTGUN_SHOTS +
 									')';
-								console.log( i + " " + sql3 );
-								console.log( i + " " + sql4 );
+								//console.log( i + " " + sql3 );
+								//console.log( i + " " + sql4 );
 								db.query( sql3 + sql4, function( err, rows, fields ) {
 									if( err ) {
 										throw err;
@@ -514,8 +514,8 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 									'' + p.SHOTGUN_KILLS + ',' +
 									'' + p.SHOTGUN_SHOTS +
 									')';
-								console.log( i + " " + sql3 );
-								console.log( i + " " + sql4 );
+								//console.log( i + " " + sql3 );
+								//console.log( i + " " + sql4 );
 								db.query( sql3 + sql4, function( err, rows, fields ) {
 									if( err ) { throw err; }
 								} );
@@ -616,8 +616,8 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 									'' + p.SHOTGUN_KILLS + ',' +
 									'' + p.SHOTGUN_SHOTS +
 									')';
-								console.log( i + " " + sql3 );
-								console.log( i + " " + sql4 );
+								//console.log( i + " " + sql3 );
+								//console.log( i + " " + sql4 );
 								db.query( sql3 + sql4, function( err, rows, fields ) {
 									if( err ) { throw err; }
 								} );
