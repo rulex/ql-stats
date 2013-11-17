@@ -15,26 +15,38 @@
 		<div class="row-fluid"><div class="span4">Total play time by all players:</div><div class="span8">{{ overview.players[0].PLAY_TIME_SUM | number }} s ( {{ date-overview.players[0].PLAY_TIME_SUM*1000 | timeago }} )</div></div>
 	</div>
 
+
+
+	<div class="span6 well">
+		<div class="well" id="daily_matches"></div>
+	</div>
+
+	<!--
 	<div class="span6 well">
 		<table class="table table-condensed table-striped table-hover">
 			<thead>
 				<tr>
-					<th>type</th>
-					<th>games</th>
+					<th>MAP</th>
+					<th>MATCHES_PLAYED</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in overview.gametypes | orderBy: MATCHES_PLAYED">
-					<td>{{ z.GAME_TYPE }}</td>
-					<td>{{ z.MATCHES_PLAYED }}</td>
+				<tr ng-repeat="z in maps.themaps | orderBy: MATCHES_PLAYED">
+					<td><a href="#/map/{{ z.MAP }}">{{ z.MAP }}</a></td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
 				</tr>
 			</tbody>
 		</table>
 	</div>
+	-->
 
 </div>
 
 
 <div class="row-fluid">
+
+	<div class="row-fluid">
+	</div>
+
 </div>
 

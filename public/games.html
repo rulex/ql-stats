@@ -1,30 +1,30 @@
 
 <div class="row-fluid">
 	<div class="span12 well">
-		 Last 500 games saved
-		<table class="table table-condensed table-striped table-hover">
+		 Last 500 games
+		<table class="table table-condensed table-striped ">
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='PUBLIC_ID'; ordertype=!ordertype">PUBLIC_ID</a></th>
+					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype">GAME_TYPE</a></th>
 					<th><a href="" ng-click="ordercolumn='OWNER'; ordertype=!ordertype">OWNER</a></th>
 					<th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">MAP</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype">GAME_TYPE</a></th>
+					<th><a href="" ng-click="ordercolumn='TOTAL_KILLS'; ordertype=!ordertype">KILLS</a></th>
 					<th><a href="" ng-click="ordercolumn='GAME_TIMESTAMP'; ordertype=!ordertype">GAME_TIMESTAMP</a></th>
 					<th><a href="" ng-click="ordercolumn='GAME_LENGTH'; ordertype=!ordertype">GAME_LENGTH</a></th>
 					<th><a href="" ng-click="ordercolumn='NUM_PLAYERS'; ordertype=!ordertype">NUM_PLAYERS</a></th>
-					<th><a href="" ng-click="ordercolumn='TOTAL_KILLS'; ordertype=!ordertype">TOTAL_KILLS</a></th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in games.thegames | orderBy:ordercolumn:ordertype">
 					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
+					<td><b>{{ z.GAME_TYPE }}</b> {{ z.RULESET | ruleset }} {{ z.PREMIUM | premium }} {{ z.RANKED | ranked }}</td>
 					<td><a href="#/owner/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
-					<td>{{ z.MAP }}</td>
-					<td>{{ z.GAME_TYPE }}</td>
+					<td><a href="#/map/{{ z.MAP }}">{{ z.MAP }}</a></td>
+					<td>{{ z.TOTAL_KILLS }}</td>
 					<td>{{ z.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td>
 					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>
 					<td>{{ z.NUM_PLAYERS }}</td>
-					<td>{{ z.TOTAL_KILLS }}</td>
 				</tr>
 			</tbody>
 		</table>

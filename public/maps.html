@@ -1,0 +1,27 @@
+
+
+<div class="row-fluid">
+	<div class="span12 well">
+		 Last 500 games saved
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">MAP</a></th>
+					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
+					<th><a href="" ng-click="ordercolumn='TOTAL_KILLS'; ordertype=!ordertype">TOTAL_KILLS</a></th>
+					<th><a href="" ng-click="ordercolumn='GAME_LENGTH'; ordertype=!ordertype">GAME_LENGTH</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in maps.themaps | orderBy:ordercolumn:ordertype">
+					<td><a href="#/map/{{ z.MAP }}">{{ z.MAP }}</a></td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
+					<td>{{ z.TOTAL_KILLS | number }}</td>
+					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+

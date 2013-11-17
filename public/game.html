@@ -1,4 +1,35 @@
 
+<div class="row-fluid">
+
+	<div class="span6 well">
+		<h4>Game PUBLIC_ID: <a href="#/game/{{ game.game.PUBLIC_ID }}">{{ game.game.PUBLIC_ID }}</a></h4>
+		<table class="table table-condensed table-striped table-hover">
+			<tbody>
+				<tr><td>OWNER</td><td><a href="#/owner/{{ game.game.OWNER }}">{{ game.game.OWNER }}</a></td></td><td></tr>
+				<tr><td>GAME_TYPE</td><td>{{ game.game.GAME_TYPE }}</td></td><td></tr>
+				<tr><td>AVG_ACC</td><td>{{ game.game.AVG_ACC }}</td></td><td></tr>
+				<tr><td>PREMIUM</td><td>{{ game.game.PREMIUM }}</td></td><td></tr>
+				<tr><td>RANKED</td><td>{{ game.game.RANKED }}</td></td><td></tr>
+				<tr><td>RULESET</td><td>{{ game.game.RULESET }}</td></td><td></tr>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="span6 well">
+		<table class="table table-condensed table-striped table-hover">
+			<tbody>
+				<tr><td>most MOST_ACCURATE</td><td><a href="#/player/{{ game.game.MOST_ACCURATE_NICK }}">{{ game.game.MOST_ACCURATE_NICK }}</a></td><td> {{ game.game.MOST_ACCURATE_NUM | number }}</td></tr>
+				<tr><td>most DMG_DELIVERED</td><td><a href="#/player/{{ game.game.DMG_DELIVERED_NICK }}">{{ game.game.DMG_DELIVERED_NICK }}</a></td><td> {{ game.game.DMG_DELIVERED_NUM | number }}</td></tr>
+				<tr><td>most DMG_TAKEN</td><td><a href="#/player/{{ game.game.DMG_TAKEN_NICK }}">{{ game.game.DMG_TAKEN_NICK }}</a> </td><td>{{ game.game.DMG_TAKEN_NUM | number }}</td></tr>
+				<tr><td>LEAST_DEATHS</td><td><a href="#/player/{{ game.game.LEAST_DEATHS_NICK }}">{{ game.game.LEAST_DEATHS_NICK }}</a></td><td> {{ game.game.LEAST_DEATHS_NUM | number }}</td></tr>
+				<tr><td>MOST_DEATHS</td><td><a href="#/player/{{ game.game.MOST_DEATHS_NICK }}">{{ game.game.MOST_DEATHS_NICK }}</a></td><td> {{ game.game.MOST_DEATHS_NUM | number }}</td></tr>
+				<tr><td>FIRST_SCORER</td><td><a href="#/player/{{ game.game.FIRST_SCORER }}">{{ game.game.FIRST_SCORER }}</a></td><td> {{ game.game.FIRST_SCORER | number }}</td></tr>
+				<tr><td>LAST_SCORER</td><td><a href="#/player/{{ game.game.LAST_SCORER }}">{{ game.game.LAST_SCORER }}</a></td><td> {{ game.game.LAST_SCORER | number }}</td></tr>
+			</tbody>
+		</table>
+	</div>
+
+</div>
 
 <div class="row-fluid">
 
@@ -8,18 +39,18 @@
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">Nick</a></th>
-					<th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">Rank</a></th>
-					<th><a href="" ng-click="ordercolumn='TEAM'; ordertype=!ordertype">Team</a></th>
-					<th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">Score</a></th>
-					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">Kills</a></th>
-					<th><a href="" ng-click="ordercolumn='DEATHS'; ordertype=!ordertype">Deaths</a></th>
-					<th><a href="" ng-click="ordercolumn='IMPRESSIVE'; ordertype=!ordertype">Imp</a>/<a href="" ng-click="ordercolumn='EXCELLENT'; ordertype=!ordertype">Exc</a>/<a href="" ng-click="ordercolumn='HUMILIATION'; ordertype=!ordertype">Hum</a></th>
-					<th><a href="" ng-click="ordercolumn='TEAM_RANK'; ordertype=!ordertype">TeamRank</a></th>
-					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PlayTime</a></th>
-					<th>Acc</th>
-					<th>RL(<a href="" ng-click="ordercolumn='RL_A'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RL_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RL_S'; ordertype=!ordertype">s</a>)</th>
-					<th>RG(<a href="" ng-click="ordercolumn='RG_A'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RG_S'; ordertype=!ordertype">s</a>)</th>
-					<th>LG(<a href="" ng-click="ordercolumn='LG_A'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='LG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='LG_S'; ordertype=!ordertype">s</a>)</th>
+					<th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">RANK</a></th>
+					<th><a href="" ng-click="ordercolumn='TEAM'; ordertype=!ordertype">TEAM</a></th>
+					<th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">SCORE</a></th>
+					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
+					<th><a href="" ng-click="ordercolumn='DEATHS'; ordertype=!ordertype">DEATHS</a></th>
+					<th><a href="" ng-click="ordercolumn='IMPRESSIVE'; ordertype=!ordertype">IMP</a>/<a href="" ng-click="ordercolumn='EXCELLENT'; ordertype=!ordertype">EXC</a>/<a href="" ng-click="ordercolumn='HUMILIATION'; ordertype=!ordertype">HUM</a></th>
+					<th><a href="" ng-click="ordercolumn='TEAM_RANK'; ordertype=!ordertype">TEAM_RANK</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
+					<th><a href="" ng-click="ordercolumn='HITS/SHOTS'; ordertype=!ordertype">ACC</a></th>
+					<th>RL(<a href="" ng-click="ordercolumn='RL_H/RL_S'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RL_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RL_S'; ordertype=!ordertype">s</a>)</th>
+					<th>RG(<a href="" ng-click="ordercolumn='RG_H/RG_S'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RG_S'; ordertype=!ordertype">s</a>)</th>
+					<th>LG(<a href="" ng-click="ordercolumn='LG_H/LG_S'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='LG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='LG_S'; ordertype=!ordertype">s</a>)</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -34,9 +65,9 @@
 					<td>{{ z.TEAM_RANK }}</td>
 					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
 					<td>{{ ( z.HITS / z.SHOTS )*100 | number }}</td>
-					<td>{{ z.RL_A | number }} / {{ z.RL_K | number }} / {{ z.RL_S | number }}</td>
-					<td>{{ z.RG_A | number }} / {{ z.RG_K | number }} / {{ z.RG_S | number }}</td>
-					<td>{{ z.LG_A | number }} / {{ z.LG_K | number }} / {{ z.LG_S | number }}</td>
+					<td>{{ z.RL_H/z.RL_S*100 | number:2 }} / {{ z.RL_K | number }} / {{ z.RL_S | number }}</td>
+					<td>{{ z.RG_H/z.RG_S*100 | number:2 }} / {{ z.RG_K | number }} / {{ z.RG_S | number }}</td>
+					<td>{{ z.LG_H/z.LG_S*100 | number:2 }} / {{ z.LG_K | number }} / {{ z.LG_S | number }}</td>
 				</tr>
 			</tbody>
 		</table>

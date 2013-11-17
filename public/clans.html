@@ -7,7 +7,7 @@
 		{{currentPage+1}}/{{numberOfPages()}}
 		<button ng-disabled="currentPage >= data.length/pageSize - 1" ng-click="currentPage=currentPage+1"> Next </button>
 		-->
-		<table class="table table-condensed table-striped table-hover">
+		<table class="table table-condensed table-striped ">
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='PLAYER_CLAN'; ordertype=!ordertype">PLAYER_CLAN</a></th>
@@ -25,7 +25,7 @@
 			<!-- | startForm:currentPage*pageSize | limitTo:pageSize  -->
 				<tr ng-repeat="z in clans.theclans | orderBy:ordercolumn:ordertype ">
 					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
-					<td>{{ z.MATCHES_PLAYED }}</td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ z.WIN_PERCENT | number }}</td>
 					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
 					<td>{{ z.SCORE_SUM | number }}</td>

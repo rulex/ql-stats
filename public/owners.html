@@ -1,8 +1,8 @@
 
 <div class="row-fluid">
 	<div class="span12 well">
-		 Server owners
-		<table class="table table-condensed table-striped table-hover">
+		Server owners
+		<table class="table table-condensed table-striped ">
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='OWNER'; ordertype=!ordertype">OWNER</a></th>
@@ -19,11 +19,11 @@
 			<tbody>
 				<tr ng-repeat="z in owners.theowners | orderBy:ordercolumn:ordertype">
 					<td><a href="#/owner/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
-					<td>{{ z.MATCHES_PLAYED }}</td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ date-z.GAME_LENGTH_SUM*1000 | timeago }}</td>
 					<td>{{ date-z.GAME_LENGTH_AVG*1000 | timeago }}</td>
 					<td>{{ z.TOTAL_KILLS | number }}</td>
-					<td>{{ z.AVG_ACC | number }}</td>
+					<td>{{ z.AVG_ACC | number:2 }}</td>
 					<td>{{ z.duel | number }}</td>
 					<td>{{ z.tdm | number }}</td>
 					<td>{{ z.ca | number }}</td>

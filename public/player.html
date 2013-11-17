@@ -49,7 +49,7 @@
 				<tr ng-repeat="z in games.thegames | orderBy:ordercolumn:ordertype">
 					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
 					<td>{{ z.GAME_TIMESTAMP *1000 | date:'yyyy-MM-dd HH:mm:ss' }} </td>
-					<td>{{ z.GAME_TYPE }}</td>
+					<td><b>{{ z.GAME_TYPE }}</b> {{ z.RULESET | ruleset }} {{ z.PREMIUM | premium }} {{ z.RANKED | ranked }}</td>
 					<td><a href="#/player/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
 				</tr>
 			</tbody>
