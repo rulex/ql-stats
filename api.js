@@ -31,6 +31,18 @@ var db = mysql.createConnection( {
 } );
 db.connect();
 
+// counter
+var requests_counter = 0;
+if( cfg.counter.on ) {
+	setInterval( function() {
+		fs.writeFile( cfg.counter.path, requests_counter, function ( err ) {
+			if( err ) { throw err; }
+			requests_counter = 0;
+		} );
+	}, 5*60*1000 );
+}
+
+// db timeout
 setInterval( function() {
 	db.ping();
 }, 5000*1000 );
@@ -96,16 +108,18 @@ app.get( '/stats', function ( req, res ) {
 	res.jsonp( cmds );
 	res.end();
 	console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+	requests_counter++;
 } );
 app.get( '/stats/players', function ( req, res ) {
 	var timer_start = process.hrtime();
-	var sql = 'select Players.PLAYER_NICK as PLAYER_NICK, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, max(Games.GAME_TIMESTAMP) as GAME_TIMESTAMP, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO,sum(Players.HITS) as HITS,avg(Players.HITS) as HITS_AVG,sum(Players.SHOTS) as SHOTS,avg(Players.SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME,sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG,sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT,avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID GROUP BY Players.PLAYER_NICK ORDER BY NULL LIMIT 500;';
+	var sql = 'select Players.PLAYER_NICK as PLAYER_NICK, count(*) as MATCHES_PLAYED, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO,sum(Players.HITS) as HITS,avg(Players.HITS) as HITS_AVG,sum(Players.SHOTS) as SHOTS,avg(Players.SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME,sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG,sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT,avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players GROUP BY Players.PLAYER_NICK ORDER BY KILLS desc LIMIT 500;';
 	db.query( sql, function( err, rows, fields ) {
 		//console.log( rows );
 		res.jsonp( { theplayers: rows } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/player/*/games', function ( req, res ) {
@@ -119,6 +133,7 @@ app.get( '/stats/player/*/games', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 	//console.log( nick );
 } );
@@ -150,6 +165,7 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 				console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 				res.jsonp( { player: nick, updated: lastgames.length, scanned: nrcallbacks, updated_games: lastgames } );
 				res.end();
+				requests_counter++;
 			}
 		} );
 		$( '.areaMapC' ).each( function( i ) {
@@ -626,6 +642,7 @@ app.get( '/stats/player/*', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 	//console.log( nick );
 } );
@@ -649,6 +666,7 @@ app.get( '/stats/idealteams/*', function ( req, res ) {
 		res.jsonp( rows );
 		res.end();
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/games/type/*', function ( req, res ) {
@@ -661,6 +679,7 @@ app.get( '/stats/games/type/*', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/games/owner/*', function ( req, res ) {
@@ -674,6 +693,7 @@ app.get( '/stats/games/owner/*', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/games', function ( req, res ) {
@@ -685,6 +705,7 @@ app.get( '/stats/games', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/game/*', function ( req, res ) {
@@ -698,6 +719,7 @@ app.get( '/stats/game/*', function ( req, res ) {
 		res.jsonp( { game: resulty[0][0], teams: resulty[2], players: resulty[1] } );
 		res.end();
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/owners', function ( req, res ) {
@@ -709,6 +731,32 @@ app.get( '/stats/owners', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
+	} );
+} );
+app.get( '/stats/owner/*/players', function ( req, res ) {
+	var owner = mysql_real_escape_string( req.url.split( '/' )[3] );
+	var timer_start = process.hrtime();
+	// players
+	sql = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
+	db.query( sql, function( err, rows, fields ) {
+		//console.log( rows );
+		res.jsonp( { theplayers: rows, more: 'less' } );
+		res.end();
+		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
+	} );
+} );
+app.get( '/stats/owner/*/games', function ( req, res ) {
+	var owner = mysql_real_escape_string( req.url.split( '/' )[3] );
+	var timer_start = process.hrtime();
+	sql = 'select * from Games where OWNER="'+ owner +'"';
+	db.query( sql, function( err, rows, fields ) {
+		//console.log( rows );
+		res.jsonp( { thegames: rows, more: 'less' } );
+		res.end();
+		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/owner/*', function ( req, res ) {
@@ -724,12 +772,13 @@ app.get( '/stats/owner/*', function ( req, res ) {
 	// game types
 	sql[3] = 'select count(*) as MATCHES_PLAYED, GAME_TYPE from Games where OWNER="'+ owner +'" group by GAME_TYPE order by NULL';
 	// players
-	sql[4] = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
+	//sql[4] = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
 	db.query( sql.join( ';' ), function( err, resulty ) {
 		//console.log( rows );
-		res.jsonp( { asdf: resulty[2], sum: resulty[0], types: resulty[3], maps: resulty[1], players: resulty[4] } );
+		res.jsonp( { asdf: resulty[2], sum: resulty[0], types: resulty[3], maps: resulty[1] } );
 		res.end();
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/types', function ( req, res ) {
@@ -742,17 +791,20 @@ app.get( '/stats/types', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/clans', function ( req, res ) {
 	var timer_start = process.hrtime();
-	var sql = 'select Players.PLAYER_CLAN as PLAYER_CLAN, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO,sum(Players.HITS) as HITS, avg(Players.HITS) as HITS_AVG,sum(Players.SHOTS) as SHOTS,avg(Players.SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME,sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG,sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT,avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID GROUP BY Players.PLAYER_CLAN ORDER BY NULL';
+	var sql = 'select Players.PLAYER_CLAN as PLAYER_CLAN, count(*) as MATCHES_PLAYED, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID GROUP BY Players.PLAYER_CLAN ORDER BY NULL';
+	//var sql = 'select Players.PLAYER_CLAN as PLAYER_CLAN, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO,sum(Players.HITS) as HITS, avg(Players.HITS) as HITS_AVG,sum(Players.SHOTS) as SHOTS,avg(Players.SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME,sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG,sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT,avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID GROUP BY Players.PLAYER_CLAN ORDER BY NULL';
 	db.query( sql, function( err, rows, fields ) {
 		//console.log( rows );
 		res.jsonp( { theclans: rows } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/clan/*', function ( req, res ) {
@@ -769,6 +821,29 @@ app.get( '/stats/clan/*', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
+	} );
+} );
+app.get( '/stats/all/daily', function ( req, res ) {
+	var timer_start = process.hrtime();
+	// maps
+	sql = 'select count(*) as count, DATE(from_unixtime(GAME_TIMESTAMP)) as date, year(from_unixtime(GAME_TIMESTAMP)) as year, month(from_unixtime(GAME_TIMESTAMP)) as month, day(from_unixtime(GAME_TIMESTAMP)) as day from Games group by year,month,day order by NULL';
+	db.query( sql, function( err, rows, fields ) {
+		res.jsonp( { thedays: rows } );
+		res.end();
+		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
+	} );
+} );
+app.get( '/stats/all/maps', function ( req, res ) {
+	var timer_start = process.hrtime();
+	// maps
+	sql = 'select count(*) as MATCHES_PLAYED, MAP from Games group by MAP order by MATCHES_PLAYED desc';
+	db.query( sql, function( err, rows, fields ) {
+		res.jsonp( { themaps: rows } );
+		res.end();
+		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 app.get( '/stats/all', function ( req, res ) {
@@ -779,18 +854,41 @@ app.get( '/stats/all', function ( req, res ) {
 	sql[0] = 'SELECT count(*) as MATCHES_PLAYED, SUM(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC FROM Games';
 	// players
 	sql[1] = 'SELECT sum(PLAY_TIME) as PLAY_TIME_SUM, sum(SHOTS) as SHOTS, sum(KILLS) as KILLS, sum(RL_K) as RL_K_SUM, sum(RG_K) as RG_K_SUM, sum(LG_K) as LG_K_SUM FROM Players ';
-	// maps
-	sql[2] = 'select count(*) as MATCHES_PLAYED, MAP from Games group by MAP order by MATCHES_PLAYED desc';
 	// UNIQUE_PLAYERS
-	sql[3] = 'select count(*) as UNIQUE_PLAYERS from ( select PLAYER_NICK from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID group by PLAYER_NICK ) as a';
+	sql[2] = 'select count(*) as UNIQUE_PLAYERS from ( select PLAYER_NICK from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID group by PLAYER_NICK ) as a';
 	// first/latest game
-	sql[4] = 'select min(GAME_TIMESTAMP) as min, max(GAME_TIMESTAMP) as max from Games';
+	sql[3] = 'select min(GAME_TIMESTAMP) as min, max(GAME_TIMESTAMP) as max from Games';
 	// types
-	sql[5] = 'select GAME_TYPE, count(*) as MATCHES_PLAYED from Games group by GAME_TYPE order by MATCHES_PLAYED desc';
+	sql[4] = 'select GAME_TYPE, count(*) as MATCHES_PLAYED from Games group by GAME_TYPE order by MATCHES_PLAYED desc';
 	db.query( sql.join( ';' ), function( err, resulty ) {
-		res.jsonp( { games: resulty[0], UNIQUE_PLAYERS: resulty[3], min_max: resulty[4], gametypes: resulty[5], players: resulty[1], maps: resulty[2] } );
+		res.jsonp( { games: resulty[0], UNIQUE_PLAYERS: resulty[2], min_max: resulty[3], gametypes: resulty[4], players: resulty[1] } );
 		res.end();
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
+	} );
+} );
+app.get( '/stats/maps', function ( req, res ) {
+	var timer_start = process.hrtime();
+	var sql = 'SELECT MAP, count(*) as MATCHES_PLAYED, sum(TOTAL_KILLS) as TOTAL_KILLS, sum(GAME_LENGTH) as GAME_LENGTH FROM Games group by MAP order by NULL';
+	db.query( sql, function( err, rows, fields ) {
+		res.jsonp( { themaps: rows } );
+		res.end();
+		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
+	} );
+} );
+app.get( '/stats/map/*', function ( req, res ) {
+	var timer_start = process.hrtime();
+	var map = mysql_real_escape_string( req.url.split( '/' )[3] );
+	var sql = [];
+	sql[0] = 'SELECT MAP, count(*) as MATCHES_PLAYED FROM Games WHERE MAP=\'' + map + '\' group by MAP';
+	//sql[1] = 'SELECT * FROM Players WHERE MAP=\'' + map + '\'';
+	//sql[2] = 'select Players.TEAM, count(Players.PLAYER_NICK) as PLAYERS, sum(Players.SCORE) as SCORE, avg(Players.SCORE) as SCORE_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.SHOTS) as SHOTS, sum(Players.HITS) as HITS, sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(Players.DAMAGE_DEALT)/sum(Games.GAME_LENGTH) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Players.PUBLIC_ID="'+ game +'" group by TEAM';
+	db.query( sql.join( ';' ), function( err, resulty ) {
+		res.jsonp( { map: resulty[0], teams: resulty[2], players: resulty[1] } );
+		res.end();
+		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		requests_counter++;
 	} );
 } );
 
