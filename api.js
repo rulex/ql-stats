@@ -90,8 +90,17 @@ var MyRequestsCompleted = ( function() {
 } )();
 
 // move games dir to public? or make an app.get
+app.use( express.logger( 'short' ) );
+app.use( function( req, res, next ) {
+	++requests_counter;
+	next();
+} );
 app.use( express.static( __dirname + '/public' ) );
 app.use( '/get/game', express.static( __dirname + '/games' ) );
+app.use( function( req, res, next ) {
+	//--requests_counter;
+	next();
+} );
 
 app.get( '/stats', function ( req, res ) {
 	var timer_start = process.hrtime();
@@ -107,8 +116,7 @@ app.get( '/stats', function ( req, res ) {
 ];
 	res.jsonp( cmds );
 	res.end();
-	console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-	requests_counter++;
+	//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 } );
 app.get( '/stats/players', function ( req, res ) {
 	var timer_start = process.hrtime();
@@ -118,8 +126,7 @@ app.get( '/stats/players', function ( req, res ) {
 		res.jsonp( { theplayers: rows } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/player/*/games', function ( req, res ) {
@@ -132,8 +139,7 @@ app.get( '/stats/player/*/games', function ( req, res ) {
 		res.jsonp( { thegames: rows } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 	//console.log( nick );
 } );
@@ -165,7 +171,6 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 				console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 				res.jsonp( { player: nick, updated: lastgames.length, scanned: nrcallbacks, updated_games: lastgames } );
 				res.end();
-				requests_counter++;
 			}
 		} );
 		$( '.areaMapC' ).each( function( i ) {
@@ -641,8 +646,7 @@ app.get( '/stats/player/*', function ( req, res ) {
 		res.jsonp( rows );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 	//console.log( nick );
 } );
@@ -666,7 +670,6 @@ app.get( '/stats/idealteams/*', function ( req, res ) {
 		res.jsonp( rows );
 		res.end();
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
 	} );
 } );
 app.get( '/stats/games/type/*', function ( req, res ) {
@@ -678,8 +681,7 @@ app.get( '/stats/games/type/*', function ( req, res ) {
 		res.jsonp( rows );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/games/owner/*', function ( req, res ) {
@@ -693,7 +695,6 @@ app.get( '/stats/games/owner/*', function ( req, res ) {
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
 	} );
 } );
 app.get( '/stats/games', function ( req, res ) {
@@ -704,8 +705,7 @@ app.get( '/stats/games', function ( req, res ) {
 		res.jsonp( { thegames: rows } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/game/*', function ( req, res ) {
@@ -718,8 +718,7 @@ app.get( '/stats/game/*', function ( req, res ) {
 	db.query( sql.join( ';' ), function( err, resulty ) {
 		res.jsonp( { game: resulty[0][0], teams: resulty[2], players: resulty[1] } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/owners', function ( req, res ) {
@@ -730,8 +729,7 @@ app.get( '/stats/owners', function ( req, res ) {
 		res.jsonp( { theowners: rows } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/owner/*/players', function ( req, res ) {
@@ -743,8 +741,7 @@ app.get( '/stats/owner/*/players', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { theplayers: rows, more: 'less' } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/owner/*/games', function ( req, res ) {
@@ -755,8 +752,7 @@ app.get( '/stats/owner/*/games', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { thegames: rows, more: 'less' } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/owner/*', function ( req, res ) {
@@ -777,8 +773,7 @@ app.get( '/stats/owner/*', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { asdf: resulty[2], sum: resulty[0], types: resulty[3], maps: resulty[1] } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/types', function ( req, res ) {
@@ -790,8 +785,7 @@ app.get( '/stats/types', function ( req, res ) {
 		res.jsonp( rows );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/clans', function ( req, res ) {
@@ -803,8 +797,7 @@ app.get( '/stats/clans', function ( req, res ) {
 		res.jsonp( { theclans: rows } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/clan/*', function ( req, res ) {
@@ -820,8 +813,7 @@ app.get( '/stats/clan/*', function ( req, res ) {
 		res.jsonp( { theclan: resulty[0], theplayers: resulty[1] } );
 		res.end();
 		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/all/daily', function ( req, res ) {
@@ -831,8 +823,7 @@ app.get( '/stats/all/daily', function ( req, res ) {
 	db.query( sql, function( err, rows, fields ) {
 		res.jsonp( { thedays: rows } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/all/maps', function ( req, res ) {
@@ -842,8 +833,7 @@ app.get( '/stats/all/maps', function ( req, res ) {
 	db.query( sql, function( err, rows, fields ) {
 		res.jsonp( { themaps: rows } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/all', function ( req, res ) {
@@ -863,8 +853,7 @@ app.get( '/stats/all', function ( req, res ) {
 	db.query( sql.join( ';' ), function( err, resulty ) {
 		res.jsonp( { games: resulty[0], UNIQUE_PLAYERS: resulty[2], min_max: resulty[3], gametypes: resulty[4], players: resulty[1] } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/maps', function ( req, res ) {
@@ -873,8 +862,7 @@ app.get( '/stats/maps', function ( req, res ) {
 	db.query( sql, function( err, rows, fields ) {
 		res.jsonp( { themaps: rows } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/stats/map/*', function ( req, res ) {
@@ -887,9 +875,26 @@ app.get( '/stats/map/*', function ( req, res ) {
 	db.query( sql.join( ';' ), function( err, resulty ) {
 		res.jsonp( { map: resulty[0], teams: resulty[2], players: resulty[1] } );
 		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-		requests_counter++;
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
+} );
+app.get( '/stats/eloduel', function ( req, res ) {
+	var timer_start = process.hrtime();
+	//sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON,
+	//var sql = 'select Players.PLAYER_NICK as PLAYER_NICK, count(*) as MATCHES_PLAYED, avg(RANK) as RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME, sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG, sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT, avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID GROUP BY Players.PLAYER_NICK ORDER BY Games.GAME_TIMESTAMP asc ';
+	sql = 'select Games.PUBLIC_ID, Players.PLAYER_NICK, Players.RANK, Games.GAME_TYPE, Games.GAME_TIMESTAMP from Games left join Players on Games.PUBLIC_ID=Players.PUBLIC_ID where Games.GAME_TYPE="duel" order by Games.GAME_TIMESTAMP';
+	db.query( sql, function( err, rows, fields ) {
+		//console.log( rows );
+		res.jsonp( { theplayers: rows } );
+		res.end();
+		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+	} );
+} );
+app.get( '/status', function ( req, res ) {
+	var timer_start = process.hrtime();
+	res.jsonp( { requests_counter: requests_counter } );
+	res.end();
 } );
 
 app.listen( cfg.api.port );
