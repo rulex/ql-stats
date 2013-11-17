@@ -14,6 +14,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/clan/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
 	when( '/maps', { controller: MapsCtrl, templateUrl: 'maps.html' } ).
 	when( '/map/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
+	when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
 	otherwise( { redirectTo: '/' } );
 } ] );
 
@@ -156,6 +157,13 @@ function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.ordertype = false;
 	$scope.date = new Date().getTime();
 }
+function EloDuelCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	var lol = theLiz.eloduel();
+	$scope.players = lol;
+	$scope.date = new Date().getTime();
+	$scope.ordercolumn = 'ELO';
+	$scope.ordertype = true;
+}
 
 
 angular.module( 'lizzy', ['ngResource'] ).
@@ -235,6 +243,11 @@ factory( 'theLiz', function( $http ) {
 	}
 	theLiz.map = function( m ) {
 		return $http.get( 'stats/map/' + m ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.eloduel = function( m ) {
+		return $http.get( 'stats/eloduel' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}

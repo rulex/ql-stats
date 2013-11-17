@@ -4,7 +4,7 @@
 
 	<div class="span6 well">
 		<div class="row-fluid">Per game stats for:<h3>{{ player[0].PLAYER_NICK }}</h3> </div>
-		<table class="table table-condensed table-striped table-hover">
+		<table class="table table-condensed table-striped ">
 			<tbody>
 				<tr><td>MATCHES_PLAYED:</td><td>{{ player[0].MATCHES_PLAYED }}</td></tr>
 				<tr><td>PLAY_TIME_SUM:</td><td>{{ date-player[0].PLAY_TIME_SUM*1000 | timeago }}</td></tr>
@@ -20,7 +20,7 @@
 
 	<div class="span6 well">
 		<div class="row-fluid"><h3>All</h3> </div>
-		<table class="table table-condensed table-striped table-hover">
+		<table class="table table-condensed table-striped ">
 			<tbody>
 				<tr ng-repeat="(key,val) in player[0]">
 					<td>{{ key }}</td>
@@ -36,7 +36,7 @@
 
 	<div class="span12 well">
 		<div class="row-fluid"><h3>Games</h3> </div>
-		<table class="table table-condensed table-striped table-hover">
+		<table class="table table-condensed table-striped ">
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='PUBLIC_ID'; ordertype=!ordertype">PUBLIC_ID</a></th>
