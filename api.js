@@ -30,11 +30,17 @@ var db = mysql.createConnection( {
 	multipleStatements: true,
 } );
 db.connect();
+// db timeout
+setInterval( function() {
+	db.ping();
+}, 10*60*1000 );
 
 // counter
 var requests_counter = 0;
+var requests_counter_total = 0;
 if( cfg.counter.on ) {
 	setInterval( function() {
+		// write counter to file for use in external app
 		fs.writeFile( cfg.counter.path, requests_counter, function ( err ) {
 			if( err ) { throw err; }
 			requests_counter = 0;
@@ -42,66 +48,24 @@ if( cfg.counter.on ) {
 	}, 5*60*1000 );
 }
 
-// db timeout
-setInterval( function() {
-	db.ping();
-}, 5000*1000 );
-
-function elapsed_time2( timer ) {
-	var precision = 3; // 3 decimal places
-	var elapsed = process.hrtime( timer )[1] / 1000000; // divide by a million to get nano to milli
-	//nlog.log( 'info', elapsed.toFixed( precision ) + ' ms - ' + note );
-	timer = process.hrtime(); // reset the timer
-	return parseFloat( elapsed.toFixed( precision ) );
-}
-var MyRequestsCompleted = ( function() {
-	var numRequestToComplete, requestsCompleted, callBacks, singleCallBack;
-	return function( options ) {
-		if( !options ) {
-			options = {};
-		}
-		numRequestToComplete = options.numRequest || 0;
-		requestsCompleted = options.requestsCompleted || 0;
-		callBacks = [];
-		var fireCallbacks = function () {
-			console.log( "we're all complete" );
-			for( var i = 0; i < callBacks.length; i++ ) {
-				callBacks[i]();
-			}
-		};
-		if( options.singleCallback ) {
-			callBacks.push( options.singleCallback );
-		}
-		this.addCallbackToQueue = function( isComplete, callback ) {
-			if( isComplete ) requestsCompleted++;
-			if( callback ) callBacks.push( callback );
-			if( requestsCompleted == numRequestToComplete ) fireCallbacks();
-		};
-		this.requestComplete = function( isComplete ) {
-			if( isComplete ) requestsCompleted++;
-			if( requestsCompleted == numRequestToComplete ) {
-				fireCallbacks();
-			}
-		};
-		this.setCallback = function( callback ) {
-			callBacks.push( callBack );
-		};
-	};
-} )();
-
-// move games dir to public? or make an app.get
+// http console logger
 app.use( express.logger( 'short' ) );
+// count requests made
 app.use( function( req, res, next ) {
 	++requests_counter;
+	++requests_counter_total;
 	next();
 } );
+// serve static html files
 app.use( express.static( __dirname + '/public' ) );
+// serve saved games from /get/game/<PUBLIC_ID>.json.gz
 app.use( '/get/game', express.static( __dirname + '/games' ) );
 app.use( function( req, res, next ) {
 	//--requests_counter;
 	next();
 } );
 
+// api
 app.get( '/stats', function ( req, res ) {
 	var timer_start = process.hrtime();
 	var cmds = [
@@ -120,12 +84,10 @@ app.get( '/stats', function ( req, res ) {
 } );
 app.get( '/stats/players', function ( req, res ) {
 	var timer_start = process.hrtime();
-	var sql = 'select Players.PLAYER_NICK as PLAYER_NICK, count(*) as MATCHES_PLAYED, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO,sum(Players.HITS) as HITS,avg(Players.HITS) as HITS_AVG,sum(Players.SHOTS) as SHOTS,avg(Players.SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME,sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG,sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT,avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players GROUP BY Players.PLAYER_NICK ORDER BY KILLS desc LIMIT 500;';
+	var sql = 'select Players.PLAYER_NICK as PLAYER_NICK, Players.PLAYER_COUNTRY as PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO,sum(Players.HITS) as HITS,avg(Players.HITS) as HITS_AVG,sum(Players.SHOTS) as SHOTS,avg(Players.SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME,sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG,sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT,avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players GROUP BY Players.PLAYER_NICK ORDER BY KILLS desc LIMIT 500;';
 	db.query( sql, function( err, rows, fields ) {
-		//console.log( rows );
 		res.jsonp( { theplayers: rows } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -133,16 +95,16 @@ app.get( '/stats/player/*/games', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
 	var timer_start = process.hrtime();
 	var nick = mysql_real_escape_string( req.url.split( '/' )[3] );
-	var sql = 'select Games.PUBLIC_ID, Games.GAME_TIMESTAMP, Games.GAME_TYPE, Games.OWNER, Games.RULESET, Games.RANKED, Games.PREMIUM, Players.PLAYER_NICK from Games left join Players on Games.PUBLIC_ID=Players.PUBLIC_ID where Players.PLAYER_NICK="'+ nick +'" order by NULL';
+	var sql = 'select Games.PUBLIC_ID, Games.GAME_TIMESTAMP, Games.MAP, Games.GAME_TYPE, Games.OWNER, Games.RULESET, Games.RANKED, Games.PREMIUM, Players.PLAYER_NICK from Games left join Players on Games.PUBLIC_ID=Players.PUBLIC_ID where Players.PLAYER_NICK="'+ nick +'" order by NULL';
 	//console.log( sql );
 	db.query( sql, function( err, rows, fields ) {
 		res.jsonp( { thegames: rows } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 	//console.log( nick );
 } );
+//app.get( '/stats/player/*/clans', function( req, res ) {} );
 app.get( '/stats/player/*/update', function ( req, res ) {
 	var timer_start = process.hrtime();
 	var nick = req.url.split( '/' )[3];
@@ -191,6 +153,16 @@ app.get( '/stats/player/*/update', function ( req, res ) {
 						var j = JSON.parse( body );
 						// save to disk
 						if( j.UNAVAILABLE != 1 ) {
+							// tmp dir....
+							//
+							//
+							//
+							//
+							//
+							//
+							//
+							//
+							//
 							//
 							fs.writeFile( './games/' + j.PUBLIC_ID + '.json', body, function( err ) {
 								if( err ) { console.log( err ); }
@@ -645,7 +617,6 @@ app.get( '/stats/player/*', function ( req, res ) {
 	db.query( sql, function( err, rows, fields ) {
 		res.jsonp( rows );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 	//console.log( nick );
@@ -680,7 +651,6 @@ app.get( '/stats/games/type/*', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( rows );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -693,7 +663,6 @@ app.get( '/stats/games/owner/*', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { theowner: rows } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -704,7 +673,6 @@ app.get( '/stats/games', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { thegames: rows } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -728,7 +696,6 @@ app.get( '/stats/owners', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { theowners: rows } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -736,7 +703,7 @@ app.get( '/stats/owner/*/players', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.url.split( '/' )[3] );
 	var timer_start = process.hrtime();
 	// players
-	sql = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
+	sql = 'select Players.PLAYER_NICK, Players.PLAYER_CLAN, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
 	db.query( sql, function( err, rows, fields ) {
 		//console.log( rows );
 		res.jsonp( { theplayers: rows, more: 'less' } );
@@ -744,6 +711,7 @@ app.get( '/stats/owner/*/players', function ( req, res ) {
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
+//app.get( '/stats/owner/*/player/*', function( req, res ) {} );
 app.get( '/stats/owner/*/games', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.url.split( '/' )[3] );
 	var timer_start = process.hrtime();
@@ -784,7 +752,6 @@ app.get( '/stats/types', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( rows );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -796,7 +763,6 @@ app.get( '/stats/clans', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { theclans: rows } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -812,7 +778,6 @@ app.get( '/stats/clan/*', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { theclan: resulty[0], theplayers: resulty[1] } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
@@ -887,18 +852,19 @@ app.get( '/stats/eloduel', function ( req, res ) {
 		//console.log( rows );
 		res.jsonp( { theplayers: rows } );
 		res.end();
-		//apilog.log( 'info', 'GET', { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
 } );
 app.get( '/status', function ( req, res ) {
-	var timer_start = process.hrtime();
-	res.jsonp( { requests_counter: requests_counter } );
+	// getting server status
+	res.jsonp( { requests_counter_total: requests_counter_total, requests_counter: requests_counter, process_uptime: process.uptime() } );
 	res.end();
 } );
 
 app.listen( cfg.api.port );
 
+
+// escape chars
 function mysql_real_escape_string( str ) {
 	return str.replace(/[\0\x08\x09\x1a\n\r"'\\\%]/g, function (char) {
 		switch( char ) {
@@ -923,3 +889,47 @@ function mysql_real_escape_string( str ) {
 		}
 	} );
 }
+
+// elapsed time
+function elapsed_time2( timer ) {
+	var precision = 3; // 3 decimal places
+	var elapsed = process.hrtime( timer )[1] / 1000000; // divide by a million to get nano to milli
+	timer = process.hrtime(); // reset the timer
+	return parseFloat( elapsed.toFixed( precision ) );
+}
+
+// 
+var MyRequestsCompleted = ( function() {
+	var numRequestToComplete, requestsCompleted, callBacks, singleCallBack;
+	return function( options ) {
+		if( !options ) {
+			options = {};
+		}
+		numRequestToComplete = options.numRequest || 0;
+		requestsCompleted = options.requestsCompleted || 0;
+		callBacks = [];
+		var fireCallbacks = function () {
+			//console.log( "we're all complete" );
+			for( var i = 0; i < callBacks.length; i++ ) {
+				callBacks[i]();
+			}
+		};
+		if( options.singleCallback ) {
+			callBacks.push( options.singleCallback );
+		}
+		this.addCallbackToQueue = function( isComplete, callback ) {
+			if( isComplete ) requestsCompleted++;
+			if( callback ) callBacks.push( callback );
+			if( requestsCompleted == numRequestToComplete ) fireCallbacks();
+		};
+		this.requestComplete = function( isComplete ) {
+			if( isComplete ) requestsCompleted++;
+			if( requestsCompleted == numRequestToComplete ) {
+				fireCallbacks();
+			}
+		};
+		this.setCallback = function( callback ) {
+			callBacks.push( callBack );
+		};
+	};
+} )();
