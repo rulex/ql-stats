@@ -1,13 +1,127 @@
 
 <div class="row-fluid">
 
+	<div class="span12 well">
+		<div class="span2">
+			<table class="table table-condensed table-bordered">
+				<tr>
+					<td>
+						<a class="pull-left " href="#/map/{{ game.game.MAP }}">
+							<img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ game.game.MAP }}_v2011071903.0.jpg" alt="{{ game.game.MAP }}" title="{{ game.game.MAP }}" style="height:42px;width:56px;border-width:0px;" />
+						</a>
+					</td>
+					<td>
+						<img class="pull-left" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ game.game.GAME_TYPE }}_v2013071601.0.png" alt="{{ game.game.GAME_TYPE }}" title="{{ game.game.GAME_TYPE }}" />
+						<div class="pull-left {{ game.game.RULESET | ruleset }}"></div>
+						<div class="pull-left {{ game.game.PREMIUM | premium }}"> </div>
+						<div class="pull-left {{ game.game.RANKED | ranked }}"></div>
+					</td>
+				</tr>
+				<tr>
+					<td> Avg. Acc. </td> <td> <div class="pull-left" title="Average Accuracy">{{ game.game.AVG_ACC }}%</div> </td>
+				</tr>
+			</table>
+		</div>
+		<div class="span5">
+			<table class="table table-condensed table-bordered">
+				<tr> <td>GAME:</td> <td><a href="#/game/{{ game.game.PUBLIC_ID }}">{{ game.game.PUBLIC_ID }}</a></td> </tr>
+				<tr> <td>OWNER:</td> <td><a href="#/owner/{{ game.game.OWNER }}">{{ game.game.OWNER }}</a></td> </tr>
+				<tr> <td>TIMESTAMP:</td> <td>{{ game.game.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td> </tr>
+				<tr> <td>DURATION:</td> <td>{{ date-game.game.GAME_LENGTH*1000 | timeago }}</td> </tr>
+				<tr> <td>MOST ACCURATE</td> <td>{{ game.game.MOST_ACCURATE_NUM | number }}%<a class="pull-right" href="#/player/{{ game.game.MOST_ACCURATE_NICK }}">{{ game.game.MOST_ACCURATE_NICK }}</a> </td></tr>
+			</table>
+		</div>
+		<div class="span5">
+			<table class="table table-condensed table-bordered">
+				<tr><td>MOST DAMAGE DELIVERED</td><td>{{ game.game.DMG_DELIVERED_NUM | number }}<a class="pull-right" href="#/player/{{ game.game.DMG_DELIVERED_NICK }}">{{ game.game.DMG_DELIVERED_NICK }}</a> </td></tr>
+				<tr><td>MOST DAMAGE TAKEN</td><td>{{ game.game.DMG_TAKEN_NUM | number }}<a class="pull-right" href="#/player/{{ game.game.DMG_TAKEN_NICK }}">{{ game.game.DMG_TAKEN_NICK }}</a> </td></tr>
+				<tr><td>MOST DEATHS</td><td>{{ game.game.MOST_DEATHS_NUM | number }}<a class="pull-right" href="#/player/{{ game.game.MOST_DEATHS_NICK }}">{{ game.game.MOST_DEATHS_NICK }}</a> </td></tr>
+				<tr><td>LEAST DEATHS</td><td>{{ game.game.LEAST_DEATHS_NUM | number }}<a class="pull-right" href="#/player/{{ game.game.LEAST_DEATHS_NICK }}">{{ game.game.LEAST_DEATHS_NICK }}</a> </td></tr>
+				<tr><td>FIRST SCORER</td><td>{{ game.game.FIRST_SCORER | number }}<a class="pull-right" href="#/player/{{ game.game.FIRST_SCORER }}">{{ game.game.FIRST_SCORER }}</a> </td></tr>
+				<tr><td>LAST SCORER</td><td>{{ game.game.LAST_SCORER | number }}<a class="pull-right" href="#/player/{{ game.game.LAST_SCORER }}">{{ game.game.LAST_SCORER }}</a> </td></tr>
+			</table>
+		</div>
+	</div>
+
+</div>
+
+<div class="row-fluid">
+
+
+		<table class="table table-condensed table-striped table-hover table-bordered">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='PLAYER_CLAN'; ordertype=!ordertype">CLAN</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">NICK</a></th>
+					<th><a href="" title="RANK" ng-click="ordercolumn='RANK'; ordertype=!ordertype">R</a></th>
+					<th><a href="" ng-click="ordercolumn='TEAM'; ordertype=!ordertype">TEAM</a></th>
+					<th><a href="" title="SCORE" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">S</a></th>
+					<th><a href="" title="KILLS" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">K</a></th>
+					<th><a href="" title="DEATHS" ng-click="ordercolumn='DEATHS'; ordertype=!ordertype">D</a></th>
+					<th><a href="" title="DAMAGE_DEALT" ng-click="ordercolumn='DAMAGE_DEALT'; ordertype=!ordertype">DD</a></th>
+					<th><a href="" title="DAMAGE_TAKEN" ng-click="ordercolumn='DAMAGE_TAKEN'; ordertype=!ordertype">DT</a></th>
+					<th><a href="" title="IMPRESSIVE" ng-click="ordercolumn='IMPRESSIVE'; ordertype=!ordertype">I</a> / <a href="" title="EXCELLENT" ng-click="ordercolumn='EXCELLENT'; ordertype=!ordertype">E</a> / <a href="" title="HUMILIATION" ng-click="ordercolumn='HUMILIATION'; ordertype=!ordertype">H</a></th>
+					<th><a href="" title="TEAM_RANK" ng-click="ordercolumn='TEAM_RANK'; ordertype=!ordertype">TR</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
+					<th><a href="" ng-click="ordercolumn='HITS/SHOTS'; ordertype=!ordertype">ACC</a></th>
+					<th>
+						<img src="http://cdn.quakelive.com/web/2013071601/images/profile/weapons/md/ROCKET_v2013071601.0.png" width="27" height="27" title="RL" title="RL" />
+						<a href="" title="Accuracy" ng-click="ordercolumn='RL_H/RL_S'; ordertype=!ordertype">a</a>/
+						<a href="" title="Kills" ng-click="ordercolumn='RL_K'; ordertype=!ordertype">k</a>/
+						<a href="" title="Shots" ng-click="ordercolumn='RL_S'; ordertype=!ordertype">s</a>
+					</th>
+					<th>
+						<img src="http://cdn.quakelive.com/web/2013071601/images/profile/weapons/md/RAILGUN_v2013071601.0.png" width="27" height="27" title="RG" title="RG" />
+						<a href="" title="Accuracy" ng-click="ordercolumn='RG_H/RG_S'; ordertype=!ordertype">a</a>/
+						<a href="" title="Kills" ng-click="ordercolumn='RG_K'; ordertype=!ordertype">k</a>/
+						<a href="" title="Shots" ng-click="ordercolumn='RG_S'; ordertype=!ordertype">s</a>
+					</th>
+					<th>
+						<img src="http://cdn.quakelive.com/web/2013071601/images/profile/weapons/md/LIGHTNING_v2013071601.0.png" width="27" height="27" title="LG" title="LG" />
+						<a href="" title="Accuracy" ng-click="ordercolumn='LG_H/LG_S'; ordertype=!ordertype">a</a>/
+						<a href="" title="Kills" ng-click="ordercolumn='LG_K'; ordertype=!ordertype">k</a>/
+						<a href="" title="Shots" ng-click="ordercolumn='LG_S'; ordertype=!ordertype">s</a>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in game.players | orderBy: ordercolumn:ordertype" class="{{ z.TEAM | team }}">
+					<td><a href="#/clan/{{z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
+					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
+					<td>{{ z.RANK }}</td>
+					<td>{{ z.TEAM }}</td>
+					<td>{{ z.SCORE }}</td>
+					<td>{{ z.KILLS }}</td>
+					<td>{{ z.DEATHS }}</td>
+					<td title="{{ z.DAMAGE_DEALT }} ({{ z.DAMAGE_DEALT / z.PLAY_TIME | number:2 }}dmg/s)">{{ z.DAMAGE_DEALT/1000 | number:1 }} k</td>
+					<td title="{{ z.DAMAGE_TAKEN }}">{{ z.DAMAGE_TAKEN/1000 | number:1 }} k</td>
+					<td>{{ z.IMPRESSIVE }} / {{ z.EXCELLENT }} / {{ z.HUMILIATION }}</td>
+					<td>{{ z.TEAM_RANK }}</td>
+					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
+					<td title="{{ z.HITS / z.SHOTS * 100 }}">{{ ( z.HITS / z.SHOTS )*100 | number:1 }}%</td>
+					<td>{{ z.RL_H/z.RL_S*100 | number:2 }} / {{ z.RL_K | number }} / {{ z.RL_S | number }}</td>
+					<td>{{ z.RG_H/z.RG_S*100 | number:2 }} / {{ z.RG_K | number }} / {{ z.RG_S | number }}</td>
+					<td>{{ z.LG_H/z.LG_S*100 | number:2 }} / {{ z.LG_K | number }} / {{ z.LG_S | number }}</td>
+				</tr>
+			</tbody>
+		</table>
+
+
+</div>
+
+
+
+<div class="row-fluid">
+
 	<div class="span6 well">
 		<h4>Game PUBLIC_ID: <a href="#/game/{{ game.game.PUBLIC_ID }}">{{ game.game.PUBLIC_ID }}</a></h4>
 		<table class="table table-condensed table-striped table-hover">
 			<tbody>
 				<tr><td>OWNER</td><td><a href="#/owner/{{ game.game.OWNER }}">{{ game.game.OWNER }}</a></td></td><td></tr>
+				<tr><td>GAME_TIMESTAMP</td><td>{{ game.game.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td></td><td></tr>
+				<tr><td>GAME_LENGTH</td><td>{{ date-game.game.GAME_LENGTH*1000 | timeago }}</td></td><td></tr>
 				<tr><td>GAME_TYPE</td><td>{{ game.game.GAME_TYPE }}</td></td><td></tr>
-				<tr><td>MAP</td><td>{{ game.game.MAP }}</td></td><td></tr>
+				<tr><td>MAP</td><td><a href="#/map/{{ game.game.MAP }}">{{ game.game.MAP }}</a></td></td><td></tr>
 				<tr><td>AVG_ACC</td><td>{{ game.game.AVG_ACC }}</td></td><td></tr>
 				<tr><td>PREMIUM</td><td>{{ game.game.PREMIUM }}</td></td><td></tr>
 				<tr><td>RANKED</td><td>{{ game.game.RANKED }}</td></td><td></tr>
@@ -32,50 +146,7 @@
 
 </div>
 
-<div class="row-fluid">
 
-	<div class="span12 well">
-
-		<table class="table table-condensed table-striped table-hover">
-			<thead>
-				<tr>
-					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">Nick</a></th>
-					<th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">RANK</a></th>
-					<th><a href="" ng-click="ordercolumn='TEAM'; ordertype=!ordertype">TEAM</a></th>
-					<th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">SCORE</a></th>
-					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
-					<th><a href="" ng-click="ordercolumn='DEATHS'; ordertype=!ordertype">DEATHS</a></th>
-					<th><a href="" ng-click="ordercolumn='IMPRESSIVE'; ordertype=!ordertype">IMP</a>/<a href="" ng-click="ordercolumn='EXCELLENT'; ordertype=!ordertype">EXC</a>/<a href="" ng-click="ordercolumn='HUMILIATION'; ordertype=!ordertype">HUM</a></th>
-					<th><a href="" ng-click="ordercolumn='TEAM_RANK'; ordertype=!ordertype">TEAM_RANK</a></th>
-					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
-					<th><a href="" ng-click="ordercolumn='HITS/SHOTS'; ordertype=!ordertype">ACC</a></th>
-					<th>RL(<a href="" ng-click="ordercolumn='RL_H/RL_S'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RL_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RL_S'; ordertype=!ordertype">s</a>)</th>
-					<th>RG(<a href="" ng-click="ordercolumn='RG_H/RG_S'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='RG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='RG_S'; ordertype=!ordertype">s</a>)</th>
-					<th>LG(<a href="" ng-click="ordercolumn='LG_H/LG_S'; ordertype=!ordertype">a</a>/<a href="" ng-click="ordercolumn='LG_K'; ordertype=!ordertype">k</a>/<a href="" ng-click="ordercolumn='LG_S'; ordertype=!ordertype">s</a>)</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="z in game.players | orderBy: ordercolumn:ordertype">
-					<td><a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
-					<td>{{ z.RANK }}</td>
-					<td>{{ z.TEAM }}</td>
-					<td>{{ z.SCORE }}</td>
-					<td>{{ z.KILLS }}</td>
-					<td>{{ z.DEATHS }}</td>
-					<td>{{ z.IMPRESSIVE }} / {{ z.EXCELLENT }} / {{ z.HUMILIATION }}</td>
-					<td>{{ z.TEAM_RANK }}</td>
-					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
-					<td>{{ ( z.HITS / z.SHOTS )*100 | number }}</td>
-					<td>{{ z.RL_H/z.RL_S*100 | number:2 }} / {{ z.RL_K | number }} / {{ z.RL_S | number }}</td>
-					<td>{{ z.RG_H/z.RG_S*100 | number:2 }} / {{ z.RG_K | number }} / {{ z.RG_S | number }}</td>
-					<td>{{ z.LG_H/z.LG_S*100 | number:2 }} / {{ z.LG_K | number }} / {{ z.LG_S | number }}</td>
-				</tr>
-			</tbody>
-		</table>
-
-	</div>
-
-</div>
 
 <div class="row-fluid">
 

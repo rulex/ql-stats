@@ -315,14 +315,14 @@ factory( 'theLiz', function( $http ) {
 } )
 .filter( 'ranked', function() {
 	return function( r ) {
-		if( r == 1 ) return "R";
-		else return "U";
+		if( r == 1 ) return "";
+		else return "unranked_icon";
 	}
 } )
 .filter( 'premium', function() {
 	return function( r ) {
-		if( r == 1 ) return "PR";
-		else if( r == 0 ) return "ST";
+		if( r == 1 ) return "premium_icon";
+		else if( r == 0 ) return "";
 		else return "";
 	}
 } )
@@ -335,6 +335,24 @@ factory( 'theLiz', function( $http ) {
 .filter( 'escape', function() {
 	return function( m ) {
 		return escape( m );
+	}
+} )
+.filter( 'team', function() {
+	return function( t ) {
+		if( t == 'Blue' ) { return 'info' }
+		else if( t == 'Red' ) { return 'error' }
+		else return '';
+	}
+} )
+.filter( 'lower', function() {
+	return function( str ) {
+		return str.toLowerCase();
+	}
+} )
+.filter( 'cleanclan', function() {
+	return function( c ) {
+		if( c == 'None' ) { return '' }
+		else { return c; }
 	}
 } );
 

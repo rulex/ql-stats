@@ -22,14 +22,14 @@
 			<tbody>
 				<tr ng-repeat="z in clan.theplayers | orderBy:ordercolumn:ordertype">
 					<td><a href="#/player/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
-					<td>{{ z.MATCHES_PLAYED }}</td>
-					<td>{{ z.WIN_PERCENT | number }}</td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
+					<td>{{ z.WIN_PERCENT | number:2 }}</td>
 					<td>{{ date-z.PLAY_TIME_SUM*1000 | timeago }}</td>
-					<td>{{ z.SCORE_SUM }}</td>
-					<td>{{ z.SCORE_AVG }}</td>
-					<td>{{ z.RATIO }}</td>
-					<td>{{ z.ACC_AVG }}</td>
-					<td>{{ z.KILLS_SUM }}</td>
+					<td>{{ z.SCORE_SUM | number }}</td>
+					<td>{{ z.SCORE_AVG | number:2 }}</td>
+					<td>{{ z.RATIO | number:2 }}</td>
+					<td>{{ z.ACC_AVG | number:2 }}</td>
+					<td>{{ z.KILLS_SUM | number }}</td>
 				</tr>
 			</tbody>
 		</table>

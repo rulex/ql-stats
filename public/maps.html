@@ -14,7 +14,7 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in maps.themaps | orderBy:ordercolumn:ordertype">
-					<td><a href="#/map/{{ z.MAP }}">{{ z.MAP }}</a></td>
+					<td><a href="#/map/{{ z.MAP }}"><img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ z.MAP }}_v2011071903.0.jpg" alt="{{ z.MAP }}" title="{{ z.MAP }}" style="height:42px;width:56px;border-width:0px;"></a></td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ z.TOTAL_KILLS | number }}</td>
 					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>

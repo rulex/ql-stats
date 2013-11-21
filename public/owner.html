@@ -62,6 +62,7 @@
 		<table class="table table-condensed table-striped ">
 			<thead>
 				<tr>
+					<th><a href="" ng-click="ordercolumn2='PLAYER_CLAN'; ordertype2=!ordertype2">Clan</a></th>
 					<th><a href="" ng-click="ordercolumn2='PLAYER_NICK'; ordertype2=!ordertype2">Player</a></th>
 					<th><a href="" ng-click="ordercolumn2='PLAY_TIME'; ordertype2=!ordertype2">PLAY_TIME</a></th>
 					<th><a href="" ng-click="ordercolumn2='MATCHES_PLAYED'; ordertype2=!ordertype2">Games</a></th>
@@ -71,6 +72,7 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in theplayers.theplayers | orderBy:ordercolumn2:ordertype2">
+					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
 					<td><a href="#/player/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
 					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
@@ -89,16 +91,27 @@
 				<tr>
 					<th><a href="" ng-click="ordercolumn3='PUBLIC_ID'; ordertype3=!ordertype3">PUBLIC_ID</a></th>
 					<th><a href="" ng-click="ordercolumn3='MAP'; ordertype3=!ordertype3">MAP</a></th>
+					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
 					<th><a href="" ng-click="ordercolumn3='GAME_TIMESTAMP'; ordertype3=!ordertype3">GAME_TIMESTAMP</a></th>
-					<th><a href="" ng-click="ordercolumn3='GAME_TYPE'; ordertype3=!ordertype3">GAME_TYPE</a></th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in thegames.thegames | orderBy:ordercolumn3:ordertype3">
-					<td><a href="#/player/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
-					<td>{{ z.MAP }}</td>
+					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
+					<td>
+						<a href="#/map/{{ z.MAP }}">
+							<img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ z.MAP }}_v2011071903.0.jpg" alt="{{ z.MAP }}" title="{{ z.MAP }}" style="height:42px;width:56px;border-width:0px;" />
+						</a>
+					</td>
+					<td>
+							<img style="float: left;" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013071601.0.png" class="gameicon" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" />
+						<div style="height: 14px; float: left;">
+							<div class="{{ z.RULESET | ruleset }}"></div>
+							<div class="{{ z.PREMIUM | premium }}"> </div>
+							<div class="{{ z.RANKED | ranked }}"></div>
+						</div>
+					</td>
 					<td>{{ z.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td>
-					<td>{{ z.GAME_TYPE }}</td>
 				</tr>
 			</tbody>
 		</table>
