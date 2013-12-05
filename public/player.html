@@ -3,17 +3,17 @@
 <div class="row-fluid">
 
 	<div class="span6 well">
-		<div class="row-fluid">Per game stats for:<h3>{{ player[0].PLAYER_NICK }}</h3> </div>
+		<div class="row-fluid">Per game stats for:<h3>{{ player.data.player.PLAYER_NICK }}</h3> </div>
 		<table class="table table-condensed table-striped ">
 			<tbody>
-				<tr><td>MATCHES_PLAYED:</td><td>{{ player[0].MATCHES_PLAYED }}</td></tr>
-				<tr><td>PLAY_TIME_SUM:</td><td>{{ date-player[0].PLAY_TIME_SUM*1000 | timeago }}</td></tr>
-				<tr><td>ACC_AVG:</td><td>{{ player[0].ACC_AVG }}</td></tr>
-				<tr><td>DAMAGE_DEALT_PER_SEC_AVG:</td><td>{{ player[0].DAMAGE_DEALT_PER_SEC_AVG }}</td></tr>
-				<tr><td>KILLS / DEATHS ( RATIO )</td><td>{{ player[0].KILLS_SUM }} [{{ player[0].KILLS_AVG }}avg] / {{ player[0].DEATHS_SUM }} [{{ player[0].DEATHS_AVG }}avg] ({{ player[0].RATIO | number }})</td></tr>
-				<tr><td>SCORE:</td><td>{{ player[0].SCORE_SUM }}total [{{player[0].SCORE_AVG}}avg]</td></tr>
-				<tr><td>RANK avg:</td><td>{{ player[0].RANK_AVG }} [{{ player[0].TEAM_RANK_AVG }} teamrank] </td></tr>
-				<tr><td>Excellent/Impressive AVG:</td><td>{{ player[0].EXCELLENT_AVG }} [{{ player[0].IMPRESSIVE_AVG }}] </td></tr>
+				<tr><td>MATCHES_PLAYED:</td><td>{{ player.data.player.MATCHES_PLAYED }}</td></tr>
+				<tr><td>PLAY_TIME_SUM:</td><td>{{ date-player.data.player.PLAY_TIME_SUM*1000 | timeago }}</td></tr>
+				<tr><td>ACC_AVG:</td><td>{{ player.data.player.ACC_AVG }}</td></tr>
+				<tr><td>DAMAGE_DEALT_PER_SEC_AVG:</td><td>{{ player.data.player.DAMAGE_DEALT_PER_SEC_AVG }}</td></tr>
+				<tr><td>KILLS / DEATHS ( RATIO )</td><td>{{ player.data.player.KILLS_SUM }} [{{ player.data.player.KILLS_AVG }}avg] / {{ player.data.player.DEATHS_SUM }} [{{ player.data.player.DEATHS_AVG }}avg] ({{ player.data.player.RATIO | number }})</td></tr>
+				<tr><td>SCORE:</td><td>{{ player.data.player.SCORE_SUM }}total [{{player.data.player.SCORE_AVG}}avg]</td></tr>
+				<tr><td>RANK avg:</td><td>{{ player.data.player.RANK_AVG }} [{{ player.data.player.TEAM_RANK_AVG }} teamrank] </td></tr>
+				<tr><td>Excellent/Impressive AVG:</td><td>{{ player.data.player.EXCELLENT_AVG }} [{{ player.data.player.IMPRESSIVE_AVG }}] </td></tr>
 			</tbody>
 		</table>
 	</div>
@@ -22,7 +22,7 @@
 		<div class="row-fluid"><h3>All</h3> </div>
 		<table class="table table-condensed table-striped ">
 			<tbody>
-				<tr ng-repeat="(key,val) in player[0]">
+				<tr ng-repeat="(key,val) in player.data.player">
 					<td>{{ key }}</td>
 					<td>{{ val }}</td>
 				</tr>
@@ -47,7 +47,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in games.thegames | orderBy:ordercolumn:ordertype">
+				<tr ng-repeat="z in games.data.games | orderBy:ordercolumn:ordertype">
 					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
 					<td>{{ z.GAME_TIMESTAMP *1000 | date:'yyyy-MM-dd HH:mm:ss' }} </td>
 					<td>

@@ -20,8 +20,8 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in clan.theplayers | orderBy:ordercolumn:ordertype">
-					<td><a href="#/player/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
+				<tr ng-repeat="z in clan.data.players | orderBy:ordercolumn:ordertype">
+					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ z.WIN_PERCENT | number:2 }}</td>
 					<td>{{ date-z.PLAY_TIME_SUM*1000 | timeago }}</td>
@@ -43,7 +43,7 @@
 		<div class="row-fluid"><h3>All</h3> </div>
 		<table class="table table-condensed table-striped table-hover">
 			<tbody>
-				<tr ng-repeat="(key,val) in clan.theclan[0]">
+				<tr ng-repeat="(key,val) in clan.data.clan">
 					<td>{{ key }}</td>
 					<td>{{ val }}</td>
 				</tr>

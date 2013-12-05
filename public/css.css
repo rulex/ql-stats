@@ -1,0 +1,54 @@
+
+.premium_icon {
+	background: url(http://quakelive.com/images/lgi/premium_icon_v2013071600.0.png) no-repeat;
+	width: 16px;
+	height: 16px;
+	position: relative;
+	margin-left: 2px;
+}
+.unranked_icon {
+	background: url(http://quakelive.com/images/modules/browser/unrank_icon_v2013071600.0.png) no-repeat;
+	width: 14px;
+	height: 14px;
+	position: relative;
+	margin-left: 2px;
+}
+
+/* Autocomplete
+----------------------------------*/
+.ui-autocomplete { position: absolute; cursor: default; }       
+.ui-autocomplete-loading { background: white url( 'images/ui-anim_basic_16x16.gif' ) right center no-repeat; }
+
+/* workarounds */
+* html .ui-autocomplete { width: 1px; } /* without this, the menu expands to 100% in IE6 */
+
+/* Menu
+----------------------------------*/
+.ui-menu {
+	list-style: none;
+	padding: 2px;
+	margin: 0;
+	display: block;
+}
+.ui-menu .ui-menu {
+	/*
+	margin-top: 3px;
+	*/
+}
+.ui-menu .ui-menu-item {
+	margin:0;
+	padding: 0;
+	width: 100%;
+	background-color: "#cccccc";
+}
+.ui-menu .ui-menu-item a {
+	text-decoration: none;
+	display: block;
+	padding: .2em .4em;
+	line-height: 1.5;
+	zoom: 1;
+}
+.ui-menu .ui-menu-item a.ui-state-hover,
+.ui-menu .ui-menu-item a.ui-state-active {
+	margin: -1px;
+}

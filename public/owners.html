@@ -17,7 +17,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in owners.theowners | orderBy:ordercolumn:ordertype">
+				<tr ng-repeat="z in owners.data.owners | orderBy:ordercolumn:ordertype">
 					<td><a href="#/owner/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ date-z.GAME_LENGTH_SUM*1000 | timeago }}</td>

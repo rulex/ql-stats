@@ -16,7 +16,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in games.thegames | orderBy:ordercolumn:ordertype">
+				<tr ng-repeat="z in games.data.games | orderBy:ordercolumn:ordertype">
 					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
 					<td>
 							<img style="float: left;" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013071601.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" />

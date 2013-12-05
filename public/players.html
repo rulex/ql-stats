@@ -16,7 +16,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in players.theplayers | orderBy:ordercolumn:ordertype">
+				<tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
 					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
@@ -28,6 +28,22 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
+
+		<div class="center">
+			<div class="pagination">
+				<ul>
+					<li ng-class="{disabled: page == 0}">
+						<a href="#/players/{{ page-1 }}">Prev</a>
+					</li>
+					<li ng-repeat="n in range" ng-class="{active: n == page}">
+						<a href="#/players/{{ n }}">{{ n }}</a>
+					</li>
+					<li ng-class="{disabled: page == pagedProjects.length - 1}">
+						<a href="#/players/{{ page+1 }}">Next</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+
 </div>
 

@@ -23,8 +23,8 @@
 			</thead>
 			<tbody>
 			<!-- | startForm:currentPage*pageSize | limitTo:pageSize  -->
-				<tr ng-repeat="z in clans.theclans | orderBy:ordercolumn:ordertype ">
-					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
+				<tr ng-repeat="z in clans.data.clans | orderBy:ordercolumn:ordertype ">
+					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ z.WIN_PERCENT | number }}</td>
 					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>

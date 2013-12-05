@@ -1,4 +1,36 @@
 
+$( document ).ready( function() {
+
+	$( "#player_search" ).autocomplete( {
+		source: function( request, response ) {
+			$.ajax( {
+				url: "api/search/players/" + request.term + '/',
+				dataType: "jsonp",
+				success: function( data ) {
+					response( $.map( data.data.players, function( item ) {
+						return {
+							//'<div><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="' + item.PLAYER_COUNTRY + '" /> ' +
+							label:  item.PLAYER_NICK
+						}
+					} ) );
+				}
+			} );
+		},
+		minLength: 1,
+		select: function( event, ui ) {
+			console.log( ui.item ?  "Selected: " + ui.item.label : "Nothing selected, input was " + this.value );
+		},
+		open: function() {
+			//$( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
+		},
+		close: function() {
+			//$( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
+		}
+	} );
+
+} );
+
+
 angular.module( 'liz', ['lizzy'] )
 .config( ['$routeProvider', function( $routeProvider ) {
 	$routeProvider.
@@ -6,26 +38,27 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/overview', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
 	when( '/games', { controller: GamesCtrl, templateUrl: 'games.html' } ).
 	when( '/game/:game', { controller: GameCtrl, templateUrl: 'game.html' } ).
-	when( '/players', { controller: PlayersCtrl, templateUrl: 'players.html' } ).
+	when( '/players/:page', { controller: PlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/player/:player', { controller: PlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/owners', { controller: OwnersCtrl, templateUrl: 'owners.html' } ).
 	when( '/owner/:owner', { controller: OwnerCtrl, templateUrl: 'owner.html' } ).
+	when( '/owner/:owner/player/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
 	when( '/clan/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
 	when( '/maps', { controller: MapsCtrl, templateUrl: 'maps.html' } ).
 	when( '/map/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
+	when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
 	when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
 	otherwise( { redirectTo: '/' } );
 } ] );
 
-
-function OverviewCtrl( $scope, theLiz, $timeout ) {
+function OverviewCtrl( $scope, theLiz, $timeout, $routeParams ) {
 	var lol = theLiz.overview();
 	$scope.overview = lol;
 	$scope.date = new Date().getTime();
 	//$scope.maps = theLiz.overview_maps();
 	$.ajax( {
-		url: "stats/all/daily",
+		url: "api/all/daily",
 		type: "get",
 		dataType: "json"
 	} ).success( function( data ) {
@@ -58,7 +91,7 @@ function OverviewCtrl( $scope, theLiz, $timeout ) {
 			guide: {
 				y: {
 					min: 0,
-					max: 10000
+					max: 15000
 				},
 				color: { numticks: 10 },
 			}
@@ -83,6 +116,7 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var p = $routeParams.player;
 	var lol = theLiz.player( p );
+	//$scope.lol = lol.theplayer.PLAYER_NICK;
 	$scope.player = lol;
 	var lol2 = theLiz.playergames( p );
 	$scope.games = lol2;
@@ -91,11 +125,17 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.date = new Date().getTime();
 }
 function PlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
-	var lol = theLiz.players();
+	$scope.page = parseInt( $routeParams.page );
+	var lol = theLiz.players( $scope.page );
 	$scope.players = lol;
 	$scope.date = new Date().getTime();
 	$scope.ordercolumn = 'KILLS';
 	$scope.ordertype = true;
+	var range = [];
+	for( var i=0 ; i < $scope.players.total ; i++ ) {
+		range.push( i );
+	}
+	$scope.range = range;
 }
 function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var lol = theLiz.owners();
@@ -116,6 +156,17 @@ function OwnerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.ordertype3 = true;
 	$scope.theplayers = theLiz.owner_players( o );
 	$scope.thegames = theLiz.owner_games( o );
+	$scope.date = new Date().getTime();
+}
+function OwnerPlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	var o = $routeParams.owner;
+	var p = $routeParams.player;
+	var lol = theLiz.ownerplayer( o, p );
+	$scope.player = lol;
+	$scope.ordercolumn = 'GAME_TIMESTAMP';
+	$scope.ordertype = true;
+	//$scope.theplayers = theLiz.owner_players( o );
+	//$scope.thegames = theLiz.owner_games( o );
 	$scope.date = new Date().getTime();
 }
 function ClansCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
@@ -157,6 +208,13 @@ function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.ordertype = false;
 	$scope.date = new Date().getTime();
 }
+function CountriesCtrl( $scope, theLiz, $timeout ) {
+	var lol = theLiz.countries();
+	$scope.countries = lol;
+	$scope.ordercolumn = 'MATCHES_PLAYED';
+	$scope.ordertype = true;
+	$scope.date = new Date().getTime();
+}
 function EloDuelCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var lol = theLiz.eloduel();
 	$scope.players = lol;
@@ -165,6 +223,7 @@ function EloDuelCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.ordertype = true;
 }
 
+var _perpage = 20;
 
 angular.module( 'lizzy', ['ngResource'] ).
 factory( 'theLiz', function( $http ) {
@@ -172,82 +231,92 @@ factory( 'theLiz', function( $http ) {
 		angular.extend( this, data );
 	}
 	theLiz.overview = function() {
-		return $http.get( 'stats/all' ).then( function( response ) {
+		return $http.get( 'api/all' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.overview_maps = function() {
-		return $http.get( 'stats/all/maps' ).then( function( response ) {
+		return $http.get( 'api/all/maps' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.games = function() {
-		return $http.get( 'stats/games' ).then( function( response ) {
+		return $http.get( 'api/games' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.game = function( g ) {
-		return $http.get( 'stats/game/' + g ).then( function( response ) {
+		return $http.get( 'api/game/' + g ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.player = function( p ) {
-		return $http.get( 'stats/player/' + p ).then( function( response ) {
+		return $http.get( 'api/player/' + p ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.playergames = function( p ) {
-		return $http.get( 'stats/player/' + p + '/games' ).then( function( response ) {
+		return $http.get( 'api/player/' + p + '/games' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
-	theLiz.players = function() {
-		return $http.get( 'stats/players' ).then( function( response ) {
+	theLiz.players = function( page ) {
+		return $http.get( 'api/players/' + page ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owners = function() {
-		return $http.get( 'stats/owners' ).then( function( response ) {
+		return $http.get( 'api/owners' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owner = function( o ) {
-		return $http.get( 'stats/owner/' + o ).then( function( response ) {
+		return $http.get( 'api/owner/' + o ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.ownerplayer = function( o, p ) {
+		return $http.get( 'api/owner/' + o + '/player/' + p ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owner_players = function( o ) {
-		return $http.get( 'stats/owner/' + o + '/players' ).then( function( response ) {
+		return $http.get( 'api/owner/' + o + '/players' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owner_games = function( o ) {
-		return $http.get( 'stats/owner/' + o + '/games' ).then( function( response ) {
+		return $http.get( 'api/owner/' + o + '/games' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.clans = function() {
-		return $http.get( 'stats/clans' ).then( function( response ) {
+		return $http.get( 'api/clans' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.clan = function( c ) {
-		return $http.get( 'stats/clan/' + c ).then( function( response ) {
+		return $http.get( 'api/clan/' + c ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.maps = function() {
-		return $http.get( 'stats/maps' ).then( function( response ) {
+		return $http.get( 'api/maps' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.map = function( m ) {
-		return $http.get( 'stats/map/' + m ).then( function( response ) {
+		return $http.get( 'api/map/' + m ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.countries = function() {
+		return $http.get( 'api/countries' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.eloduel = function( m ) {
-		return $http.get( 'stats/eloduel' ).then( function( response ) {
+		return $http.get( 'api/eloduel' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
@@ -345,7 +414,7 @@ factory( 'theLiz', function( $http ) {
 	}
 } )
 .filter( 'lower', function() {
-	return function( str ) {
+	return function lower( str ) {
 		return str.toLowerCase();
 	}
 } )
