@@ -91,3 +91,10 @@ CREATE TABLE `Players`(
 	PRIMARY KEY( `PLAYER_NICK`, `PUBLIC_ID` ),
 	CONSTRAINT fk_Games_PUBLIC_ID FOREIGN KEY( `PUBLIC_ID` ) REFERENCES Games( `PUBLIC_ID` ) ON UPDATE CASCADE
 );
+
+-- create table updated_players ( PLAYER_NICK varchar(100), TS TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP );
+
+-- create table tags(id int(11) auto_increment primary key, name varchar(30) );
+
+-- create table game_tags(tag_id int(11), PUBLIC_ID varchar(36), primary key( tag_id, PUBLIC_ID ) );
+

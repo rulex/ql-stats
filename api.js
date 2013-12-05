@@ -717,6 +717,18 @@ app.get( '/api/game/*/player/*', function ( req, res ) {
 	} );
 	//console.log( nick );
 } );
+app.get( '/api/game/*/tags', function( req, res ) {
+	var timer_start = process.hrtime();
+	var queryObject = url.parse( req.url, true ).query;
+	var game = mysql_real_escape_string( req.url.split( '/' )[3] );
+	var sql = 'select tags.id, tags.name, game_tags.PUBLIC_ID from tags left join game_tags on tags.id=game_tags.tag_id where game_tags.PUBLIC_ID=\''+ game +'\'';
+	db.query( sql, function( err, rows, fields ) {
+		res.jsonp( { data: { tags: rows } } );
+		res.end();
+	} );
+} );
+//app.get( '/api/game/*/tag/add/*',
+//app.get( '/api/game/*/tag/del/*',
 app.get( '/api/game/*', function ( req, res ) {
 	var timer_start = process.hrtime();
 	var game = mysql_real_escape_string( req.url.split( '/' )[3] );
