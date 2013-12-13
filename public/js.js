@@ -34,8 +34,10 @@ $( document ).ready( function() {
 angular.module( 'liz', ['lizzy'] )
 .config( ['$routeProvider', function( $routeProvider ) {
 	$routeProvider.
-	when( '/', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
-	when( '/overview', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
+	//when( '/', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
+	when( '/', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/overview', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
+	when( '/overview', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	when( '/games', { controller: GamesCtrl, templateUrl: 'games.html' } ).
 	when( '/game/:game', { controller: GameCtrl, templateUrl: 'game.html' } ).
 	when( '/players/:page', { controller: PlayersCtrl, templateUrl: 'players.html' } ).
@@ -43,15 +45,22 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/owners', { controller: OwnersCtrl, templateUrl: 'owners.html' } ).
 	when( '/owner/:owner', { controller: OwnerCtrl, templateUrl: 'owner.html' } ).
 	when( '/owner/:owner/player/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
-	when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
-	when( '/clan/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
-	when( '/maps', { controller: MapsCtrl, templateUrl: 'maps.html' } ).
-	when( '/map/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
-	when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
-	when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
+	//when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
+	when( '/clans', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/clan/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
+	when( '/clan/:clan', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/maps', { controller: MapsCtrl, templateUrl: 'maps.html' } ).
+	when( '/maps', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/map/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
+	when( '/map/:map', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
+	when( '/countries', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
 	otherwise( { redirectTo: '/' } );
 } ] );
 
+function EmptyCtrl( $scope, $timeout, $routeParams ) {
+}
 function OverviewCtrl( $scope, theLiz, $timeout, $routeParams ) {
 	var lol = theLiz.overview();
 	$scope.overview = lol;
@@ -163,6 +172,7 @@ function OwnerPlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var p = $routeParams.player;
 	var lol = theLiz.ownerplayer( o, p );
 	$scope.player = lol;
+	$scope.games = theLiz.ownerplayergames( o, p );
 	$scope.ordercolumn = 'GAME_TIMESTAMP';
 	$scope.ordertype = true;
 	//$scope.theplayers = theLiz.owner_players( o );
@@ -277,6 +287,11 @@ factory( 'theLiz', function( $http ) {
 	}
 	theLiz.ownerplayer = function( o, p ) {
 		return $http.get( 'api/owner/' + o + '/player/' + p ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.ownerplayergames = function( o, p ) {
+		return $http.get( 'api/owner/' + o + '/player/' + p + '/games' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
