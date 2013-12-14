@@ -40,7 +40,7 @@ setInterval( function() {
 var requests_counter = 0;
 var requests_counter_total = 0;
 if( cfg.counter.on ) {
-		/*
+	/*
 	setInterval( function() {
 		// write counter to file for use in external app
 		fs.writeFile( cfg.counter.path, requests_counter, function ( err ) {
@@ -48,7 +48,7 @@ if( cfg.counter.on ) {
 			requests_counter = 0;
 		} );
 	}, 5*1000 );
-		*/
+	*/
 }
 
 // minify json
@@ -61,13 +61,16 @@ app.configure( 'development', function() {
 
 app.configure( 'production', function() {
 	//db = require( 'mongoskin').db( 'localhost:37751/bands' );
-	var allow_update = true;
+	allow_update = true;
 } );
 
 // gzip/compress
 app.use( express.compress() );
 // http console logger
 app.use( express.logger( 'short' ) );
+// http log to file
+var logFile = fs.createWriteStream( cfg.api.httplogfile, { flags: 'w' } );
+app.use( express.logger( { stream: logFile } ) );
 // count requests made
 app.use( function( req, res, next ) {
 	++requests_counter;
@@ -270,29 +273,19 @@ app.get( '/api/player/*/update', function ( req, res ) {
 							var j = JSON.parse( body );
 							// save to disk
 							if( j.UNAVAILABLE != 1 ) {
-								// tmp dir....
-								//
-								//
-								//
-								//
-								//
-								//
-								//
-								//
-								//
-								//
-								fs.writeFile( './games/' + j.PUBLIC_ID + '.json', body, function( err ) {
-									if( err ) { console.log( err ); }
-									else {
-										//console.log( "saved " + j.PUBLIC_ID );
-										newgames.push( j.PUBLIC_ID );
-										var gzip = zlib.createGzip();
-										var inp = fs.createReadStream( './games/' + j.PUBLIC_ID + '.json' );
-										var out = fs.createWriteStream( './games/' + j.PUBLIC_ID + '.json.gz' );
-										inp.pipe( gzip ).pipe( out );
-										fs.unlink( './games/' + j.PUBLIC_ID + '.json' );
-									}
-								} );
+								if( cfg.api.games.save ) {
+									fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
+										if( err ) { console.log( err ); }
+										else {
+											newgames.push( j.PUBLIC_ID );
+											var gzip = zlib.createGzip();
+											var inp = fs.createReadStream( cfg.api.games.tempdir  + j.PUBLIC_ID + '.json' );
+											var out = fs.createWriteStream( cfg.api.games.gamesdir + j.PUBLIC_ID + '.json.gz' );
+											inp.pipe( gzip ).pipe( out );
+											fs.unlink( cfg.api.games.tempdir + j.PUBLIC_ID + '.json' );
+										}
+									} );
+								}
 								//
 								var AVG_ACC = 0;
 								var MOST_ACCURATE_NICK = "";
@@ -743,18 +736,6 @@ app.get( '/api/player/*', function ( req, res ) {
 	} );
 	//console.log( nick );
 } );
-app.get( '/api/games/owner/*', function ( req, res ) {
-	var owner = mysql_real_escape_string( req.url.split( '/' )[4] );
-	var timer_start = process.hrtime();
-	//var sql = 'SELECT * FROM Games WHERE OWNER=\'rul3x\' AND GAME_TYPE="ca" order by GAME_TIMESTAMP';
-	var sql = 'SELECT * FROM Games where OWNER="'+ owner +'" order by GAME_TIMESTAMP desc LIMIT 500';
-	db.query( sql, function( err, rows, fields ) {
-		//console.log( rows );
-		res.jsonp( { data: { owner: rows[0] } } );
-		res.end();
-		console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
-	} );
-} );
 app.get( '/api/games', function ( req, res ) {
 	var timer_start = process.hrtime();
 	var sql = 'SELECT * FROM Games order by GAME_TIMESTAMP desc LIMIT 500';
@@ -882,7 +863,7 @@ app.get( '/api/owner/*/player/*', function ( req, res ) {
 	var sql = 'SELECT PLAYER_NICK, PLAYER_CLAN, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID WHERE Games.OWNER=\'' + owner + '\' and Players.PLAYER_NICK=\''+ nick +'\' GROUP BY PLAYER_NICK order by NULL';
 	//console.log( sql );
 	db.query( sql, function( err, rows, fields ) {
-		res.jsonp( { data: { player: rows[0], nick: nick, owner: owner } } );
+		res.jsonp( { data: { player: rows[0] } } );
 		res.end();
 		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
 	} );
