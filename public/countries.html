@@ -1,0 +1,27 @@
+
+
+<div class="row-fluid">
+	<div class="span12 well">
+		<table class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">MAP</a></th>
+					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
+					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in countries.thecountries | orderBy:ordercolumn:ordertype">
+					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/country/{{z.PLAYER_COUNTRY}}">{{ z.PLAYER_COUNTRY }}</a></td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
+					<td>{{ z.KILLS | number }}</td>
+					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+
+
