@@ -77,9 +77,9 @@
 					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/owner/{{owner.data.owner.OWNER}}/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
 					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
-					<td title="{{ z.DAMAGE_DEALT_PER_SEC_AVG }}">{{ z.DAMAGE_DEALT_PER_SEC_AVG | number:2 }}</td>
-					<td title="{{ z.KILLS }}kills {{ z.DEATHS }}deaths ({{ z.RATIO }}ratio)">{{ z.KILLS | number }}</td>
-					<td title="{{z.ACC}}">{{ z.ACC | number:1 }}%</td>
+					<td title="{{ z.DAMAGE_DEALT_PER_SEC_AVG | number:4 }}">{{ z.DAMAGE_DEALT_PER_SEC_AVG | number:2 }}</td>
+					<td title="{{ z.KILLS | number }}kills {{ z.DEATHS | number }}deaths ({{ z.RATIO | number:2 }}ratio)">{{ z.KILLS | number }}</td>
+					<td title="{{ z.ACC | number:4 }}">{{ z.ACC | number:1 }}%</td>
 				</tr>
 			</tbody>
 		</table>

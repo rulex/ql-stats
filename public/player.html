@@ -43,7 +43,7 @@
 					<th><a href="" ng-click="ordercolumn='GAME_TIMESTAMP'; ordertype=!ordertype">GAME_TIMESTAMP</a></th>
 					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
 					<th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">MAP</a></th>
-					<th><a href="" ng-click="ordercolumn='DAMAGE_DEALT_PER_SEC_AVG'; ordertype=!ordertype">DD/s</a></th>
+					<th title="DAMAGE_DEALT_PER_SEC"><a href="" ng-click="ordercolumn='DAMAGE_DEALT_PER_SEC_AVG'; ordertype=!ordertype">DD/s</a></th>
 					<th><a href="" ng-click="ordercolumn='OWNER'; ordertype=!ordertype">OWNER</a></th>
 				</tr>
 			</thead>
@@ -60,7 +60,7 @@
 						</div>
 					</td>
 					<td><a href="#/map/{{ z.MAP }}"><img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ z.MAP }}_v2011071903.0.jpg" alt="{{ z.MAP }}" title="{{ z.MAP }}" style="height:42px;width:56px;border-width:0px;"></a></td>
-					<td>{{ z.DAMAGE_DEALT_PER_SEC_AVG }}</td>
+					<td>{{ z.DAMAGE_DEALT_PER_SEC_AVG | number:2 }}</td>
 					<td><a href="#/player/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
 				</tr>
 			</tbody>

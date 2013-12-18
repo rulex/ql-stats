@@ -1,51 +1,13 @@
 
 <div class="row-fluid">
 
-
-</div>
-
-
-<div class="row-fluid">
-
-	<div class="span6 well">
-		<div class="row-fluid"><div class="span4">First stored game:</div><div class="span8">{{ overview.min_max[0].min*1000 | date:'yyyy-MM-dd HH:mm:ss Z' }}</div></div>
-		<div class="row-fluid"><div class="span4">Unique players:</div><div class="span8">{{ overview.UNIQUE_PLAYERS[0].UNIQUE_PLAYERS | number }}</div></div>
-		<div class="row-fluid"><div class="span4">Total kills:</div><div class="span8">{{ overview.games[0].TOTAL_KILLS | number }} </div></div>
-		<div class="row-fluid"><div class="span4">Total games stored:</div><div class="span8">{{ overview.games[0].MATCHES_PLAYED | number }}</div></div>
-		<div class="row-fluid"><div class="span4">Total play time by all players:</div><div class="span8">{{ overview.players[0].PLAY_TIME_SUM | number }} s ( {{ date-overview.players[0].PLAY_TIME_SUM*1000 | timeago }} )</div></div>
-	</div>
-
-
-
-	<div class="span6 well">
-		<div class="well" id="daily_matches"></div>
-	</div>
-
-	<!--
-	<div class="span6 well">
-		<table class="table table-condensed table-striped table-hover">
-			<thead>
-				<tr>
-					<th>MAP</th>
-					<th>MATCHES_PLAYED</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="z in maps.themaps | orderBy: MATCHES_PLAYED">
-					<td><a href="#/map/{{ z.MAP }}">{{ z.MAP }}</a></td>
-					<td>{{ z.MATCHES_PLAYED | number }}</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-	-->
-
-</div>
-
-
-<div class="row-fluid">
-
 	<div class="row-fluid">
+
+		<p><b>Total</b>: {{ sum( gametypes.data.gametypes ) | number }} games</p>
+		<div ng-repeat="z in gametypes.data.gametypes | orderBy: 'MATCHES_PLAYED': true">
+			<p><b>{{ z.GAME_TYPE }}</b>: {{ z.MATCHES_PLAYED | number }} games, {{ date-z.GAME_LENGTH*1000 | timeago }} play time</p>
+		</div>
+
 	</div>
 
 </div>

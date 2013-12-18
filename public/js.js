@@ -34,10 +34,10 @@ $( document ).ready( function() {
 angular.module( 'liz', ['lizzy'] )
 .config( ['$routeProvider', function( $routeProvider ) {
 	$routeProvider.
-	//when( '/', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
-	when( '/', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
-	//when( '/overview', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
-	when( '/overview', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	when( '/', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
+	//when( '/', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/all', { controller: AllCtrl, templateUrl: 'all.html' } ).
+	when( '/overview', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
 	when( '/games', { controller: GamesCtrl, templateUrl: 'games.html' } ).
 	when( '/game/:game', { controller: GameCtrl, templateUrl: 'game.html' } ).
 	when( '/players/:page', { controller: PlayersCtrl, templateUrl: 'players.html' } ).
@@ -61,8 +61,22 @@ angular.module( 'liz', ['lizzy'] )
 
 function EmptyCtrl( $scope, $timeout, $routeParams ) {
 }
-function OverviewCtrl( $scope, theLiz, $timeout, $routeParams ) {
+function OverviewCtrl( $scope, theLiz, $timeout ) {
 	var lol = theLiz.overview();
+	$scope.gametypes = lol;
+	//$scope.ordercolumn = 'GAME_TIMESTAMP';
+	//$scope.ordertype = true;
+	$scope.date = new Date().getTime();
+	$scope.sum = function( list ) {
+		var total = 0;
+		angular.forEach( list, function( item ) {
+			total += item.MATCHES_PLAYED;
+		} );
+		return total;
+	}
+}
+function AllCtrl( $scope, theLiz, $timeout, $routeParams ) {
+	var lol = theLiz.all();
 	$scope.overview = lol;
 	$scope.date = new Date().getTime();
 	//$scope.maps = theLiz.overview_maps();
@@ -240,8 +254,13 @@ factory( 'theLiz', function( $http ) {
 	var theLiz = function( data ) {
 		angular.extend( this, data );
 	}
-	theLiz.overview = function() {
+	theLiz.all = function() {
 		return $http.get( 'api/all' ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.overview = function() {
+		return $http.get( 'api/overview' ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
