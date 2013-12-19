@@ -237,6 +237,19 @@ app.get( '/api/player/*/clans', function ( req, res ) {
 	} );
 	//console.log( nick );
 } );
+app.get( '/api/player/*/countries', function ( req, res ) {
+	var queryObject = url.parse( req.url, true ).query;
+	var timer_start = process.hrtime();
+	var nick = mysql_real_escape_string( req.url.split( '/' )[3] );
+	var sql = 'select PLAYER_NICK, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED from Players where PLAYER_NICK="'+ nick +'" group by PLAYER_COUNTRY order by NULL';
+	//console.log( sql );
+	db.query( sql, function( err, rows, fields ) {
+		res.jsonp( { data: { countries: rows } } );
+		res.end();
+		//console.log( { url: req.url, ms: elapsed_time2( timer_start ), from: req.connection.remoteAddress } );
+	} );
+	//console.log( nick );
+} );
 app.get( '/api/player/*/update', function ( req, res ) {
 	var timer_start = process.hrtime();
 	var nick = req.url.split( '/' )[3];
@@ -804,7 +817,7 @@ app.get( '/api/game/*', function ( req, res ) {
 	var sql = [];
 	sql[0] = 'SELECT * FROM Games WHERE PUBLIC_ID=\'' + game + '\'';
 	sql[1] = 'SELECT * FROM Players WHERE PUBLIC_ID=\'' + game + '\'';
-	sql[2] = 'select Players.TEAM, count(Players.PLAYER_NICK) as PLAYERS, sum(Players.SCORE) as SCORE_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(Players.SCORE) as SCORE_AVG, sum(Players.KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, avg(Players.DEATHS) as DEATHS_AVG, sum(Players.DEATHS) as DEATHS_SUM, sum(Players.SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(Players.HITS) as HITS_SUM, avg(HITS) as HITS_AVG, avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(Players.DAMAGE_DEALT)/sum(Players.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, avg(RL_H) as RL_H_AVG, sum(RL_H) as RL_H_SUM, avg(RL_S) as RL_S_AVG, sum(RL_S) as RL_S_SUM, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, avg(LG_H) as LG_H_AVG, sum(LG_H) as LG_H_SUM, avg(LG_S) as LG_S_AVG, sum(LG_S) as LG_S_SUM, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, avg(RG_H) as RG_H_AVG, sum(RG_H) as RG_H_SUM, avg(RG_S) as RG_S_AVG, sum(RG_S) as RG_S_SUM from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Players.PUBLIC_ID="'+ game +'" group by TEAM with rollup having ( TEAM="Red" or TEAM="Blue" ) ';
+	sql[2] = 'select Players.TEAM, count(Players.PLAYER_NICK) as PLAYERS, sum(Players.SCORE) as SCORE_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(Players.SCORE) as SCORE_AVG, sum(Players.KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, avg(Players.DEATHS) as DEATHS_AVG, sum(Players.DEATHS) as DEATHS_SUM, sum(Players.SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(Players.HITS) as HITS_SUM, avg(HITS) as HITS_AVG, avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(Players.DAMAGE_DEALT)/sum(Players.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, avg(RL_H) as RL_H_AVG, sum(RL_H) as RL_H_SUM, avg(RL_S) as RL_S_AVG, sum(RL_S) as RL_S_SUM, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, avg(LG_H) as LG_H_AVG, sum(LG_H) as LG_H_SUM, avg(LG_S) as LG_S_AVG, sum(LG_S) as LG_S_SUM, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, avg(RG_H) as RG_H_AVG, sum(RG_H) as RG_H_SUM, avg(RG_S) as RG_S_AVG, sum(RG_S) as RG_S_SUM from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Players.PUBLIC_ID="'+ game +'" group by TEAM with rollup ';
 	db.query( sql.join( ';' ), function( err, resulty ) {
 		res.jsonp( { data: { game: resulty[0][0], teams: resulty[2], players: resulty[1] } } );
 		res.end();
