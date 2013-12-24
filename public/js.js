@@ -1,4 +1,6 @@
 
+var apiurl = 'http://ql.leeto.fi/';
+
 $( document ).ready( function() {
 
 	$( "#player_search" ).autocomplete( {
@@ -255,102 +257,102 @@ factory( 'theLiz', function( $http ) {
 		angular.extend( this, data );
 	}
 	theLiz.all = function() {
-		return $http.get( 'api/all' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/all' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.overview = function() {
-		return $http.get( 'api/overview' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/overview' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.overview_maps = function() {
-		return $http.get( 'api/all/maps' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/all/maps' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.games = function() {
-		return $http.get( 'api/games' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/games' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.game = function( g ) {
-		return $http.get( 'api/game/' + g ).then( function( response ) {
+		return $http( { url: apiurl + 'api/game/' + g + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.player = function( p ) {
-		return $http.get( 'api/player/' + p ).then( function( response ) {
+		return $http( { url: apiurl + 'api/player/' + p + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.playergames = function( p ) {
-		return $http.get( 'api/player/' + p + '/games' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/player/' + p + '/games' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.players = function( page ) {
-		return $http.get( 'api/players/' + page ).then( function( response ) {
+		return $http( { url: apiurl + 'api/players/' + page + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owners = function() {
-		return $http.get( 'api/owners' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/owners' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owner = function( o ) {
-		return $http.get( 'api/owner/' + o ).then( function( response ) {
+		return $http( { url: apiurl + 'api/owner/' + o + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.ownerplayer = function( o, p ) {
-		return $http.get( 'api/owner/' + o + '/player/' + p ).then( function( response ) {
+		return $http( { url: apiurl + 'api/owner/' + o + '/player/' + p + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.ownerplayergames = function( o, p ) {
-		return $http.get( 'api/owner/' + o + '/player/' + p + '/games' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/owner/' + o + '/player/' + p + '/games' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owner_players = function( o ) {
-		return $http.get( 'api/owner/' + o + '/players' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/owner/' + o + '/players' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.owner_games = function( o ) {
-		return $http.get( 'api/owner/' + o + '/games' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/owner/' + o + '/games' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.clans = function() {
-		return $http.get( 'api/clans' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/clans' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.clan = function( c ) {
-		return $http.get( 'api/clan/' + c ).then( function( response ) {
+		return $http( { url: apiurl + 'api/clan/' + c + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.maps = function() {
-		return $http.get( 'api/maps' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/maps' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.map = function( m ) {
-		return $http.get( 'api/map/' + m ).then( function( response ) {
+		return $http( { url: apiurl + 'api/map/' + m + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.countries = function() {
-		return $http.get( 'api/countries' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/countries' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
 	theLiz.eloduel = function( m ) {
-		return $http.get( 'api/eloduel' ).then( function( response ) {
+		return $http( { url: apiurl + 'api/eloduel' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
@@ -413,7 +415,7 @@ factory( 'theLiz', function( $http ) {
 	return function( r ) {
 		if( r == 1 ) return "";
 		else if( r == 2 ) return "PQL";
-		else return "QL";
+		else return "";
 	}
 } )
 .filter( 'ranked', function() {
