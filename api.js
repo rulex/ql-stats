@@ -423,7 +423,12 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 								//console.log( sql1 );
 								//console.log( sql2 );
 								db.query( sql1 + sql2, function( err, rows, fields ) {
-									if( err ) { throw err; }
+									if( err.code == 'ER_DUP_ENTRY' ) {
+										console.log( err );
+									}
+									else if( err ) {
+										throw err;
+									}
 									else {
 										lastgames.push( { PUBLIC_ID: j.PUBLIC_ID, MAP: j.MAP, OWNER: j.OWNER, GAME_TYPE: j.GAME_TYPE, GAME_TIMESTAMP: new Date( j.GAME_TIMESTAMP ).getTime()/1000, GAME_TIMESTAMP2: j.GAME_TIMESTAMP, GAME_TIMESTAMP_NICE: j.GAME_TIMESTAMP_NICE } );
 										requestCallback.requestComplete( true );
@@ -526,7 +531,10 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 									//console.log( i + " " + sql3 );
 									//console.log( i + " " + sql4 );
 									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err ) {
+										if( err.code == 'ER_DUP_ENTRY' ) {
+											console.log( err );
+										}
+										else if( err ) {
 											throw err;
 										}
 									} );
@@ -626,7 +634,12 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 									//console.log( i + " " + sql3 );
 									//console.log( i + " " + sql4 );
 									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err ) { throw err; }
+										if( err.code == 'ER_DUP_ENTRY' ) {
+											console.log( err );
+										}
+										else if( err ) {
+											throw err;
+										}
 									} );
 								}
 								for( var i in j.SCOREBOARD ) {
@@ -728,7 +741,12 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 									//console.log( i + " " + sql3 );
 									//console.log( i + " " + sql4 );
 									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err ) { throw err; }
+										if( err.code == 'ER_DUP_ENTRY' ) {
+											console.log( err );
+										}
+										else if( err ) {
+											throw err;
+										}
 									} );
 								}
 							}
@@ -1064,6 +1082,16 @@ app.get( '/api/tag/:tag', function ( req, res ) {
 	//sql[2] = 'select Players.TEAM, count(Players.PLAYER_NICK) as PLAYERS, sum(Players.SCORE) as SCORE, avg(Players.SCORE) as SCORE_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.SHOTS) as SHOTS, sum(Players.HITS) as HITS, sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(Players.DAMAGE_DEALT)/sum(Games.GAME_LENGTH) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Players.PUBLIC_ID="'+ game +'" group by TEAM';
 	db.query( sql.join( ';' ), function( err, resulty ) {
 		res.jsonp( { data: { tag: resulty[0] } } );
+		res.end();
+	} );
+} );
+app.get( '/api/tag/:tag/players', function ( req, res ) {
+	var tag = mysql_real_escape_string( req.params.tag );
+	// players
+	sql = 'select Players.PLAYER_NICK, Players.PLAYER_CLAN, Players.PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS, sum( DEATHS ) as DEATHS, avg( KILLS/DEATHS ) as RATIO from Players left join game_tags on Players.PUBLIC_ID=game_tags.PUBLIC_ID where game_tags.tag_id="'+ tag +'" group by Players.PLAYER_NICK order by NULL';
+	db.query( sql, function( err, rows, fields ) {
+		//console.log( rows );
+		res.jsonp( { data: { players: rows, more: 'less' } } );
 		res.end();
 	} );
 } );
