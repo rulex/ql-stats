@@ -423,7 +423,7 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 								//console.log( sql1 );
 								//console.log( sql2 );
 								db.query( sql1 + sql2, function( err, rows, fields ) {
-									if( err.code == 'ER_DUP_ENTRY' ) {
+									if( err != null && err.code == 'ER_DUP_ENTRY' ) {
 										console.log( err );
 									}
 									else if( err ) {
@@ -531,7 +531,7 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 									//console.log( i + " " + sql3 );
 									//console.log( i + " " + sql4 );
 									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err.code == 'ER_DUP_ENTRY' ) {
+										if( err != null && err.code == 'ER_DUP_ENTRY' ) {
 											console.log( err );
 										}
 										else if( err ) {
@@ -634,7 +634,7 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 									//console.log( i + " " + sql3 );
 									//console.log( i + " " + sql4 );
 									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err.code == 'ER_DUP_ENTRY' ) {
+										if( err != null && err.code == 'ER_DUP_ENTRY' ) {
 											console.log( err );
 										}
 										else if( err ) {
@@ -741,7 +741,7 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 									//console.log( i + " " + sql3 );
 									//console.log( i + " " + sql4 );
 									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err.code == 'ER_DUP_ENTRY' ) {
+										if( err != null && err.code == 'ER_DUP_ENTRY' ) {
 											console.log( err );
 										}
 										else if( err ) {
