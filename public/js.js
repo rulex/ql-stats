@@ -1,5 +1,5 @@
 
-var apiurl = 'http://ql.leeto.fi/';
+var apiurl = 'http://dev.ql.leeto.fi/';
 
 $( document ).ready( function() {
 
@@ -58,6 +58,10 @@ angular.module( 'liz', ['lizzy'] )
 	//when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
 	when( '/countries', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
+	when( '/tag/:tag', { controller: TagCtrl, templateUrl: 'tag.html' } ).
+	when( '/tag/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games.html' } ).
+	when( '/tag/:tag/players', { controller: TagPlayersCtrl, templateUrl: 'players.html' } ).
+	when( '/tags', { controller: TagsCtrl, templateUrl: 'tags.html' } ).
 	otherwise( { redirectTo: '/' } );
 } ] );
 
@@ -248,6 +252,45 @@ function EloDuelCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.ordercolumn = 'ELO';
 	$scope.ordertype = true;
 }
+function TagCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	var t = $routeParams.tag;
+	var lol = theLiz.tag( t );
+	$scope.tag = lol;
+	//$scope.ordercolumn = 'RANK';
+	//$scope.ordertype = false;
+	$scope.date = new Date().getTime();
+}
+function TagsCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	//$scope.page = parseInt( $routeParams.page );
+	var lol = theLiz.tags();
+	$scope.tags = lol;
+	$scope.date = new Date().getTime();
+	//$scope.ordercolumn = 'KILLS';
+	//$scope.ordertype = true;
+	/*
+	var range = [];
+	for( var i=0 ; i < $scope.players.total ; i++ ) {
+		range.push( i );
+	}
+	$scope.range = range;
+	*/
+}
+function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
+	var t = $routeParams.tag;
+	var lol = theLiz.taggames( t );
+	$scope.games = lol;
+	$scope.ordercolumn = 'GAME_TIMESTAMP';
+	$scope.ordertype = true;
+	$scope.date = new Date().getTime();
+}
+function TagPlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
+	var t = $routeParams.tag;
+	var lol = theLiz.tagplayers( t );
+	$scope.players = lol;
+	$scope.ordercolumn = 'GAME_TIMESTAMP';
+	$scope.ordertype = true;
+	$scope.date = new Date().getTime();
+}
 
 var _perpage = 20;
 
@@ -353,6 +396,26 @@ factory( 'theLiz', function( $http ) {
 	}
 	theLiz.eloduel = function( m ) {
 		return $http( { url: apiurl + 'api/eloduel' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.tag = function( t ) {
+		return $http( { url: apiurl + 'api/tag/' + t + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.tags = function( t ) {
+		return $http( { url: apiurl + 'api/tags' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.taggames = function( t ) {
+		return $http( { url: apiurl + 'api/tag/' + t + '/games' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.tagplayers = function( t ) {
+		return $http( { url: apiurl + 'api/tag/' + t + '/players' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
