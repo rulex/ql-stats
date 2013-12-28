@@ -507,9 +507,9 @@ factory( 'theLiz', function( $http ) {
 } )
 .filter( 'team', function() {
 	return function( t ) {
-		if( t == 'Blue' ) { return 'info' }
-		else if( t == 'Red' ) { return 'error' }
-		else return '';
+		if( t == 'Blue' ) { return "success" }
+		else if( t == 'Red' ) { return "danger" }
+		else return "";
 	}
 } )
 .filter( 'lower', function() {
