@@ -23,9 +23,10 @@
     "server"
   ],
   "dependencies" : {
-    "express" :  "3.2.x",
+    "express" :  "3.4.x",
     "mysql"   :  "2.x.x",
     "zlib"   :  "1.0.x",
+    "request"   :  "2.30.x",
     "cheerio"   :  "0.12.x"
   },
   "license": "GPL",
