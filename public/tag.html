@@ -1,0 +1,22 @@
+
+<div class="row-fluid">
+	<div class="span12 well">
+		<div class="span12">
+			<table class="table table-condensed table-bordered">
+				<tr>
+					<td>ID</td>
+					<td>{{ tag.data.tag.id }} </td>
+				</tr>
+					<td>Name</td>
+					<td>{{ tag.data.tag.name }} </td>
+				<tr>
+					<td>Description</td>
+					<td>{{ tag.data.tag.descr }} </td>
+				</tr>
+			</table>
+			<a href="#/tag/{{ tag.data.tag.id }}/games">Games</a>
+			<a href="#/tag/{{ tag.data.tag.id }}/players">Players</a>
+		</div>
+	</div>
+</div>
+
