@@ -1,0 +1,21 @@
+
+<div class="row-fluid">
+	<div class="span12 well">
+		<table class="table table-condensed table-striped ">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='id'; ordertype=!ordertype">id</a></th>
+					<th><a href="" ng-click="ordercolumn='name'; ordertype=!ordertype">name</a></th>
+					<th><a href="" ng-click="ordercolumn='tagged_games'; ordertype=!ordertype">tagged_games</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="z in tags.data.tags | orderBy:ordercolumn:ordertype">
+					<td>{{ z.id | number }}</td>
+					<td><a href="#/tag/{{ z.id }}">{{ z.name }}</a></td>
+					<td>{{ z.tagged_games | number }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
