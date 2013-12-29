@@ -6,8 +6,19 @@
 		"password": "mysecretpassword,lol"
 	},
 	"api": {
-		"port": 8585
+		"port": 8585,
+		"httplogfile": "./http.log",
+		"games": {
+			"save": true,
+			"tempdir": "/tmp/",
+			"gamesdir": "./games/"
+		}
+	},
+	"counter": {
+		"on": true,
+		"path": "/tmp/ql-stats-dev.counter"
 	}
 }
+
 
 
