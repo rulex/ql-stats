@@ -92,8 +92,6 @@ app.use( function( req, res, next ) {
 } );
 
 var _perpage = 20;
-var newgames = [];
-var foundgames = [];
 var lastgames = [];
 
 // api
@@ -283,13 +281,12 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 				singleCallback: function() {
 					//console.log( "I'm the callback" );
 					res.jsonp( { data: { player: nick, updated: lastgames.length, scanned: nrcallbacks, updated_games: lastgames } } );
+					lastgames = [];
 					res.end();
 				}
 			} );
 			$( '.areaMapC' ).each( function( i ) {
-				//if( _lastgame == i ) { res.jsonp( { nick: nick, games_added: newgames } ); }
 				lastgame = $(this).attr( 'id' ).split( '_' )[1];
-				foundgames.push( lastgame );
 				var last_game_public_id = lastgame;
 				db.query( 'SELECT PUBLIC_ID FROM Games WHERE PUBLIC_ID=\''+ lastgame +'\'', function( err, rows, fields ) {
 					if( err ) { throw err; }
@@ -755,7 +752,6 @@ function get_game( game_public_id, requestCallback, res ) {
 				fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
 					if( err ) { console.log( err ); }
 					else {
-						newgames.push( j.PUBLIC_ID );
 						var gzip = zlib.createGzip();
 						var inp = fs.createReadStream( cfg.api.games.tempdir  + j.PUBLIC_ID + '.json' );
 						var out = fs.createWriteStream( cfg.api.games.gamesdir + j.PUBLIC_ID + '.json.gz' );
