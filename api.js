@@ -38,6 +38,8 @@ setInterval( function() {
 
 // counter
 var requests_counter = 0;
+var requests_counter_api = 0;
+var requests_counter_pub = 0;
 var requests_counter_total = 0;
 if( cfg.counter.on ) {
 	/*
@@ -74,6 +76,7 @@ app.use( express.logger( { stream: logFile } ) );
 // count requests made
 app.use( function( req, res, next ) {
 	++requests_counter;
+	++requests_counter_pub;
 	++requests_counter_total;
 	next();
 } );
@@ -83,6 +86,8 @@ app.use( express.static( __dirname + '/public' ) );
 app.use( '/get/game', express.static( __dirname + '/games' ) );
 app.use( function( req, res, next ) {
 	//--requests_counter;
+	--requests_counter_pub;
+	++requests_counter_api;
 	next();
 } );
 
@@ -649,10 +654,12 @@ app.get( '/api/tag/:tag/players', function ( req, res ) {
 } );
 app.get( '/status', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
-	res.jsonp( { requests_counter_total: requests_counter_total, requests_counter: requests_counter, process_uptime: process.uptime() } );
+	res.jsonp( { requests_counter_total: requests_counter_total, requests_counter: requests_counter, requests_counter_api: requests_counter_api, requests_counter_pub: requests_counter_pub, process_uptime: process.uptime() } );
 	res.end();
 	if( typeof queryObject.cacti != 'undefined' ) {
 		requests_counter = 0;
+		requests_counter_api = 0;
+		requests_counter_pub = 0;
 	}
 } );
 
