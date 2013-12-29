@@ -87,6 +87,9 @@ app.use( function( req, res, next ) {
 } );
 
 var _perpage = 20;
+var newgames = [];
+var foundgames = [];
+var lastgames = [];
 
 // api
 app.get( '/api', function ( req, res ) {
@@ -258,15 +261,11 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 	var d = new Date();
 	//console.log( 'updating ' + nick + '...' );
 	var url = 'http://www.quakelive.com/profile/matches_by_week/' + nick + '/' + d.getFullYear() + '-' + ( d.getMonth() + 1 ) + '-' + d.getUTCDate();
-	var url2 = 'http://www.quakelive.com/stats/matchdetails/' + "";
-	var newgames = [];
-	var foundgames = [];
 	if( allow_update ) {
 		request( url, function( err, resp, body ) {
 			if( err ) { throw err; }
 			$ = cheerio.load( body );
 			var lastgame = "";
-			var lastgames = [];
 			var _lastgame = $( '.areaMapC' ).length-1;
 			var nrcallbacks = $( '.areaMapC' ).length;
 			if( nrcallbacks == 0 ) {
@@ -286,474 +285,14 @@ app.get( '/api/player/:player/update', function ( req, res ) {
 				//if( _lastgame == i ) { res.jsonp( { nick: nick, games_added: newgames } ); }
 				lastgame = $(this).attr( 'id' ).split( '_' )[1];
 				foundgames.push( lastgame );
-				var lstg = lastgame;
+				var last_game_public_id = lastgame;
 				db.query( 'SELECT PUBLIC_ID FROM Games WHERE PUBLIC_ID=\''+ lastgame +'\'', function( err, rows, fields ) {
 					if( err ) { throw err; }
 					if( rows.length > 0 ) {
 						requestCallback.requestComplete( true );
 					}
 					else {
-						request( url2 + lstg, function( err, resp, body ) {
-							//console.log( );
-							//console.log( body );
-							//console.log( );
-							var j = JSON.parse( body );
-							// save to disk
-							if( j.UNAVAILABLE != 1 ) {
-								if( cfg.api.games.save ) {
-									fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
-										if( err ) { console.log( err ); }
-										else {
-											newgames.push( j.PUBLIC_ID );
-											var gzip = zlib.createGzip();
-											var inp = fs.createReadStream( cfg.api.games.tempdir  + j.PUBLIC_ID + '.json' );
-											var out = fs.createWriteStream( cfg.api.games.gamesdir + j.PUBLIC_ID + '.json.gz' );
-											inp.pipe( gzip ).pipe( out );
-											fs.unlink( cfg.api.games.tempdir + j.PUBLIC_ID + '.json' );
-										}
-									} );
-								}
-								//
-								var AVG_ACC = 0;
-								var MOST_ACCURATE_NICK = "";
-								var MOST_ACCURATE_NUM = 0;
-								var DMG_DELIVERED_NICK = "";
-								var DMG_DELIVERED_NUM = 0;
-								var DMG_TAKEN_NICK = "";
-								var DMG_TAKEN_NUM = 0;
-								var LEAST_DEATHS_NICK = "";
-								var LEAST_DEATHS_NUM = 0;
-								var MOST_DEATHS_NICK = "";
-								var MOST_DEATHS_NUM = 0;
-								var TOTAL_ROUNDS = 0;
-								var WINNING_TEAM = "";
-								if( !isNaN( j.AVG_ACC ) && j.AVG_ACC !== 'undefined' ) {
-									AVG_ACC = j.AVG_ACC;
-								}
-								if( typeof j.MOST_ACCURATE !== 'undefined' ) {
-									MOST_ACCURATE_NICK = j.MOST_ACCURATE.PLAYER_NICK;
-									MOST_ACCURATE_NUM = j.MOST_ACCURATE.NUM;
-								}
-								if( typeof j.DMG_DELIVERED !== 'undefined' ) {
-									DMG_DELIVERED_NICK = j.DMG_DELIVERED.PLAYER_NICK;
-									DMG_DELIVERED_NUM = j.DMG_DELIVERED.NUM;
-								}
-								if( typeof j.DMG_TAKEN !== 'undefined' ) {
-									DMG_TAKEN_NICK = j.DMG_TAKEN.PLAYER_NICK;
-									DMG_TAKEN_NUM = j.DMG_TAKEN.NUM;
-								}
-								if( typeof j.LEAST_DEATHS !== 'undefined' ) {
-									LEAST_DEATHS_NICK = j.LEAST_DEATHS.PLAYER_NICK;
-									LEAST_DEATHS_NUM = j.LEAST_DEATHS.NUM;
-								}
-								if( typeof j.MOST_DEATHS !== 'undefined' ) {
-									MOST_DEATHS_NICK = j.MOST_DEATHS.PLAYER_NICK;
-									MOST_DEATHS_NUM = j.MOST_DEATHS.NUM;
-								}
-								if( typeof j.TOTAL_ROUNDS !== 'undefined' ) {
-									TOTAL_ROUNDS = j.TOTAL_ROUNDS;
-									WINNING_TEAM = j.WINNING_TEAM;
-								}
-								var sql1 = 'INSERT INTO Games(' +
-									'PUBLIC_ID,' +
-									'OWNER, ' +
-									'MAP, ' +
-									'NUM_PLAYERS, ' +
-									'AVG_ACC, ' +
-									'PREMIUM, ' +
-									'RANKED, ' +
-									'RESTARTED, ' +
-									'RULESET, ' +
-									'TIER, ' +
-									'TOTAL_KILLS, ' +
-									'TOTAL_ROUNDS, ' +
-									'WINNING_TEAM, ' +
-									'TSCORE0, ' +
-									'TSCORE1, ' +
-									'FIRST_SCORER, ' +
-									'LAST_SCORER, ' +
-									'GAME_LENGTH, ' +
-									'GAME_TYPE, ' +
-									'GAME_TIMESTAMP, ' +
-									'DMG_DELIVERED_NICK, ' +
-									'DMG_DELIVERED_NUM, ' +
-									'DMG_TAKEN_NICK, ' +
-									'DMG_TAKEN_NUM, ' +
-									'LEAST_DEATHS_NICK, ' +
-									'LEAST_DEATHS_NUM, ' +
-									'MOST_DEATHS_NICK, ' +
-									'MOST_DEATHS_NUM, ' +
-
-									'MOST_ACCURATE_NICK, ' +
-									'MOST_ACCURATE_NUM ' +
-									') values( ';
-								var sql2 = '' +
-									'\"' + j.PUBLIC_ID + '\",' +
-									'\"' + j.OWNER + '\",' +
-									'\"' + j.MAP + '\",' +
-									'' + j.NUM_PLAYERS + ',' +
-									'' + AVG_ACC + ',' +
-									'' + j.PREMIUM + ',' +
-									'' + j.RANKED + ',' +
-									'' + j.RESTARTED + ',' +
-									'' + j.RULESET + ',' +
-									'' + j.TIER + ',' +
-									'' + j.TOTAL_KILLS + ',' +
-									'' + TOTAL_ROUNDS + ',' +
-									'\"' + WINNING_TEAM + '\",' +
-									'' + j.TSCORE0 + ',' +
-									'' + j.TSCORE1 + ',' +
-									'\"' + j.FIRST_SCORER + '\",' +
-									'\"' + j.LAST_SCORER + '\",' +
-									'' + j.GAME_LENGTH + ',' +
-									'\"' + j.GAME_TYPE + '\",' +
-									'' + new Date( j.GAME_TIMESTAMP ).getTime()/1000 + ',' +
-									'\"' + DMG_DELIVERED_NICK + '\",' +
-									'' + DMG_DELIVERED_NUM + ',' +
-									'\"' + DMG_TAKEN_NICK + '\",' +
-									'' + DMG_TAKEN_NUM + ',' +
-									'\"' + LEAST_DEATHS_NICK + '\",' +
-									'' + LEAST_DEATHS_NUM + ',' +
-									'\"' + MOST_DEATHS_NICK + '\",' +
-									'' + MOST_DEATHS_NUM + ',' +
-
-									'\"' + MOST_ACCURATE_NICK + '\",' +
-									'' + MOST_ACCURATE_NUM +
-									')';
-								//console.log( sql1 );
-								//console.log( sql2 );
-								db.query( sql1 + sql2, function( err, rows, fields ) {
-									if( err != null && err.code == 'ER_DUP_ENTRY' ) {
-										console.log( err );
-									}
-									else if( err ) {
-										throw err;
-									}
-									else {
-										lastgames.push( { PUBLIC_ID: j.PUBLIC_ID, MAP: j.MAP, OWNER: j.OWNER, GAME_TYPE: j.GAME_TYPE, GAME_TIMESTAMP: new Date( j.GAME_TIMESTAMP ).getTime()/1000, GAME_TIMESTAMP2: j.GAME_TIMESTAMP, GAME_TIMESTAMP_NICE: j.GAME_TIMESTAMP_NICE } );
-										requestCallback.requestComplete( true );
-										//res.jsonp( { nick: nick, update_games:  } );
-									}
-								}	);
-								for( var i in j.BLUE_SCOREBOARD ) {
-									var p = j.BLUE_SCOREBOARD[i];
-									var IMPRESSIVE = 0;
-									var EXCELLENT = 0;
-									if( typeof p.IMPRESSIVE !== 'undefined' ) { IMPRESSIVE = p.IMPRESSIVE; }
-									if( typeof p.EXCELLENT !== 'undefined' ) { EXCELLENT = p.EXCELLENT; }
-									//console.log( j.PUBLIC_ID + " " + p.PLAYER_NICK + " " + p.TEAM );
-									var sql3 = 'INSERT INTO Players(' +
-										'PUBLIC_ID, ' +
-										'PLAYER_NICK, ' +
-										'PLAYER_CLAN, ' +
-										'PLAYER_COUNTRY, ' +
-										'RANK, ' +
-										'SCORE, ' +
-										'QUIT, ' +
-										'DAMAGE_DEALT, ' +
-										'DAMAGE_TAKEN, ' +
-										'KILLS, ' +
-										'DEATHS, ' +
-										'HITS, ' +
-										'SHOTS, ' +
-										'TEAM, ' +
-										'TEAM_RANK, ' +
-										'HUMILIATION, ' +
-										'IMPRESSIVE, ' +
-										'EXCELLENT, ' +
-										'PLAY_TIME, ' +
-										'G_K, ' +
-										'GL_H, ' +
-										'GL_K, ' +
-										'GL_S, ' +
-										'LG_H, ' +
-										'LG_K, ' +
-										'LG_S, ' +
-										'MG_H, ' +
-										'MG_K, ' +
-										'MG_S, ' +
-										'PG_H, ' +
-										'PG_K, ' +
-										'PG_S, ' +
-										'RG_H, ' +
-										'RG_K, ' +
-										'RG_S, ' +
-										'RL_H, ' +
-										'RL_K, ' +
-										'RL_S, ' +
-										'SG_H, ' +
-										'SG_K, ' +
-										'SG_S' +
-										') values( ';
-									var sql4 = '' +
-										'\"' + j.PUBLIC_ID + '\",' +
-										'\"' + p.PLAYER_NICK + '\",' +
-										'\"' + p.PLAYER_CLAN + '\",' +
-										'\"' + p.PLAYER_COUNTRY + '\",' +
-										'' + p.RANK + ',' +
-										'' + p.SCORE + ',' +
-										'' + p.QUIT + ',' +
-										'' + p.DAMAGE_DEALT + ',' +
-										'' + p.DAMAGE_TAKEN + ',' +
-										'' + p.KILLS + ',' +
-										'' + p.DEATHS + ',' +
-										'' + p.HITS + ',' +
-										'' + p.SHOTS + ',' +
-										'\"' + p.TEAM + '\",' +
-										'' + p.TEAM_RANK + ',' +
-										'' + p.HUMILIATION + ',' +
-										'' + IMPRESSIVE + ',' +
-										'' + EXCELLENT + ',' +
-										'' + p.PLAY_TIME + ',' +
-										'' + p.GAUNTLET_KILLS + ',' +
-										'' + p.GRENADE_HITS + ',' +
-										'' + p.GRENADE_KILLS + ',' +
-										'' + p.GRENADE_SHOTS + ',' +
-										'' + p.LIGHTNING_HITS + ',' +
-										'' + p.LIGHTNING_KILLS + ',' +
-										'' + p.LIGHTNING_SHOTS + ',' +
-										'' + p.MACHINEGUN_HITS + ',' +
-										'' + p.MACHINEGUN_KILLS + ',' +
-										'' + p.MACHINEGUN_SHOTS + ',' +
-										'' + p.PLASMA_HITS + ',' +
-										'' + p.PLASMA_KILLS + ',' +
-										'' + p.PLASMA_SHOTS + ',' +
-										'' + p.RAILGUN_HITS + ',' +
-										'' + p.RAILGUN_KILLS + ',' +
-										'' + p.RAILGUN_SHOTS + ',' +
-										'' + p.ROCKET_HITS + ',' +
-										'' + p.ROCKET_KILLS + ',' +
-										'' + p.ROCKET_SHOTS + ',' +
-										'' + p.SHOTGUN_HITS + ',' +
-										'' + p.SHOTGUN_KILLS + ',' +
-										'' + p.SHOTGUN_SHOTS +
-										')';
-									//console.log( i + " " + sql3 );
-									//console.log( i + " " + sql4 );
-									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err != null && err.code == 'ER_DUP_ENTRY' ) {
-											console.log( err );
-										}
-										else if( err ) {
-											throw err;
-										}
-									} );
-								}
-								for( var i in j.RED_SCOREBOARD ) {
-									var p = j.RED_SCOREBOARD[i];
-									var IMPRESSIVE = 0;
-									var EXCELLENT = 0;
-									if( typeof p.IMPRESSIVE !== 'undefined' ) { IMPRESSIVE = p.IMPRESSIVE; }
-									if( typeof p.EXCELLENT !== 'undefined' ) { EXCELLENT = p.EXCELLENT; }
-									var sql3 = 'INSERT INTO Players(' +
-										'PUBLIC_ID, ' +
-										'PLAYER_NICK, ' +
-										'PLAYER_CLAN, ' +
-										'PLAYER_COUNTRY, ' +
-										'RANK, ' +
-										'SCORE, ' +
-										'QUIT, ' +
-										'DAMAGE_DEALT, ' +
-										'DAMAGE_TAKEN, ' +
-										'KILLS, ' +
-										'DEATHS, ' +
-										'HITS, ' +
-										'SHOTS, ' +
-										'TEAM, ' +
-										'TEAM_RANK, ' +
-										'HUMILIATION, ' +
-										'IMPRESSIVE, ' +
-										'EXCELLENT, ' +
-										'PLAY_TIME, ' +
-										'G_K, ' +
-										'GL_H, ' +
-										'GL_K, ' +
-										'GL_S, ' +
-										'LG_H, ' +
-										'LG_K, ' +
-										'LG_S, ' +
-										'MG_H, ' +
-										'MG_K, ' +
-										'MG_S, ' +
-										'PG_H, ' +
-										'PG_K, ' +
-										'PG_S, ' +
-										'RG_H, ' +
-										'RG_K, ' +
-										'RG_S, ' +
-										'RL_H, ' +
-										'RL_K, ' +
-										'RL_S, ' +
-										'SG_H, ' +
-										'SG_K, ' +
-										'SG_S' +
-										') values( ';
-									var sql4 = '' +
-										'\"' + j.PUBLIC_ID + '\",' +
-										'\"' + p.PLAYER_NICK + '\",' +
-										'\"' + p.PLAYER_CLAN + '\",' +
-										'\"' + p.PLAYER_COUNTRY + '\",' +
-										'' + p.RANK + ',' +
-										'' + p.SCORE + ',' +
-										'' + p.QUIT + ',' +
-										'' + p.DAMAGE_DEALT + ',' +
-										'' + p.DAMAGE_TAKEN + ',' +
-										'' + p.KILLS + ',' +
-										'' + p.DEATHS + ',' +
-										'' + p.HITS + ',' +
-										'' + p.SHOTS + ',' +
-										'\"' + p.TEAM + '\",' +
-										'' + p.TEAM_RANK + ',' +
-										'' + p.HUMILIATION + ',' +
-										'' + IMPRESSIVE + ',' +
-										'' + EXCELLENT + ',' +
-										'' + p.PLAY_TIME + ',' +
-										'' + p.GAUNTLET_KILLS + ',' +
-										'' + p.GRENADE_HITS + ',' +
-										'' + p.GRENADE_KILLS + ',' +
-										'' + p.GRENADE_SHOTS + ',' +
-										'' + p.LIGHTNING_HITS + ',' +
-										'' + p.LIGHTNING_KILLS + ',' +
-										'' + p.LIGHTNING_SHOTS + ',' +
-										'' + p.MACHINEGUN_HITS + ',' +
-										'' + p.MACHINEGUN_KILLS + ',' +
-										'' + p.MACHINEGUN_SHOTS + ',' +
-										'' + p.PLASMA_HITS + ',' +
-										'' + p.PLASMA_KILLS + ',' +
-										'' + p.PLASMA_SHOTS + ',' +
-										'' + p.RAILGUN_HITS + ',' +
-										'' + p.RAILGUN_KILLS + ',' +
-										'' + p.RAILGUN_SHOTS + ',' +
-										'' + p.ROCKET_HITS + ',' +
-										'' + p.ROCKET_KILLS + ',' +
-										'' + p.ROCKET_SHOTS + ',' +
-										'' + p.SHOTGUN_HITS + ',' +
-										'' + p.SHOTGUN_KILLS + ',' +
-										'' + p.SHOTGUN_SHOTS +
-										')';
-									//console.log( i + " " + sql3 );
-									//console.log( i + " " + sql4 );
-									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err != null && err.code == 'ER_DUP_ENTRY' ) {
-											console.log( err );
-										}
-										else if( err ) {
-											throw err;
-										}
-									} );
-								}
-								for( var i in j.SCOREBOARD ) {
-									var p = j.SCOREBOARD[i];
-									var IMPRESSIVE = 0;
-									var EXCELLENT = 0;
-									var QUIT = 0;
-									var TEAM_RANK = 0;
-									if( typeof p.IMPRESSIVE !== 'undefined' ) { IMPRESSIVE = p.IMPRESSIVE; }
-									if( typeof p.EXCELLENT !== 'undefined' ) { EXCELLENT = p.EXCELLENT; }
-									if( typeof p.QUIT !== 'undefined' ) { QUIT = p.QUIT; }
-									if( typeof p.TEAM_RANK !== 'undefined' ) { TEAM_RANK = p.TEAM_RANK; }
-									var sql3 = 'INSERT INTO Players(' +
-										'PUBLIC_ID, ' +
-										'PLAYER_NICK, ' +
-										'PLAYER_CLAN, ' +
-										'PLAYER_COUNTRY, ' +
-										'RANK, ' +
-										'SCORE, ' +
-										'QUIT, ' +
-										'DAMAGE_DEALT, ' +
-										'DAMAGE_TAKEN, ' +
-										'KILLS, ' +
-										'DEATHS, ' +
-										'HITS, ' +
-										'SHOTS, ' +
-										'TEAM, ' +
-										'TEAM_RANK, ' +
-										'HUMILIATION, ' +
-										'IMPRESSIVE, ' +
-										'EXCELLENT, ' +
-										'PLAY_TIME, ' +
-										'G_K, ' +
-										'GL_H, ' +
-										'GL_K, ' +
-										'GL_S, ' +
-										'LG_H, ' +
-										'LG_K, ' +
-										'LG_S, ' +
-										'MG_H, ' +
-										'MG_K, ' +
-										'MG_S, ' +
-										'PG_H, ' +
-										'PG_K, ' +
-										'PG_S, ' +
-										'RG_H, ' +
-										'RG_K, ' +
-										'RG_S, ' +
-										'RL_H, ' +
-										'RL_K, ' +
-										'RL_S, ' +
-										'SG_H, ' +
-										'SG_K, ' +
-										'SG_S' +
-										') values( ';
-									var sql4 = '' +
-										'\"' + j.PUBLIC_ID + '\",' +
-										'\"' + p.PLAYER_NICK + '\",' +
-										'\"' + p.PLAYER_CLAN + '\",' +
-										'\"' + p.PLAYER_COUNTRY + '\",' +
-										'' + p.RANK + ',' +
-										'' + p.SCORE + ',' +
-										'' + QUIT + ',' +
-										'' + p.DAMAGE_DEALT + ',' +
-										'' + p.DAMAGE_TAKEN + ',' +
-										'' + p.KILLS + ',' +
-										'' + p.DEATHS + ',' +
-										'' + p.HITS + ',' +
-										'' + p.SHOTS + ',' +
-										'\"' + p.TEAM + '\",' +
-										'' + TEAM_RANK + ',' +
-										'' + p.HUMILIATION + ',' +
-										'' + IMPRESSIVE + ',' +
-										'' + EXCELLENT + ',' +
-										'' + p.PLAY_TIME + ',' +
-										'' + p.GAUNTLET_KILLS + ',' +
-										'' + p.GRENADE_HITS + ',' +
-										'' + p.GRENADE_KILLS + ',' +
-										'' + p.GRENADE_SHOTS + ',' +
-										'' + p.LIGHTNING_HITS + ',' +
-										'' + p.LIGHTNING_KILLS + ',' +
-										'' + p.LIGHTNING_SHOTS + ',' +
-										'' + p.MACHINEGUN_HITS + ',' +
-										'' + p.MACHINEGUN_KILLS + ',' +
-										'' + p.MACHINEGUN_SHOTS + ',' +
-										'' + p.PLASMA_HITS + ',' +
-										'' + p.PLASMA_KILLS + ',' +
-										'' + p.PLASMA_SHOTS + ',' +
-										'' + p.RAILGUN_HITS + ',' +
-										'' + p.RAILGUN_KILLS + ',' +
-										'' + p.RAILGUN_SHOTS + ',' +
-										'' + p.ROCKET_HITS + ',' +
-										'' + p.ROCKET_KILLS + ',' +
-										'' + p.ROCKET_SHOTS + ',' +
-										'' + p.SHOTGUN_HITS + ',' +
-										'' + p.SHOTGUN_KILLS + ',' +
-										'' + p.SHOTGUN_SHOTS +
-										')';
-									//console.log( i + " " + sql3 );
-									//console.log( i + " " + sql4 );
-									db.query( sql3 + sql4, function( err, rows, fields ) {
-										if( err != null && err.code == 'ER_DUP_ENTRY' ) {
-											console.log( err );
-										}
-										else if( err ) {
-											throw err;
-										}
-									} );
-								}
-							}
-							else {
-								requestCallback.requestComplete( true );
-							}
-						} );
+						get_game( last_game_public_id, requestCallback );
 					}
 				}	);
 			} );
@@ -807,6 +346,19 @@ app.get( '/api/game/:game/tags', function( req, res ) {
 	db.query( sql, function( err, rows, fields ) {
 		res.jsonp( { data: { tags: rows } } );
 		res.end();
+	} );
+} );
+app.get( '/api/game/:game/get', function( req, res ) {
+	var game = mysql_real_escape_string( req.params.game );
+	var sql = 'select PUBLIC_ID from Games where PUBLIC_ID=\''+ game +'\'';
+	db.query( sql, function( err, rows, fields ) {
+		if( rows.length == 0 ) {
+			get_game( game, null, res );
+		}
+		else {
+			res.jsonp( { data: {}, error: "already exist" } );
+			res.end();
+		}
 	} );
 } );
 app.get( '/api/game/:game/tag/add/:tag', function( req, res ) {
@@ -1180,3 +732,477 @@ var MyRequestsCompleted = ( function() {
 function isNumber( n ) {
 	return !isNaN( parseFloat( n ) ) && isFinite( n );
 }
+
+// get game
+
+function get_game( game_public_id, requestCallback, res ) {
+	var url2 = 'http://www.quakelive.com/stats/matchdetails/' + "";
+	request( url2 + game_public_id, function( err, resp, body ) {
+		//console.log( );
+		//console.log( body );
+		//console.log( );
+		var j = JSON.parse( body );
+		// save to disk
+		if( j.UNAVAILABLE != 1 ) {
+			if( cfg.api.games.save ) {
+				fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
+					if( err ) { console.log( err ); }
+					else {
+						newgames.push( j.PUBLIC_ID );
+						var gzip = zlib.createGzip();
+						var inp = fs.createReadStream( cfg.api.games.tempdir  + j.PUBLIC_ID + '.json' );
+						var out = fs.createWriteStream( cfg.api.games.gamesdir + j.PUBLIC_ID + '.json.gz' );
+						inp.pipe( gzip ).pipe( out );
+						fs.unlink( cfg.api.games.tempdir + j.PUBLIC_ID + '.json' );
+					}
+				} );
+			}
+			//
+			var AVG_ACC = 0;
+			var MOST_ACCURATE_NICK = "";
+			var MOST_ACCURATE_NUM = 0;
+			var DMG_DELIVERED_NICK = "";
+			var DMG_DELIVERED_NUM = 0;
+			var DMG_TAKEN_NICK = "";
+			var DMG_TAKEN_NUM = 0;
+			var LEAST_DEATHS_NICK = "";
+			var LEAST_DEATHS_NUM = 0;
+			var MOST_DEATHS_NICK = "";
+			var MOST_DEATHS_NUM = 0;
+			var TOTAL_ROUNDS = 0;
+			var WINNING_TEAM = "";
+			if( !isNaN( j.AVG_ACC ) && j.AVG_ACC !== 'undefined' ) {
+				AVG_ACC = j.AVG_ACC;
+			}
+			if( typeof j.MOST_ACCURATE !== 'undefined' ) {
+				MOST_ACCURATE_NICK = j.MOST_ACCURATE.PLAYER_NICK;
+				MOST_ACCURATE_NUM = j.MOST_ACCURATE.NUM;
+			}
+			if( typeof j.DMG_DELIVERED !== 'undefined' ) {
+				DMG_DELIVERED_NICK = j.DMG_DELIVERED.PLAYER_NICK;
+				DMG_DELIVERED_NUM = j.DMG_DELIVERED.NUM;
+			}
+			if( typeof j.DMG_TAKEN !== 'undefined' ) {
+				DMG_TAKEN_NICK = j.DMG_TAKEN.PLAYER_NICK;
+				DMG_TAKEN_NUM = j.DMG_TAKEN.NUM;
+			}
+			if( typeof j.LEAST_DEATHS !== 'undefined' ) {
+				LEAST_DEATHS_NICK = j.LEAST_DEATHS.PLAYER_NICK;
+				LEAST_DEATHS_NUM = j.LEAST_DEATHS.NUM;
+			}
+			if( typeof j.MOST_DEATHS !== 'undefined' ) {
+				MOST_DEATHS_NICK = j.MOST_DEATHS.PLAYER_NICK;
+				MOST_DEATHS_NUM = j.MOST_DEATHS.NUM;
+			}
+			if( typeof j.TOTAL_ROUNDS !== 'undefined' ) {
+				TOTAL_ROUNDS = j.TOTAL_ROUNDS;
+				WINNING_TEAM = j.WINNING_TEAM;
+			}
+			var sql1 = 'INSERT INTO Games(' +
+					'PUBLIC_ID,' +
+					'OWNER, ' +
+					'MAP, ' +
+					'NUM_PLAYERS, ' +
+					'AVG_ACC, ' +
+					'PREMIUM, ' +
+					'RANKED, ' +
+					'RESTARTED, ' +
+					'RULESET, ' +
+					'TIER, ' +
+					'TOTAL_KILLS, ' +
+					'TOTAL_ROUNDS, ' +
+					'WINNING_TEAM, ' +
+					'TSCORE0, ' +
+					'TSCORE1, ' +
+					'FIRST_SCORER, ' +
+					'LAST_SCORER, ' +
+					'GAME_LENGTH, ' +
+					'GAME_TYPE, ' +
+					'GAME_TIMESTAMP, ' +
+					'DMG_DELIVERED_NICK, ' +
+					'DMG_DELIVERED_NUM, ' +
+					'DMG_TAKEN_NICK, ' +
+					'DMG_TAKEN_NUM, ' +
+					'LEAST_DEATHS_NICK, ' +
+					'LEAST_DEATHS_NUM, ' +
+					'MOST_DEATHS_NICK, ' +
+					'MOST_DEATHS_NUM, ' +
+
+					'MOST_ACCURATE_NICK, ' +
+					'MOST_ACCURATE_NUM ' +
+					') values( ';
+						var sql2 = '' +
+						'\"' + j.PUBLIC_ID + '\",' +
+						'\"' + j.OWNER + '\",' +
+						'\"' + j.MAP + '\",' +
+						'' + j.NUM_PLAYERS + ',' +
+						'' + AVG_ACC + ',' +
+						'' + j.PREMIUM + ',' +
+						'' + j.RANKED + ',' +
+						'' + j.RESTARTED + ',' +
+						'' + j.RULESET + ',' +
+						'' + j.TIER + ',' +
+						'' + j.TOTAL_KILLS + ',' +
+						'' + TOTAL_ROUNDS + ',' +
+						'\"' + WINNING_TEAM + '\",' +
+						'' + j.TSCORE0 + ',' +
+						'' + j.TSCORE1 + ',' +
+						'\"' + j.FIRST_SCORER + '\",' +
+						'\"' + j.LAST_SCORER + '\",' +
+						'' + j.GAME_LENGTH + ',' +
+						'\"' + j.GAME_TYPE + '\",' +
+						'' + new Date( j.GAME_TIMESTAMP ).getTime()/1000 + ',' +
+						'\"' + DMG_DELIVERED_NICK + '\",' +
+						'' + DMG_DELIVERED_NUM + ',' +
+						'\"' + DMG_TAKEN_NICK + '\",' +
+						'' + DMG_TAKEN_NUM + ',' +
+						'\"' + LEAST_DEATHS_NICK + '\",' +
+						'' + LEAST_DEATHS_NUM + ',' +
+						'\"' + MOST_DEATHS_NICK + '\",' +
+						'' + MOST_DEATHS_NUM + ',' +
+
+						'\"' + MOST_ACCURATE_NICK + '\",' +
+						'' + MOST_ACCURATE_NUM +
+						')';
+			//console.log( sql1 );
+			//console.log( sql2 );
+			db.query( sql1 + sql2, function( err, rows, fields ) {
+				if( err != null && err.code == 'ER_DUP_ENTRY' ) {
+					console.log( err );
+				}
+				else if( err ) {
+					throw err;
+				}
+				else {
+					lastgames.push( { PUBLIC_ID: j.PUBLIC_ID, MAP: j.MAP, OWNER: j.OWNER, GAME_TYPE: j.GAME_TYPE, GAME_TIMESTAMP: new Date( j.GAME_TIMESTAMP ).getTime()/1000, GAME_TIMESTAMP2: j.GAME_TIMESTAMP, GAME_TIMESTAMP_NICE: j.GAME_TIMESTAMP_NICE } );
+				if( requestCallback != null )
+					requestCallback.requestComplete( true );
+					//res.jsonp( { nick: nick, update_games:  } );
+				}
+			}	);
+			for( var i in j.BLUE_SCOREBOARD ) {
+				var p = j.BLUE_SCOREBOARD[i];
+				var IMPRESSIVE = 0;
+				var EXCELLENT = 0;
+				if( typeof p.IMPRESSIVE !== 'undefined' ) { IMPRESSIVE = p.IMPRESSIVE; }
+				if( typeof p.EXCELLENT !== 'undefined' ) { EXCELLENT = p.EXCELLENT; }
+				//console.log( j.PUBLIC_ID + " " + p.PLAYER_NICK + " " + p.TEAM );
+				var sql3 = 'INSERT INTO Players(' +
+						'PUBLIC_ID, ' +
+						'PLAYER_NICK, ' +
+						'PLAYER_CLAN, ' +
+						'PLAYER_COUNTRY, ' +
+						'RANK, ' +
+						'SCORE, ' +
+						'QUIT, ' +
+						'DAMAGE_DEALT, ' +
+						'DAMAGE_TAKEN, ' +
+						'KILLS, ' +
+						'DEATHS, ' +
+						'HITS, ' +
+						'SHOTS, ' +
+						'TEAM, ' +
+						'TEAM_RANK, ' +
+						'HUMILIATION, ' +
+						'IMPRESSIVE, ' +
+						'EXCELLENT, ' +
+						'PLAY_TIME, ' +
+						'G_K, ' +
+						'GL_H, ' +
+						'GL_K, ' +
+						'GL_S, ' +
+						'LG_H, ' +
+						'LG_K, ' +
+						'LG_S, ' +
+						'MG_H, ' +
+						'MG_K, ' +
+						'MG_S, ' +
+						'PG_H, ' +
+						'PG_K, ' +
+						'PG_S, ' +
+						'RG_H, ' +
+						'RG_K, ' +
+						'RG_S, ' +
+						'RL_H, ' +
+						'RL_K, ' +
+						'RL_S, ' +
+						'SG_H, ' +
+						'SG_K, ' +
+						'SG_S' +
+						') values( ';
+							var sql4 = '' +
+							'\"' + j.PUBLIC_ID + '\",' +
+							'\"' + p.PLAYER_NICK + '\",' +
+							'\"' + p.PLAYER_CLAN + '\",' +
+							'\"' + p.PLAYER_COUNTRY + '\",' +
+							'' + p.RANK + ',' +
+							'' + p.SCORE + ',' +
+							'' + p.QUIT + ',' +
+							'' + p.DAMAGE_DEALT + ',' +
+							'' + p.DAMAGE_TAKEN + ',' +
+							'' + p.KILLS + ',' +
+							'' + p.DEATHS + ',' +
+							'' + p.HITS + ',' +
+							'' + p.SHOTS + ',' +
+							'\"' + p.TEAM + '\",' +
+							'' + p.TEAM_RANK + ',' +
+							'' + p.HUMILIATION + ',' +
+							'' + IMPRESSIVE + ',' +
+							'' + EXCELLENT + ',' +
+							'' + p.PLAY_TIME + ',' +
+							'' + p.GAUNTLET_KILLS + ',' +
+							'' + p.GRENADE_HITS + ',' +
+							'' + p.GRENADE_KILLS + ',' +
+							'' + p.GRENADE_SHOTS + ',' +
+							'' + p.LIGHTNING_HITS + ',' +
+							'' + p.LIGHTNING_KILLS + ',' +
+							'' + p.LIGHTNING_SHOTS + ',' +
+							'' + p.MACHINEGUN_HITS + ',' +
+							'' + p.MACHINEGUN_KILLS + ',' +
+							'' + p.MACHINEGUN_SHOTS + ',' +
+							'' + p.PLASMA_HITS + ',' +
+							'' + p.PLASMA_KILLS + ',' +
+							'' + p.PLASMA_SHOTS + ',' +
+							'' + p.RAILGUN_HITS + ',' +
+							'' + p.RAILGUN_KILLS + ',' +
+							'' + p.RAILGUN_SHOTS + ',' +
+							'' + p.ROCKET_HITS + ',' +
+							'' + p.ROCKET_KILLS + ',' +
+							'' + p.ROCKET_SHOTS + ',' +
+							'' + p.SHOTGUN_HITS + ',' +
+							'' + p.SHOTGUN_KILLS + ',' +
+							'' + p.SHOTGUN_SHOTS +
+							')';
+				//console.log( i + " " + sql3 );
+				//console.log( i + " " + sql4 );
+				db.query( sql3 + sql4, function( err, rows, fields ) {
+					if( err != null && err.code == 'ER_DUP_ENTRY' ) {
+						console.log( err );
+					}
+					else if( err ) {
+						throw err;
+					}
+				} );
+			}
+			for( var i in j.RED_SCOREBOARD ) {
+				var p = j.RED_SCOREBOARD[i];
+				var IMPRESSIVE = 0;
+				var EXCELLENT = 0;
+				if( typeof p.IMPRESSIVE !== 'undefined' ) { IMPRESSIVE = p.IMPRESSIVE; }
+				if( typeof p.EXCELLENT !== 'undefined' ) { EXCELLENT = p.EXCELLENT; }
+				var sql3 = 'INSERT INTO Players(' +
+						'PUBLIC_ID, ' +
+						'PLAYER_NICK, ' +
+						'PLAYER_CLAN, ' +
+						'PLAYER_COUNTRY, ' +
+						'RANK, ' +
+						'SCORE, ' +
+						'QUIT, ' +
+						'DAMAGE_DEALT, ' +
+						'DAMAGE_TAKEN, ' +
+						'KILLS, ' +
+						'DEATHS, ' +
+						'HITS, ' +
+						'SHOTS, ' +
+						'TEAM, ' +
+						'TEAM_RANK, ' +
+						'HUMILIATION, ' +
+						'IMPRESSIVE, ' +
+						'EXCELLENT, ' +
+						'PLAY_TIME, ' +
+						'G_K, ' +
+						'GL_H, ' +
+						'GL_K, ' +
+						'GL_S, ' +
+						'LG_H, ' +
+						'LG_K, ' +
+						'LG_S, ' +
+						'MG_H, ' +
+						'MG_K, ' +
+						'MG_S, ' +
+						'PG_H, ' +
+						'PG_K, ' +
+						'PG_S, ' +
+						'RG_H, ' +
+						'RG_K, ' +
+						'RG_S, ' +
+						'RL_H, ' +
+						'RL_K, ' +
+						'RL_S, ' +
+						'SG_H, ' +
+						'SG_K, ' +
+						'SG_S' +
+						') values( ';
+							var sql4 = '' +
+							'\"' + j.PUBLIC_ID + '\",' +
+							'\"' + p.PLAYER_NICK + '\",' +
+							'\"' + p.PLAYER_CLAN + '\",' +
+							'\"' + p.PLAYER_COUNTRY + '\",' +
+							'' + p.RANK + ',' +
+							'' + p.SCORE + ',' +
+							'' + p.QUIT + ',' +
+							'' + p.DAMAGE_DEALT + ',' +
+							'' + p.DAMAGE_TAKEN + ',' +
+							'' + p.KILLS + ',' +
+							'' + p.DEATHS + ',' +
+							'' + p.HITS + ',' +
+							'' + p.SHOTS + ',' +
+							'\"' + p.TEAM + '\",' +
+							'' + p.TEAM_RANK + ',' +
+							'' + p.HUMILIATION + ',' +
+							'' + IMPRESSIVE + ',' +
+							'' + EXCELLENT + ',' +
+							'' + p.PLAY_TIME + ',' +
+							'' + p.GAUNTLET_KILLS + ',' +
+							'' + p.GRENADE_HITS + ',' +
+							'' + p.GRENADE_KILLS + ',' +
+							'' + p.GRENADE_SHOTS + ',' +
+							'' + p.LIGHTNING_HITS + ',' +
+							'' + p.LIGHTNING_KILLS + ',' +
+							'' + p.LIGHTNING_SHOTS + ',' +
+							'' + p.MACHINEGUN_HITS + ',' +
+							'' + p.MACHINEGUN_KILLS + ',' +
+							'' + p.MACHINEGUN_SHOTS + ',' +
+							'' + p.PLASMA_HITS + ',' +
+							'' + p.PLASMA_KILLS + ',' +
+							'' + p.PLASMA_SHOTS + ',' +
+							'' + p.RAILGUN_HITS + ',' +
+							'' + p.RAILGUN_KILLS + ',' +
+							'' + p.RAILGUN_SHOTS + ',' +
+							'' + p.ROCKET_HITS + ',' +
+							'' + p.ROCKET_KILLS + ',' +
+							'' + p.ROCKET_SHOTS + ',' +
+							'' + p.SHOTGUN_HITS + ',' +
+							'' + p.SHOTGUN_KILLS + ',' +
+							'' + p.SHOTGUN_SHOTS +
+							')';
+				//console.log( i + " " + sql3 );
+				//console.log( i + " " + sql4 );
+				db.query( sql3 + sql4, function( err, rows, fields ) {
+					if( err != null && err.code == 'ER_DUP_ENTRY' ) {
+						console.log( err );
+					}
+					else if( err ) {
+						throw err;
+					}
+				} );
+			}
+			for( var i in j.SCOREBOARD ) {
+				var p = j.SCOREBOARD[i];
+				var IMPRESSIVE = 0;
+				var EXCELLENT = 0;
+				var QUIT = 0;
+				var TEAM_RANK = 0;
+				if( typeof p.IMPRESSIVE !== 'undefined' ) { IMPRESSIVE = p.IMPRESSIVE; }
+				if( typeof p.EXCELLENT !== 'undefined' ) { EXCELLENT = p.EXCELLENT; }
+				if( typeof p.QUIT !== 'undefined' ) { QUIT = p.QUIT; }
+				if( typeof p.TEAM_RANK !== 'undefined' ) { TEAM_RANK = p.TEAM_RANK; }
+				var sql3 = 'INSERT INTO Players(' +
+						'PUBLIC_ID, ' +
+						'PLAYER_NICK, ' +
+						'PLAYER_CLAN, ' +
+						'PLAYER_COUNTRY, ' +
+						'RANK, ' +
+						'SCORE, ' +
+						'QUIT, ' +
+						'DAMAGE_DEALT, ' +
+						'DAMAGE_TAKEN, ' +
+						'KILLS, ' +
+						'DEATHS, ' +
+						'HITS, ' +
+						'SHOTS, ' +
+						'TEAM, ' +
+						'TEAM_RANK, ' +
+						'HUMILIATION, ' +
+						'IMPRESSIVE, ' +
+						'EXCELLENT, ' +
+						'PLAY_TIME, ' +
+						'G_K, ' +
+						'GL_H, ' +
+						'GL_K, ' +
+						'GL_S, ' +
+						'LG_H, ' +
+						'LG_K, ' +
+						'LG_S, ' +
+						'MG_H, ' +
+						'MG_K, ' +
+						'MG_S, ' +
+						'PG_H, ' +
+						'PG_K, ' +
+						'PG_S, ' +
+						'RG_H, ' +
+						'RG_K, ' +
+						'RG_S, ' +
+						'RL_H, ' +
+						'RL_K, ' +
+						'RL_S, ' +
+						'SG_H, ' +
+						'SG_K, ' +
+						'SG_S' +
+						') values( ';
+							var sql4 = '' +
+							'\"' + j.PUBLIC_ID + '\",' +
+							'\"' + p.PLAYER_NICK + '\",' +
+							'\"' + p.PLAYER_CLAN + '\",' +
+							'\"' + p.PLAYER_COUNTRY + '\",' +
+							'' + p.RANK + ',' +
+							'' + p.SCORE + ',' +
+							'' + QUIT + ',' +
+							'' + p.DAMAGE_DEALT + ',' +
+							'' + p.DAMAGE_TAKEN + ',' +
+							'' + p.KILLS + ',' +
+							'' + p.DEATHS + ',' +
+							'' + p.HITS + ',' +
+							'' + p.SHOTS + ',' +
+							'\"' + p.TEAM + '\",' +
+							'' + TEAM_RANK + ',' +
+							'' + p.HUMILIATION + ',' +
+							'' + IMPRESSIVE + ',' +
+							'' + EXCELLENT + ',' +
+							'' + p.PLAY_TIME + ',' +
+							'' + p.GAUNTLET_KILLS + ',' +
+							'' + p.GRENADE_HITS + ',' +
+							'' + p.GRENADE_KILLS + ',' +
+							'' + p.GRENADE_SHOTS + ',' +
+							'' + p.LIGHTNING_HITS + ',' +
+							'' + p.LIGHTNING_KILLS + ',' +
+							'' + p.LIGHTNING_SHOTS + ',' +
+							'' + p.MACHINEGUN_HITS + ',' +
+							'' + p.MACHINEGUN_KILLS + ',' +
+							'' + p.MACHINEGUN_SHOTS + ',' +
+							'' + p.PLASMA_HITS + ',' +
+							'' + p.PLASMA_KILLS + ',' +
+							'' + p.PLASMA_SHOTS + ',' +
+							'' + p.RAILGUN_HITS + ',' +
+							'' + p.RAILGUN_KILLS + ',' +
+							'' + p.RAILGUN_SHOTS + ',' +
+							'' + p.ROCKET_HITS + ',' +
+							'' + p.ROCKET_KILLS + ',' +
+							'' + p.ROCKET_SHOTS + ',' +
+							'' + p.SHOTGUN_HITS + ',' +
+							'' + p.SHOTGUN_KILLS + ',' +
+							'' + p.SHOTGUN_SHOTS +
+							')';
+				//console.log( i + " " + sql3 );
+				//console.log( i + " " + sql4 );
+				db.query( sql3 + sql4, function( err, rows, fields ) {
+					if( err != null && err.code == 'ER_DUP_ENTRY' ) {
+						console.log( err );
+					}
+					else if( err ) {
+						throw err;
+					}
+				} );
+			}
+			if( requestCallback == null ) {
+				res.jsonp( { data: { PUBLIC_ID: j.PUBLIC_ID, game: {} } } );
+				res.end();
+			}
+		}
+		else {
+			if( requestCallback != null )
+				requestCallback.requestComplete( true );
+		}
+	} );
+}
+
