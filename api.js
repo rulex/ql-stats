@@ -62,6 +62,7 @@ app.configure( 'development', function() {
 	//db = require( 'mongoskin').db( 'localhost:27017/bands' );
 	maxAge_public = 0;
 	maxAge_api = 0;
+	maxAge_api_long = 0;
 } );
 
 app.configure( 'production', function() {
@@ -692,6 +693,11 @@ app.get( '/status', function ( req, res ) {
 		requests_counter_pub = 0;
 	}
 } );
+/*
+app.get( '*', function ( req, res ) {
+	res.sendfile( './public/index.html' );
+} );
+*/
 
 app.listen( cfg.api.port );
 
