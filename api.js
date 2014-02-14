@@ -338,19 +338,20 @@ app.get( '/api/player/:player', function ( req, res ) {
 	//console.log( nick );
 } );
 app.get( '/api/games', function ( req, res ) {
-	var sql = 'SELECT * FROM Games order by GAME_TIMESTAMP desc LIMIT 500';
+	var sql = 'SELECT * FROM Games order by GAME_TIMESTAMP desc LIMIT 100';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { games: CACHE[req.route.path].data } } );
 		res.end();
-		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) ) {
+		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) && !CACHE[req.route.path].fetching ) {
+			CACHE[req.route.path].fetching = true;
 			db.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
 			} );
 		}
 	}
 	else {
 		db.query( sql, function( err, rows, fields ) {
-			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
 			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 			res.jsonp( { data: { games: rows } } );
 			res.end();
@@ -424,15 +425,16 @@ app.get( '/api/owners', function ( req, res ) {
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { owners: CACHE[req.route.path].data } } );
 		res.end();
-		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) ) {
+		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) && !CACHE[req.route.path].fetching ) {
+			CACHE[req.route.path].fetching = true;
 			db.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
 			} );
 		}
 	}
 	else {
 		db.query( sql, function( err, rows, fields ) {
-			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
 			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 			res.jsonp( { data: { owners: rows } } );
 			res.end();
@@ -442,11 +444,12 @@ app.get( '/api/owners', function ( req, res ) {
 app.get( '/api/owner/:owner/players', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	// players
-	sql = 'select Players.PLAYER_NICK, Players.PLAYER_CLAN, Players.PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS, sum( DEATHS ) as DEATHS, avg( KILLS/DEATHS ) as RATIO from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
+	//var sql = 'select Games.PUBLIC_ID, Games.OWNER, Players.PLAYER_NICK, Players.PLAYER_CLAN, Players.PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, avg(Players.DAMAGE_DEALT)/avg(Players.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( Players.PLAY_TIME ) as PLAY_TIME, sum( Players.KILLS ) as KILLS, sum( Players.DEATHS ) as DEATHS, avg( Players.KILLS/Players.DEATHS ) as RATIO from Games left join Players on Games.PUBLIC_ID=Players.PUBLIC_ID where OWNER="'+ owner +'" group by Players.PLAYER_NICK;';
+	var sql = 'select Players.PLAYER_NICK, Players.PLAYER_CLAN, Players.PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS, sum( DEATHS ) as DEATHS, avg( KILLS/DEATHS ) as RATIO from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
 	db.query( sql, function( err, rows, fields ) {
 		//console.log( rows );
 		res.set( 'Cache-Control', 'public, max-age=' + maxAge_api_long );
-		res.jsonp( { data: { players: rows, more: 'less' } } );
+		res.jsonp( { data: { players: rows } } );
 		res.end();
 	} );
 } );
@@ -520,21 +523,19 @@ app.get( '/api/owner/:owner/games', function ( req, res ) {
 } );
 app.get( '/api/owner/:owner', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
-	//var sql = 'SELECT * FROM Games WHERE OWNER=\'rul3x\' AND GAME_TYPE="ca" order by GAME_TIMESTAMP';
 	var sql = [];
-	sql[0] = 'SELECT OWNER, count(*) as MATCHES_PLAYED, sum(PREMIUM) as PREMIUM_COUNT, avg(GAME_LENGTH) as GAME_LENGTH_AVG,  sum(GAME_LENGTH) as GAME_LENGTH_SUM,avg(NUM_PLAYERS) as NUM_PLAYERS_AVG, avg(TOTAL_KILLS) as TOTAL_KILLS_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS_SUM, avg(DMG_DELIVERED_NUM) as DMG_DELIVERED_NUM_AVG, avg(TSCORE0) as TSCORE0_AVG, avg(TSCORE1) as TSCORE1_AVG FROM Games where OWNER="'+ owner +'" order by GAME_TIMESTAMP desc LIMIT 500';
-	// maps
-	sql[1] = 'select MAP, count(*) as MATCHES_PLAYED from Games where OWNER="'+ owner +'" group by MAP order by NULL';
+	sql = 'SELECT OWNER, count(*) as MATCHES_PLAYED, sum(PREMIUM) as PREMIUM_COUNT, avg(GAME_LENGTH) as GAME_LENGTH_AVG,  sum(GAME_LENGTH) as GAME_LENGTH_SUM,avg(NUM_PLAYERS) as NUM_PLAYERS_AVG, avg(TOTAL_KILLS) as TOTAL_KILLS_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS_SUM, avg(DMG_DELIVERED_NUM) as DMG_DELIVERED_NUM_AVG, avg(TSCORE0) as TSCORE0_AVG, avg(TSCORE1) as TSCORE1_AVG FROM Games where OWNER="'+ owner +'" order by null';
+	//sql[1] = 'select MAP, count(*) as MATCHES_PLAYED from Games where OWNER="'+ owner +'" group by MAP order by NULL';
 	// unique players
-	sql[2] = 'select count(*) as UNIQUE_PLAYERS from ( select PLAYER_NICK from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by PLAYER_NICK order by NULL ) as a';
+	//sql[1] = 'select count(*) as UNIQUE_PLAYERS from ( select PLAYER_NICK from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by PLAYER_NICK order by NULL ) as a';
 	// game types
 	//sql[3] = 'select count(*) as MATCHES_PLAYED, GAME_TYPE from Games where OWNER="'+ owner +'" group by GAME_TYPE order by NULL';
 	// players
 	//sql[4] = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
-	db.query( sql.join( ';' ), function( err, resulty ) {
+	db.query( sql, function( err, rows, fields ) {
 		//console.log( rows );
 		res.set( 'Cache-Control', 'public, max-age=' + maxAge_api_long );
-		res.jsonp( { data: { asdf: resulty[2], owner: resulty[0][0], maps: resulty[1] } } );
+		res.jsonp( { data: { owner: rows } } );
 		res.end();
 	} );
 } );
@@ -635,19 +636,20 @@ app.get( '/api/gametypes', function ( req, res ) {
 } );
 */
 app.get( '/api/overview', function ( req, res ) {
-	sql = 'select GAME_TYPE, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH from Games group by GAME_TYPE order by NULL';
+	sql = 'select GAME_TYPE, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Games group by GAME_TYPE order by NULL';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { overview: CACHE[req.route.path].data } } );
 		res.end();
-		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) ) {
+		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) && !CACHE[req.route.path].fetching ) {
+			CACHE[req.route.path].fetching = true;
 			db.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
 			} );
 		}
 	}
 	else {
 		db.query( sql, function( err, rows, fields ) {
-			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
 			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 			res.jsonp( { data: { overview: rows } } );
 			res.end();
