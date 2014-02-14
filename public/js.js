@@ -1,5 +1,7 @@
 
-var apiurl = 'http://dev.ql.leeto.fi/';
+var apiurl = '/';
+//var apiurl = 'http://ql.leeto.fi/';
+//var apiurl = 'http://ql.l.leeto.fi/';
 
 $( document ).ready( function() {
 
