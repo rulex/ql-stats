@@ -3,9 +3,9 @@
 
 	<div class="row-fluid">
 
-		<p><b>Total</b>: {{ sum( overview.data.overview ) | number }} games</p>
+		<p><b>Total</b>: {{ sum( overview.data.overview, 'MATCHES_PLAYED' ) | number }} games, {{ ( date-sum( overview.data.overview, 'GAME_LENGTH' )*1000 ) | timeago }} play time and a total of {{ sum( overview.data.overview, 'TOTAL_KILLS' ) | number }} kills</p>
 		<div ng-repeat="z in overview.data.overview | orderBy: 'MATCHES_PLAYED': true">
-			<p><b>{{ z.GAME_TYPE }}</b>: {{ z.MATCHES_PLAYED | number }} games, {{ date-z.GAME_LENGTH*1000 | timeago }} play time</p>
+			<p><b>{{ z.GAME_TYPE }}</b>: {{ z.MATCHES_PLAYED | number }} games, {{ date-z.GAME_LENGTH*1000 | timeago }} play time and a total of {{ z.TOTAL_KILLS | number }} kills</p>
 		</div>
 
 	</div>

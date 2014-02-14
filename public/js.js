@@ -75,10 +75,10 @@ function OverviewCtrl( $scope, theLiz, $timeout ) {
 	//$scope.ordercolumn = 'GAME_TIMESTAMP';
 	//$scope.ordertype = true;
 	$scope.date = new Date().getTime();
-	$scope.sum = function( list ) {
+	$scope.sum = function( list, field ) {
 		var total = 0;
 		angular.forEach( list, function( item ) {
-			total += item.MATCHES_PLAYED;
+			total += item[field];
 		} );
 		return total;
 	}
