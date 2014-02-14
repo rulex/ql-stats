@@ -71,7 +71,7 @@ function EmptyCtrl( $scope, $timeout, $routeParams ) {
 }
 function OverviewCtrl( $scope, theLiz, $timeout ) {
 	var lol = theLiz.overview();
-	$scope.gametypes = lol;
+	$scope.overview = lol;
 	//$scope.ordercolumn = 'GAME_TIMESTAMP';
 	//$scope.ordertype = true;
 	$scope.date = new Date().getTime();

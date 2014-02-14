@@ -3,8 +3,8 @@
 
 	<div class="row-fluid">
 
-		<p><b>Total</b>: {{ sum( gametypes.data.gametypes ) | number }} games</p>
-		<div ng-repeat="z in gametypes.data.gametypes | orderBy: 'MATCHES_PLAYED': true">
+		<p><b>Total</b>: {{ sum( overview.data.overview ) | number }} games</p>
+		<div ng-repeat="z in overview.data.overview | orderBy: 'MATCHES_PLAYED': true">
 			<p><b>{{ z.GAME_TYPE }}</b>: {{ z.MATCHES_PLAYED | number }} games, {{ date-z.GAME_LENGTH*1000 | timeago }} play time</p>
 		</div>
 

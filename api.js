@@ -53,6 +53,9 @@ if( cfg.counter.on ) {
 	*/
 }
 
+// cache
+var CACHE = {};
+
 // minify json
 //app.set( 'json spaces', 0 );
 // vs
@@ -610,12 +613,19 @@ app.get( '/api/gametypes', function ( req, res ) {
 } );
 */
 app.get( '/api/overview', function ( req, res ) {
-	sql = 'select GAME_TYPE, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH from Games group by GAME_TYPE order by NULL';
-	db.query( sql, function( err, rows, fields ) {
-		res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
-		res.jsonp( { data: { gametypes: rows } } );
+	if( req.route.path in CACHE ) {
+		res.jsonp( { data: { overview: CACHE[req.route.path].data } } );
 		res.end();
-	} );
+	}
+	else {
+		sql = 'select GAME_TYPE, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH from Games group by GAME_TYPE order by NULL';
+		db.query( sql, function( err, rows, fields ) {
+			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
+			res.jsonp( { data: { overview: rows } } );
+			res.end();
+		} );
+	}
 } );
 app.get( '/api/tags', function ( req, res ) {
 	var sql = 'SELECT id, name, count(*) as tagged_games FROM tags left join game_tags on tags.id=game_tags.tag_id group by id';
