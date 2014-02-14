@@ -339,12 +339,23 @@ app.get( '/api/player/:player', function ( req, res ) {
 } );
 app.get( '/api/games', function ( req, res ) {
 	var sql = 'SELECT * FROM Games order by GAME_TIMESTAMP desc LIMIT 500';
-	db.query( sql, function( err, rows, fields ) {
-		//console.log( rows );
-		res.set( 'Cache-Control', 'public, max-age=' + maxAge_api_long );
-		res.jsonp( { data: { games: rows } } );
+	if( req.route.path in CACHE ) {
+		res.jsonp( { data: { games: CACHE[req.route.path].data } } );
 		res.end();
-	} );
+		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) ) {
+			db.query( sql, function( err, rows, fields ) {
+				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+			} );
+		}
+	}
+	else {
+		db.query( sql, function( err, rows, fields ) {
+			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows };
+			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
+			res.jsonp( { data: { games: rows } } );
+			res.end();
+		} );
+	}
 } );
 app.get( '/api/game/:game/player/:player', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
