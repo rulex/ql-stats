@@ -500,7 +500,7 @@ app.get( '/api/owner/:owner', function ( req, res ) {
 	//sql[4] = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
 	db.query( sql, function( err, rows, fields ) {
 		res.set( 'Cache-Control', 'public, max-age=' + maxAge_api_long );
-		res.jsonp( { data: { owner: rows } } );
+		res.jsonp( { data: { owner: rows[0] } } );
 		res.end();
 	} );
 } );
