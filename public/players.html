@@ -5,6 +5,7 @@
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
+					<th><a href="" ng-click="ordercolumn='PLAYER_CLAN'; ordertype=!ordertype">PLAYER_CLAN</a></th>
 					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
 					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
 					<th><a href="" ng-click="ordercolumn='SCORE_SUM'; ordertype=!ordertype">SCORE_SUM</a></th>
@@ -16,7 +17,11 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
-					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
+					<td>
+						<img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" />
+						<a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a>
+					</td>
+					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
 					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
 					<td>{{ z.SCORE_SUM | number }}</td>
