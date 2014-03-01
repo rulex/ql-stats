@@ -64,8 +64,8 @@ var maxAge_public, maxAge_api;
 app.configure( 'development', function() {
 	//db = require( 'mongoskin').db( 'localhost:27017/bands' );
 	maxAge_public = 0;
-	maxAge_api = 0;
-	maxAge_api_long = 0;
+	maxAge_api = 60*1000;
+	maxAge_api_long = 60*1000;
 } );
 
 app.configure( 'production', function() {
@@ -323,16 +323,17 @@ app.get( '/api/games', function ( req, res ) {
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { games: CACHE[req.route.path].data } } );
 		res.end();
-		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) && !CACHE[req.route.path].fetching ) {
+		if( CACHE[req.route.path].ts < new Date().getTime() &&
+			!CACHE[req.route.path].fetching ) {
 			CACHE[req.route.path].fetching = true;
 			db.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
+				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
 			} );
 		}
 	}
 	else {
 		db.query( sql, function( err, rows, fields ) {
-			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
+			CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
 			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 			res.jsonp( { data: { games: rows } } );
 			res.end();
@@ -401,16 +402,17 @@ app.get( '/api/owners', function ( req, res ) {
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { owners: CACHE[req.route.path].data } } );
 		res.end();
-		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) && !CACHE[req.route.path].fetching ) {
+		if( CACHE[req.route.path].ts < new Date().getTime() &&
+			!CACHE[req.route.path].fetching ) {
 			CACHE[req.route.path].fetching = true;
 			db.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
+				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
 			} );
 		}
 	}
 	else {
 		db.query( sql, function( err, rows, fields ) {
-			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
+			CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
 			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 			res.jsonp( { data: { owners: rows } } );
 			res.end();
@@ -601,16 +603,17 @@ app.get( '/api/overview', function ( req, res ) {
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { overview: CACHE[req.route.path].data } } );
 		res.end();
-		if( CACHE[req.route.path].ts > ( new Date().getTime() + maxAge_api_long ) && !CACHE[req.route.path].fetching ) {
+		if( CACHE[req.route.path].ts < new Date().getTime() &&
+			!CACHE[req.route.path].fetching ) {
 			CACHE[req.route.path].fetching = true;
 			db.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
+				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
 			} );
 		}
 	}
 	else {
 		db.query( sql, function( err, rows, fields ) {
-			CACHE[req.route.path] = { ts: new Date().getTime(), data: rows, fetching: false };
+			CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
 			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 			res.jsonp( { data: { overview: rows } } );
 			res.end();
@@ -676,6 +679,16 @@ app.get( '/api/tag/:tag/players', function ( req, res ) {
 		res.jsonp( { data: { players: rows, more: 'less' } } );
 		res.end();
 	} );
+} );
+app.get( '/api/status/cache', function ( req, res ) {
+	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
+	var _cache = [];
+	var now = new Date().getTime();
+	for( var i in CACHE ) {
+		_cache.push( { route: i, ts: CACHE[i].ts, fetching: CACHE[i].fetching, diff: CACHE[i].ts - now } );
+	}
+	res.jsonp( { now: now, cached: _cache } );
+	res.end();
 } );
 app.get( '/status', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
