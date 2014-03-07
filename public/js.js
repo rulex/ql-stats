@@ -3,38 +3,6 @@ var apiurl = '/';
 //var apiurl = 'http://ql.leeto.fi/';
 //var apiurl = 'http://ql.l.leeto.fi/';
 
-$( document ).ready( function() {
-
-	$( "#player_search" ).autocomplete( {
-		source: function( request, response ) {
-			$.ajax( {
-				url: "api/search/players/" + request.term + '/',
-				dataType: "jsonp",
-				success: function( data ) {
-					response( $.map( data.data.players, function( item ) {
-						return {
-							//'<div><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="' + item.PLAYER_COUNTRY + '" /> ' +
-							label:  item.PLAYER_NICK
-						}
-					} ) );
-				}
-			} );
-		},
-		minLength: 1,
-		select: function( event, ui ) {
-			console.log( ui.item ?  "Selected: " + ui.item.label : "Nothing selected, input was " + this.value );
-		},
-		open: function() {
-			//$( this ).removeClass( "ui-corner-all" ).addClass( "ui-corner-top" );
-		},
-		close: function() {
-			//$( this ).removeClass( "ui-corner-top" ).addClass( "ui-corner-all" );
-		}
-	} );
-
-} );
-
-
 angular.module( 'liz', ['lizzy'] )
 .config( ['$routeProvider', function( $routeProvider ) {
 	$routeProvider.
@@ -154,19 +122,24 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.ordercolumn = 'GAME_TIMESTAMP';
 	$scope.ordertype = true;
 	$scope.date = new Date().getTime();
+	$scope.$on( 'Update', function( e ) {
+		console.log( e );
+		console.log( p );
+		//$( '#player_update_btn' ).attr( 'disabled', 'disabled' );
+		//console.log( $scope.player.$$v.data.player.PLAYER_NICK ); // NICE!
+		$scope.player_updated = theLiz.player_update( p );
+	} );
 }
 function PlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.page = parseInt( $routeParams.page );
-	var lol = theLiz.players( $scope.page );
-	$scope.players = lol;
+	//var lol = theLiz.players( $scope.page );
+	//$scope.players = lol;
 	$scope.date = new Date().getTime();
 	$scope.ordercolumn = 'KILLS';
 	$scope.ordertype = true;
-	var range = [];
-	for( var i=0 ; i < $scope.players.total ; i++ ) {
-		range.push( i );
-	}
-	$scope.range = range;
+	$scope.$on( 'Search', function() {
+		$scope.players = theLiz.players_search( $( '#players_search' ).val() );
+	} );
 }
 function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var lol = theLiz.owners();
@@ -418,6 +391,16 @@ factory( 'theLiz', function( $http ) {
 	}
 	theLiz.tagplayers = function( t ) {
 		return $http( { url: apiurl + 'api/tag/' + t + '/players' + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.players_search = function( p ) {
+		return $http( { url: apiurl + 'api/search/players_with_details/' + p + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+			return new theLiz( response.data );
+		} );
+	}
+	theLiz.player_update = function( p ) {
+		return $http( { url: apiurl + 'api/player/' + p + '/update/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			return new theLiz( response.data );
 		} );
 	}
