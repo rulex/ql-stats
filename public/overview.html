@@ -1,13 +1,38 @@
 
-<div class="row-fluid">
+<div class="container">
 
-	<div class="row-fluid">
+	<div class="row">
+		<div class="col-md-12">
 
-		<p><b>Total</b>: {{ sum( overview.data.overview, 'MATCHES_PLAYED' ) | number }} games, {{ ( date-sum( overview.data.overview, 'GAME_LENGTH' )*1000 ) | timeago }} play time and a total of {{ sum( overview.data.overview, 'TOTAL_KILLS' ) | number }} kills</p>
-		<div ng-repeat="z in overview.data.overview | orderBy: 'MATCHES_PLAYED': true">
-			<p><b>{{ z.GAME_TYPE }}</b>: {{ z.MATCHES_PLAYED | number }} games, {{ date-z.GAME_LENGTH*1000 | timeago }} play time and a total of {{ z.TOTAL_KILLS | number }} kills</p>
+		<table class="table table-condensed table-striped ">
+			<thead>
+				<tr>
+					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
+					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
+					<th><a href="" ng-click="ordercolumn='TOTAL_KILLS'; ordertype=!ordertype">KILLS</a></th>
+					<th><a href="" ng-click="ordercolumn='GAME_LENGTH'; ordertype=!ordertype">GAME_LENGTH</a></th>
+					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>Total</td>
+					<td>Total</td>
+					<td>{{ sum( overview.data.overview, 'TOTAL_KILLS' ) | number }}</td>
+					<td>{{ ( date-sum( overview.data.overview, 'GAME_LENGTH' )*1000 ) | timeago }}</td>
+					<td>{{ sum( overview.data.overview, 'MATCHES_PLAYED' ) | number }}</td>
+				</tr>
+				<tr ng-repeat="z in overview.data.overview | orderBy:ordercolumn:ordertype">
+					<td><img style="float: left;" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013071601.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" /></td>
+					<td>{{ z.GAME_TYPE }}</td>
+					<td>{{ z.TOTAL_KILLS | number }}</td>
+					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>
+					<td>{{ z.MATCHES_PLAYED | number }}</td>
+				</tr>
+			</tbody>
+		</table>
+
 		</div>
-
 	</div>
 
 </div>
