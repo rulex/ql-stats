@@ -620,6 +620,15 @@ app.get( '/api/overview', function ( req, res ) {
 		} );
 	}
 } );
+app.get( '/api/gametype/:gametype', function ( req, res ) {
+	var gametype = mysql_real_escape_string( req.params.gametype );
+	var sql = 'SELECT GAME_TYPE, count(*) as MATCHES_PLAYED, avg( GAME_LENGTH ) as GAME_LENGTH, avg( NUM_PLAYERS ) as NUM_PLAYERS from Games where GAME_TYPE="'+ gametype +'" group by GAME_TYPE';
+	db.query( sql, function( err, rows, fields ) {
+		res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
+		res.jsonp( { data: { gametypes: rows } } );
+		res.end();
+	} );
+} );
 app.get( '/api/tags', function ( req, res ) {
 	var sql = 'SELECT id, name, count(*) as tagged_games FROM tags left join game_tags on tags.id=game_tags.tag_id group by id';
 	db.query( sql, function( err, rows, fields ) {
@@ -685,9 +694,9 @@ app.get( '/api/status/cache', function ( req, res ) {
 	var _cache = [];
 	var now = new Date().getTime();
 	for( var i in CACHE ) {
-		_cache.push( { route: i, ts: CACHE[i].ts, fetching: CACHE[i].fetching, diff: CACHE[i].ts - now } );
+		_cache.push( { route: i, ts: CACHE[i].ts, diff: CACHE[i].ts - now } );
 	}
-	res.jsonp( { now: now, cached: _cache } );
+	res.jsonp( { now: now, size: roughSizeOfObject( CACHE ), cached: _cache } );
 	res.end();
 } );
 app.get( '/status', function ( req, res ) {
@@ -1240,5 +1249,31 @@ function get_game( game_public_id, requestCallback, res ) {
 				requestCallback.requestComplete( true );
 		}
 	} );
+}
+
+// 
+function roughSizeOfObject( object ) {
+	var objectList = [];
+	var stack = [ object ];
+	var bytes = 0;
+	while ( stack.length ) {
+		var value = stack.pop();
+		if ( typeof value === 'boolean' ) {
+			bytes += 4;
+		}
+		else if ( typeof value === 'string' ) {
+			bytes += value.length * 2;
+		}
+		else if ( typeof value === 'number' ) {
+			bytes += 8;
+		}
+		else if ( typeof value === 'object' && objectList.indexOf( value ) === -1) {
+			objectList.push( value );
+			for( i in value ) {
+				stack.push( value[ i ] );
+			}
+		}
+	}
+	return bytes;
 }
 
