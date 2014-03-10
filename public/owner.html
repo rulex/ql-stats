@@ -1,7 +1,7 @@
 
 <div class="row-fluid">
 
-	<div class="span6 well">
+	<div class="col-md-6 well">
 		<h3>{{ owner.data.owner.OWNER }} server owner</h3>
 		<table class="table table-condensed table-striped ">
 			<tbody>
@@ -15,6 +15,11 @@
 				</tr>
 			</tbody>
 		</table>
+	</div>
+
+	<div class="col-md-6 ">
+		<a class="btn btn-primary" href="#/owner/{{ owner.data.owner.OWNER }}/games">Games</a>
+		<a class="btn btn-primary" href="#/owner/{{ owner.data.owner.OWNER }}/players">Players</a>
 	</div>
 
 	<!--
@@ -57,6 +62,7 @@
 
 </div>
 
+<!--
 <div class="row-fluid">
 
 	<div class="span6 well">
@@ -123,3 +129,5 @@
 	</div>
 
 </div>
+	-->
+
