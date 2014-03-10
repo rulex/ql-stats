@@ -1,35 +1,25 @@
 
 <div class="row-fluid">
-	<div class="span12 well">
-		Server owners
-		<table class="table table-condensed table-striped ">
+
+	<div class="col-md-12">
+		<table id="table_owners" class="table table-condensed table-striped ">
 			<thead>
 				<tr>
-					<th><a href="" ng-click="ordercolumn='OWNER'; ordertype=!ordertype">OWNER</a></th>
-					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_LENGTH_SUM'; ordertype=!ordertype">GAME_LENGTH_SUM</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_LENGTH_AVG'; ordertype=!ordertype">GAME_LENGTH_AVG</a></th>
-					<th><a href="" ng-click="ordercolumn='TOTAL_KILLS'; ordertype=!ordertype">TOTAL_KILLS</a></th>
-					<th><a href="" ng-click="ordercolumn='AVG_ACC'; ordertype=!ordertype">AVG_ACC</a></th>
-					<th><a href="" ng-click="ordercolumn='duel'; ordertype=!ordertype">duel</a></th>
-					<th><a href="" ng-click="ordercolumn='tdm'; ordertype=!ordertype">tdm</a></th>
-					<th><a href="" ng-click="ordercolumn='ca'; ordertype=!ordertype">ca</a></th>
+					<th data-dynatable-column="OWNER">OWNER</th>
+					<th data-dynatable-column="MATCHES_PLAYED">MATCHES_PLAYED</th>
+					<th data-dynatable-column="GAME_LENGTH_SUM">GAME_LENGTH_SUM</th>
+					<th data-dynatable-column="GAME_LENGTH_AVG">GAME_LENGTH_AVG</th>
+					<th data-dynatable-column="TOTAL_KILLS">TOTAL_KILLS</th>
+					<th data-dynatable-column="AVG_ACC">AVG_ACC</th>
+					<th data-dynatable-column="duel">duel</th>
+					<th data-dynatable-column="tdm">tdm</th>
+					<th data-dynatable-column="ca">ca</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in owners.data.owners | orderBy:ordercolumn:ordertype">
-					<td><a href="#/owner/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
-					<td>{{ z.MATCHES_PLAYED | number }}</td>
-					<td>{{ date-z.GAME_LENGTH_SUM*1000 | timeago }}</td>
-					<td>{{ date-z.GAME_LENGTH_AVG*1000 | timeago }}</td>
-					<td>{{ z.TOTAL_KILLS | number }}</td>
-					<td>{{ z.AVG_ACC | number:2 }}</td>
-					<td>{{ z.duel | number }}</td>
-					<td>{{ z.tdm | number }}</td>
-					<td>{{ z.ca | number }}</td>
-				</tr>
 			</tbody>
 		</table>
 	</div>
+
 </div>
 
