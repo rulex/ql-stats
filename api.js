@@ -328,7 +328,7 @@ app.get( '/api/player/:player', function ( req, res ) {
 	} );
 } );
 app.get( '/api/games', function ( req, res ) {
-	var sql = 'SELECT * FROM Games order by GAME_TIMESTAMP desc LIMIT 100';
+	var sql = 'SELECT * FROM Games order by GAME_TIMESTAMP desc LIMIT 1000';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { games: CACHE[req.route.path].data } } );
 		res.end();
