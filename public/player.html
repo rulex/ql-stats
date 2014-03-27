@@ -35,38 +35,28 @@
 
 	</div>
 
-	<div class="col-md-6 ">
+	<div class="col-md-6 well">
 
 		<div class="row-fluid"><h3>Games</h3> </div>
-		<table class="table table-condensed table-striped well">
+		<table id="table_player_games" class="table table-condensed">
 			<thead>
 				<tr>
-					<th><a href="" ng-click="ordercolumn='PUBLIC_ID'; ordertype=!ordertype">PUBLIC_ID</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_TIMESTAMP'; ordertype=!ordertype">GAME_TIMESTAMP</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
-					<th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">MAP</a></th>
-					<th title="DAMAGE_DEALT_PER_SEC"><a href="" ng-click="ordercolumn='DAMAGE_DEALT_PER_SEC_AVG'; ordertype=!ordertype">DD/s</a></th>
-					<th><a href="" ng-click="ordercolumn='OWNER'; ordertype=!ordertype">OWNER</a></th>
+					<th data-dynatable-column="PUBLIC_ID">PUBLIC_ID</th>
+					<th data-dynatable-column="GAME_TYPE" title="GAME_TYPE">GT</th>
+					<th data-dynatable-column="PLAYER_CLAN" title="PLAYER_CLAN">C</th>
+					<th data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
+					<th data-dynatable-column="MAP">MAP</th>
+					<th data-dynatable-column="OWNER">OWNER</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in games.data.games | orderBy:ordercolumn:ordertype">
-					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
-					<td>{{ z.GAME_TIMESTAMP *1000 | date:'yyyy-MM-dd HH:mm:ss' }} </td>
-					<td>
-							<img style="float: left;" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013071601.0.png" class="gameicon" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" />
-						<div style="height: 14px; float: left;">
-							<div class="{{ z.RULESET | ruleset }}"></div>
-							<div class="{{ z.PREMIUM | premium }}"> </div>
-							<div class="{{ z.RANKED | ranked }}"></div>
-						</div>
-					</td>
-					<td><a href="#/map/{{ z.MAP }}"><img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ z.MAP }}_v2011071903.0.jpg" alt="{{ z.MAP }}" title="{{ z.MAP }}" style="height:42px;width:56px;border-width:0px;"></a></td>
-					<td>{{ z.DAMAGE_DEALT_PER_SEC_AVG | number:2 }}</td>
-					<td><a href="#/player/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
-				</tr>
 			</tbody>
 		</table>
+		<div class="row" id="table_player_games_">
+			<div class="col-lg-1 col-center">
+				<div class="loading"></div>
+			</div>
+		</div>
 	</div>
 <!--
 	-->

@@ -3,7 +3,7 @@
 
 	<div class="col-md-12 ">
 
-		<table class="table table-condensed table-striped ">
+		<table id="table_games" class="table table-condensed table-striped ">
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='PUBLIC_ID'; ordertype=!ordertype">PUBLIC_ID</a></th>
@@ -18,9 +18,9 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in games.data.games | orderBy:ordercolumn:ordertype">
-					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
+					<td><a href="#/games/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
 					<td>
-							<img style="float: left;" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013071601.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" />
+							<img style="float: left;" src="http://cdn.quakelive.com/web/2013121709/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013121709.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" />
 						<div style="height: 14px; float: left;">
 							<div class="{{ z.PREMIUM | premium }}"> </div>
 							<div class="{{ z.RANKED | ranked }}"></div>
@@ -32,7 +32,7 @@
 							<img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ z.MAP }}_v2011071903.0.jpg" alt="{{ z.MAP }}" title="{{ z.MAP }}" style="height:42px;width:56px;border-width:0px;" />
 						</a>
 					</td>
-					<td><a href="#/owner/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
+					<td><a href="#/owners/{{ z.OWNER }}">{{ z.OWNER }}</a></td>
 					<td>{{ z.TOTAL_KILLS }}</td>
 					<td>{{ z.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td>
 					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>

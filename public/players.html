@@ -2,9 +2,9 @@
 <div class="row-fluid">
 	<div class="col-sm-12">
 
-		<div ng-show="showsearch">
+		<div ng-show="showsearch" class="">
 			<form ng:submit="$emit('Search')">
-				<input placeholder="Search player" type="text" class="input" id="players_search" />
+				<input placeholder="Search player" type="text" class="form-control" id="players_search" />
 			</form>
 		</div>
 
@@ -27,7 +27,7 @@
 				<tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
 					<td>
 						<img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" />
-						<a href="#/{{theurl}}player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a>
+						<a href="#/{{theurl}}players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a>
 					</td>
 					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>
