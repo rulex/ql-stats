@@ -15,19 +15,19 @@
 		<link href="jquery.dynatable.css" rel="stylesheet">
 	</head>
 	<body class="container">
-	<a href="https://github.com/rulex/ql-stats"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+	<a href="https://github.com/rulex/ql-stats"><img style="position: absolute; top: 50px; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
 	<!--
 	-->
 		<div class="row">
-			<div class="navbar-nav">
+			<div class="navbar-nav navbar-inverse navbar-fixed-top">
 				<ul class="nav navbar-nav">
-					<li><a class="" href="#"><b>overview</b></a></li>
-					<li><a class="" href="#/games"><b>games</b></a></li>
-					<li><a class="" href="#/players"><b>players</b></a></li>
-					<li><a class="" href="#/owners"><b>owners</b></a></li>
+					<li><a class="" href="#">overview</a></li>
+					<li><a class="" href="#/games">games</a></li>
+					<li><a class="" href="#/players">players</a></li>
+					<li><a class="" href="#/owners">owners</a></li>
 					<!--
 					-->
-					<li><a class="" href="#/tags"><b>tags</b></a></li>
+					<li><a class="" href="#/tags">tags</a></li>
 					<!--
 					<li><a class="" href="#/clans"><b>clans</b></a></li>
 					<li><a class="" href="#/maps"><b>maps</b></a></li>
@@ -40,9 +40,10 @@
 				-->
 			</div>
 		</div>
+		<div style="margin-top: 60px; margin-bottom: 10px;" id="current_url"> </div>
 		<hr />
 		<div class="row">
-			<div ng-view class="col-md-12"></div>
+			<div ng-view class="col-md-12 small"></div>
 		</div>
 		<!--
 		-->
