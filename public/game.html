@@ -24,21 +24,21 @@
 		</div>
 		<div class="span5">
 			<table class="table table-condensed table-bordered">
-				<tr> <td>GAME:</td> <td><a href="#/game/{{ game.data.game.PUBLIC_ID }}">{{ game.data.game.PUBLIC_ID }}</a></td> </tr>
-				<tr> <td>OWNER:</td> <td><a href="#/owner/{{ game.data.game.OWNER }}">{{ game.data.game.OWNER }}</a></td> </tr>
+				<tr> <td>GAME:</td> <td><a href="#/games/{{ game.data.game.PUBLIC_ID }}">{{ game.data.game.PUBLIC_ID }}</a></td> </tr>
+				<tr> <td>OWNER:</td> <td><a href="#/owners/{{ game.data.game.OWNER }}">{{ game.data.game.OWNER }}</a></td> </tr>
 				<tr> <td>TIMESTAMP:</td> <td>{{ game.data.game.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td> </tr>
 				<tr> <td>DURATION:</td> <td>{{ date-game.data.game.GAME_LENGTH*1000 | timeago }}</td> </tr>
-				<tr> <td>MOST ACCURATE</td> <td>{{ game.data.game.MOST_ACCURATE_NUM | number }}%<a class="pull-right" href="#/player/{{ game.data.game.MOST_ACCURATE_NICK }}">{{ game.data.game.MOST_ACCURATE_NICK }}</a> </td></tr>
+				<tr> <td>MOST ACCURATE</td> <td>{{ game.data.game.MOST_ACCURATE_NUM | number }}%<a class="pull-right" href="#/players/{{ game.data.game.MOST_ACCURATE_NICK }}">{{ game.data.game.MOST_ACCURATE_NICK }}</a> </td></tr>
 			</table>
 		</div>
 		<div class="span5">
 			<table class="table table-condensed table-bordered">
-				<tr><td>MOST DAMAGE DELIVERED</td><td>{{ game.data.game.DMG_DELIVERED_NUM | number }}<a class="pull-right" href="#/player/{{ game.data.game.DMG_DELIVERED_NICK }}">{{ game.data.game.DMG_DELIVERED_NICK }}</a> </td></tr>
-				<tr><td>MOST DAMAGE TAKEN</td><td>{{ game.data.game.DMG_TAKEN_NUM | number }}<a class="pull-right" href="#/player/{{ game.data.game.DMG_TAKEN_NICK }}">{{ game.data.game.DMG_TAKEN_NICK }}</a> </td></tr>
-				<tr><td>MOST DEATHS</td><td>{{ game.data.game.MOST_DEATHS_NUM | number }}<a class="pull-right" href="#/player/{{ game.data.game.MOST_DEATHS_NICK }}">{{ game.data.game.MOST_DEATHS_NICK }}</a> </td></tr>
-				<tr><td>LEAST DEATHS</td><td>{{ game.data.game.LEAST_DEATHS_NUM | number }}<a class="pull-right" href="#/player/{{ game.data.game.LEAST_DEATHS_NICK }}">{{ game.data.game.LEAST_DEATHS_NICK }}</a> </td></tr>
-				<tr><td>FIRST SCORER</td><td>{{ game.data.game.FIRST_SCORER | number }}<a class="pull-right" href="#/player/{{ game.data.game.FIRST_SCORER }}">{{ game.data.game.FIRST_SCORER }}</a> </td></tr>
-				<tr><td>LAST SCORER</td><td>{{ game.data.game.LAST_SCORER | number }}<a class="pull-right" href="#/player/{{ game.data.game.LAST_SCORER }}">{{ game.data.game.LAST_SCORER }}</a> </td></tr>
+				<tr><td>MOST DAMAGE DELIVERED</td><td>{{ game.data.game.DMG_DELIVERED_NUM | number }}<a class="pull-right" href="#/players/{{ game.data.game.DMG_DELIVERED_NICK }}">{{ game.data.game.DMG_DELIVERED_NICK }}</a> </td></tr>
+				<tr><td>MOST DAMAGE TAKEN</td><td>{{ game.data.game.DMG_TAKEN_NUM | number }}<a class="pull-right" href="#/players/{{ game.data.game.DMG_TAKEN_NICK }}">{{ game.data.game.DMG_TAKEN_NICK }}</a> </td></tr>
+				<tr><td>MOST DEATHS</td><td>{{ game.data.game.MOST_DEATHS_NUM | number }}<a class="pull-right" href="#/players/{{ game.data.game.MOST_DEATHS_NICK }}">{{ game.data.game.MOST_DEATHS_NICK }}</a> </td></tr>
+				<tr><td>LEAST DEATHS</td><td>{{ game.data.game.LEAST_DEATHS_NUM | number }}<a class="pull-right" href="#/players/{{ game.data.game.LEAST_DEATHS_NICK }}">{{ game.data.game.LEAST_DEATHS_NICK }}</a> </td></tr>
+				<tr><td>FIRST SCORER</td><td>{{ game.data.game.FIRST_SCORER | number }}<a class="pull-right" href="#/players/{{ game.data.game.FIRST_SCORER }}">{{ game.data.game.FIRST_SCORER }}</a> </td></tr>
+				<tr><td>LAST SCORER</td><td>{{ game.data.game.LAST_SCORER | number }}<a class="pull-right" href="#/players/{{ game.data.game.LAST_SCORER }}">{{ game.data.game.LAST_SCORER }}</a> </td></tr>
 			</table>
 		</div>
 	</div>
@@ -157,8 +157,8 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in game.data.players | orderBy: ordercolumn:ordertype" class="{{ z.TEAM | team }}">
-					<td><a href="#/clan/{{z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
-					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
+					<td><a href="#/clans/{{z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
+					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
 					<td>{{ z.RANK }}</td>
 					<td>{{ z.TEAM }}</td>
 					<td>{{ z.SCORE }}</td>
