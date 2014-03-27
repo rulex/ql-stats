@@ -23,7 +23,8 @@
 					<td>{{ sum( overview.data.overview, 'MATCHES_PLAYED' ) | number }}</td>
 				</tr>
 				<tr ng-repeat="z in overview.data.overview | orderBy:ordercolumn:ordertype">
-					<td><img style="float: left;" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013071601.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" /></td>
+					<td><img style="float: left;" src="http://cdn.quakelive.com/web/2013121709/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013121709.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" /></td>
+							
 					<td>{{ z.GAME_TYPE }}</td>
 					<td>{{ z.TOTAL_KILLS | number }}</td>
 					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>
@@ -31,6 +32,13 @@
 				</tr>
 			</tbody>
 		</table>
+		<!--
+		<div class="row" id="table_player_games_">
+			<div class="col-lg-1 col-center">
+				<div class="loading"></div>
+			</div>
+		</div>
+		-->
 
 		</div>
 	</div>
