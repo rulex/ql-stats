@@ -7,3 +7,5 @@ Properties
 App.config
 QLStats.csproj
 *.csproj*
+jsonfiles/*
+node_modules/*
