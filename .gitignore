@@ -1,2 +1,9 @@
 cfg.json
 games/*
+obj
+bin
+Properties
+*.cs
+App.config
+QLStats.csproj
+*.csproj*
