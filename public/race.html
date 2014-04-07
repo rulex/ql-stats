@@ -20,9 +20,9 @@
       </thead>
       <tbody>
         <tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
-          <td>{{ z.rank | number }}</td>
-          <td>{{ z.player_nick }}</td>
-          <td>{{ z.score | number }}</td>
+          <td>{{ z.RANK | number }}</td>
+          <td>{{ z.PLAYER_NICK }}</td>
+          <td>{{ z.SCORE | number }}</td>
         </tr>
       </tbody>
     </table>

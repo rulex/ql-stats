@@ -883,20 +883,20 @@ app.get('/api/race/:map', function(req, res) {
   var _ruleset = queryObject.ruleset == "vql" ? 1 : 2;
   var _weapons = queryObject.weapons == "off" ? " and (GL_S+PG_S+RL_S)=0" : "";
 
-  sql = "select p2.player_nick,p2.score,min(g2.game_timestamp) game_timestamp"
-  + " from (select p.player_nick,min(score) score"
-  + "   from players p inner join games g on g.public_id=p.public_id "
-  + "   where game_type='race' and map='" + _mapName + "' and ruleset=" + _ruleset + _weapons + " and ranked=1 and quit=0 and score>0 group by p.PLAYER_NICK order by score limit 100) pb "
-  + " inner join players p2 on p2.player_nick=pb.player_nick and p2.score=pb.score"
-  + " inner join games g2 on g2.public_id=p2.public_id"
-  + " group by p2.player_nick,p2.score"
+  sql = "select p2.PLAYER_NICK,p2.SCORE,min(g2.GAME_TIMESTAMP) GAME_TIMESTAMP"
+  + " from (select p.PLAYER_NICK,min(SCORE) SCORE"
+  + "   from Players p inner join Games g on g.PUBLIC_ID=p.PUBLIC_ID "
+  + "   where GAME_TYPE='race' and MAP='" + _mapName + "' and RULESET=" + _ruleset + _weapons + " and RANKED=1 and QUIT=0 and SCORE>0 group by p.PLAYER_NICK order by SCORE limit 100) pb "
+  + " inner join Players p2 on p2.PLAYER_NICK=pb.PLAYER_NICK and p2.SCORE=pb.SCORE"
+  + " inner join Games g2 on g2.PUBLIC_ID=p2.PUBLIC_ID"
+  + " group by p2.PLAYER_NICK,p2.SCORE"
   + " order by 2";
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, function (err, rows, fields) {
       for (var i = 0, c = rows.length; i < c; i++)
-        rows[i].rank = i + 1;
+        rows[i].RANK = i + 1;
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { players: rows, more: 'less', ruleset: _ruleset == 1 ? "vql" : "pql", weapons: _weapons == "" ? "on" : "off" } });
+      res.jsonp({ data: { players: rows, ruleset: _ruleset == 1 ? "vql" : "pql", weapons: _weapons == "" ? "on" : "off" } });
       res.end();
       conn.release();
     });
