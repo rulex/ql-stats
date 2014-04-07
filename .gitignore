@@ -1,14 +1,11 @@
 cfg.json
 games/*
+node_modules/*
 obj
 bin
 Properties
-*.cs
 App.config
-QLStats.csproj
+*.cs
+*.log
 *.csproj*
-jsonfiles/*
-node_modules/*
 cache.json
-http.log
-npm-debug.log
