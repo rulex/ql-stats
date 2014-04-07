@@ -1,0 +1,32 @@
+
+
+<div class="row-fluid">
+  <img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ map }}_v2011071903.0.jpg" alt="{{ map }}" title="{{ map }}" style="height:42px;width:56px;border-width:0px;">
+
+  <a href="#/race/{{ map }}?ruleset=pql&weapons=on">PQL weapons</a> |
+  <a href="#/race/{{ map }}?ruleset=pql&weapons=off">PQL strafe</a> |
+  <a href="#/race/{{ map }}?ruleset=vql&weapons=on">VQL weapons</a> |
+  <a href="#/race/{{ map }}?ruleset=vql&weapons=off">VQL strafe</a>
+  <p></p>
+  <p><b>{{ map }} {{ players.data.ruleset | uppercase }} weapons {{ players.data.weapons | uppercase }}</b></p>
+  <div class="span12 well">
+    <table class="table table-condensed table-striped table-hover">
+      <thead>
+        <tr>
+          <th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">RANK</a></th>
+          <th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
+          <th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">SCORE</a></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
+          <td>{{ z.rank | number }}</td>
+          <td>{{ z.player_nick }}</td>
+          <td>{{ z.score | number }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
