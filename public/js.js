@@ -69,7 +69,8 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/tags/:tag/players', { controller: TagPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/tags/:tag/players/:player', { controller: TagPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags', { controller: TagsCtrl, templateUrl: 'tags.html' } ).
-	when( '/race/:map', { controller: RaceCtrl, templateUrl: 'race.html' }).
+	when('/race', { controller: RaceMapsCtrl, templateUrl: 'racemaps.html' }).
+	when('/race/:map', { controller: RaceCtrl, templateUrl: 'race.html' }).
 	otherwise({ redirectTo: '/' });
 } ] );
 
@@ -429,6 +430,13 @@ function TagPlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	//$scope.thegames = theLiz.owner_games( o );
 	$scope.date = new Date().getTime();
 }
+function RaceMapsCtrl($scope, theLiz, $routeParams, $location, $timeout) {
+  $('#current_url').html(printLocations());
+  var lol = theLiz.racemaps();
+  $scope.racemaps = lol;
+  $scope.ordercolumn = 'MAP';
+  $scope.ordertype = false;
+}
 function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
   $('#current_url').html(printLocations());
   var m = $routeParams.map;
@@ -437,7 +445,7 @@ function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
   var lol = theLiz.race(m, r, w);
   $scope.players = lol;
   $scope.map = m;
-  $scope.ordercolumn = 'rank';
+  $scope.ordercolumn = 'RANK';
   $scope.ordertype = false;
 }
 
@@ -631,6 +639,12 @@ factory( 'theLiz', function( $http ) {
 			if( 'dbug' in parseUrl() ) { console.log( response.data ); }
 			return new theLiz( response.data );
 		} );
+	}
+	theLiz.racemaps = function () {
+	  return $http({ url: apiurl + 'api/race/?callback=JSON_CALLBACK', method: 'JSONP' }).then(function (response) {
+	    if ('dbug' in parseUrl()) { console.log(response.data); }
+	    return new theLiz(response.data);
+	  });
 	}
 	theLiz.race = function (m, ruleset, weapons) {
 	  return $http({ url: apiurl + 'api/race/' + m + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset="+ruleset, method: 'JSONP' }).then(function (response) {

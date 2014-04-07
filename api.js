@@ -876,8 +876,18 @@ app.get( '/status', function ( req, res ) {
 		requests_counter_pub = 0;
 	}
 });
-
-app.get('/api/race/:map', function(req, res) {
+app.get('/api/race', function (req, res) {
+  sql = "select distinct MAP from games where game_type='race' order by 1"; 
+  dbpool.getConnection(function (err, conn) {
+    conn.query(sql, function (err, rows, fields) {
+      res.set('Cache-Control', 'public, max-age=' + http_cache_time);
+      res.jsonp({ data: { maps: rows, more: 'less' } });
+      res.end();
+      conn.release();
+    });
+  });
+});
+app.get('/api/race/:map', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
   var _mapName = mysql_real_escape_string(req.params.map);
   var _ruleset = queryObject.ruleset == "vql" ? 1 : 2;
