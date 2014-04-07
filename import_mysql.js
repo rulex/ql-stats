@@ -10,7 +10,7 @@ var zlib = require('zlib'),
   mysql = require('mysql'),
   async = require('async');
 
-var dir = './jsonfiles/',
+var dir = "../extraQL/data/", //'./jsonfiles/',
   count = 0,
   myjson = "",
   inp,
