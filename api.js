@@ -906,7 +906,7 @@ app.get('/api/race/:map', function (req, res) {
       for (var i = 0, c = rows.length; i < c; i++)
         rows[i].RANK = i + 1;
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { players: rows, ruleset: _ruleset == 1 ? "vql" : "pql", weapons: _weapons == "" ? "on" : "off" } });
+      res.jsonp({ data: { players: rows, more: 'less', ruleset: _ruleset == 1 ? "vql" : "pql", weapons: _weapons == "" ? "on" : "off" } });
       res.end();
       conn.release();
     });
