@@ -881,7 +881,7 @@ app.get('/api/race', function (req, res) {
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, function (err, rows, fields) {
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { maps: rows } });
+      res.jsonp({ data: { maps: rows, more: 'less' } });
       res.end();
       conn.release();
     });

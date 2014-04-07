@@ -69,8 +69,8 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/tags/:tag/players', { controller: TagPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/tags/:tag/players/:player', { controller: TagPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags', { controller: TagsCtrl, templateUrl: 'tags.html' } ).
-	when( '/race', { controller: RaceMapsCtrl, templateUrl: 'racemaps.html' }).
-	when( '/race/:map', { controller: RaceCtrl, templateUrl: 'race.html' }).
+	when('/race', { controller: RaceMapsCtrl, templateUrl: 'racemaps.html' }).
+	when('/race/:map', { controller: RaceCtrl, templateUrl: 'race.html' }).
 	otherwise({ redirectTo: '/' });
 } ] );
 
