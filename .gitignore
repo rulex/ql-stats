@@ -9,3 +9,6 @@ QLStats.csproj
 *.csproj*
 jsonfiles/*
 node_modules/*
+cache.json
+http.log
+npm-debug.log
