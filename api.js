@@ -57,11 +57,11 @@ if( cfg.counter.on ) {
 
 // cache
 // read cfg.json
-var _data = fs.readFileSync( __dirname + '/cache.json' );
 var CACHE = {};
 try {
 	//fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
-	CACHE = JSON.parse( _data );
+  var _data = fs.readFileSync(__dirname + '/cache.json');
+  CACHE = JSON.parse(_data);
 	console.log( 'info', 'Parsed Cache file' );
 }
 catch( err ) {
@@ -875,7 +875,34 @@ app.get( '/status', function ( req, res ) {
 		requests_counter_api = 0;
 		requests_counter_pub = 0;
 	}
-} );
+});
+
+app.get('/api/race/:map', function(req, res) {
+  var queryObject = url.parse(req.url, true).query;
+  var _mapName = mysql_real_escape_string(req.params.map);
+  var _ruleset = queryObject.ruleset == "vql" ? 1 : 2;
+  var _weapons = queryObject.weapons == "off" ? " and (GL_S+PG_S+RL_S)=0" : "";
+
+  sql = "select p2.player_nick,p2.score,min(g2.game_timestamp) game_timestamp"
+  + " from (select p.player_nick,min(score) score"
+  + "   from players p inner join games g on g.public_id=p.public_id "
+  + "   where game_type='race' and map='" + _mapName + "' and ruleset=" + _ruleset + _weapons + " and ranked=1 and quit=0 and score>0 group by p.PLAYER_NICK order by score limit 100) pb "
+  + " inner join players p2 on p2.player_nick=pb.player_nick and p2.score=pb.score"
+  + " inner join games g2 on g2.public_id=p2.public_id"
+  + " group by p2.player_nick,p2.score"
+  + " order by 2";
+  dbpool.getConnection(function (err, conn) {
+    conn.query(sql, function (err, rows, fields) {
+      for (var i = 0, c = rows.length; i < c; i++)
+        rows[i].rank = i + 1;
+      res.set('Cache-Control', 'public, max-age=' + http_cache_time);
+      res.jsonp({ data: { players: rows, more: 'less', ruleset: _ruleset == 1 ? "vql" : "pql", weapons: _weapons == "" ? "on" : "off" } });
+      res.end();
+      conn.release();
+    });
+  });
+});
+
 /*
 app.get( '*', function ( req, res ) {
 	res.sendfile( './public/index.html' );
