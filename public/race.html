@@ -21,7 +21,7 @@
       <tbody>
         <tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
           <td>{{ z.RANK | number }}</td>
-          <td>{{ z.PLAYER_NICK }}</td>
+					<td><a href="#/players/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
           <td>{{ z.SCORE | number }}</td>
         </tr>
       </tbody>
