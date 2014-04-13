@@ -10,6 +10,7 @@ var http = require( 'http' );
 var url = require( 'url' );
 var server = http.createServer( app );
 var zlib = require( 'zlib' );
+var race = require('./racecache.js');
 var allow_update = false;
 
 // read cfg.json
@@ -877,7 +878,7 @@ app.get( '/status', function ( req, res ) {
 	}
 });
 app.get('/api/race', function (req, res) {
-  sql = "select distinct MAP from Games where GAME_TYPE='race' order by 1"; 
+  sql = "select distinct MAP from RacePW order by 1"; 
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, function (err, rows, fields) {
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
@@ -887,26 +888,41 @@ app.get('/api/race', function (req, res) {
     });
   });
 });
-app.get('/api/race/:map', function (req, res) {
+app.get('/api/race/map/:map', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
-  var _mapName = mysql_real_escape_string(req.params.map);
-  var _ruleset = queryObject.ruleset == "vql" ? 1 : 2;
-  var _weapons = queryObject.weapons == "off" ? " and (GL_S+PG_S+RL_S)=0" : "";
+  var _mapName = req.params.map;
+  var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
+  var _weapons = queryObject.weapons == "off" ? 1 : 0;
+  var _limit = parseInt(queryObject.limit);
 
-  sql = "select p2.PLAYER_NICK,p2.SCORE,min(g2.GAME_TIMESTAMP) GAME_TIMESTAMP"
-  + " from (select p.PLAYER_NICK,min(SCORE) SCORE"
-  + "   from Players p inner join Games g on g.PUBLIC_ID=p.PUBLIC_ID "
-  + "   where GAME_TYPE='race' and MAP='" + _mapName + "' and RULESET=" + _ruleset + _weapons + " and RANKED=1 and QUIT=0 and SCORE>0 group by p.PLAYER_NICK order by SCORE limit 100) pb "
-  + " inner join Players p2 on p2.PLAYER_NICK=pb.PLAYER_NICK and p2.SCORE=pb.SCORE"
-  + " inner join Games g2 on g2.PUBLIC_ID=p2.PUBLIC_ID"
-  + " group by p2.PLAYER_NICK,p2.SCORE"
-  + " order by 2";
+  sql = "select MAP,PLAYER_NICK,SCORE,from_unixtime(GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,PUBLIC_ID from Race where MAP=? and MODE=?";
+  if(_limit)
+    sql += " limit " + _limit;
   dbpool.getConnection(function (err, conn) {
-    conn.query(sql, function (err, rows, fields) {
-      for (var i = 0, c = rows.length; i < c; i++)
-        rows[i].RANK = i + 1;
+    conn.query(sql, [_mapName, _ruleset + _weapons], function (err, rows, fields) {
+      if( err ) throw err;
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { players: rows, ruleset: _ruleset == 1 ? "vql" : "pql", weapons: _weapons == "" ? "on" : "off" } });
+      res.jsonp({ data: { ruleset: _ruleset ? "vql" : "pql", weapons: _weapons ? "on" : "off", scores: rows } });
+      res.end();
+      conn.release();
+    });
+  });
+});
+app.get('/api/race/player/:player', function (req, res) {
+  var queryObject = url.parse(req.url, true).query;
+  var _playerNick = req.params.player;
+  var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
+  var _weapons = queryObject.weapons == "off" ? 1 : 0;
+  var _mapName = queryObject.map;
+
+  sql = "select MAP,PLAYER_NICK,SCORE,from_unixtime(GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,PUBLIC_ID from Race where PLAYER_NICK=? and MODE=?";
+  if (queryObject.map)
+    sql += " and MAP=?";
+  dbpool.getConnection(function (err, conn) {
+    conn.query(sql, [_playerNick, _ruleset + _weapons, _mapName], function (err, rows, fields) {
+      if( err ) throw err;
+      res.set('Cache-Control', 'public, max-age=' + http_cache_time);
+      res.jsonp({ data: { ruleset: _ruleset ? "vql" : "pql", weapons: _weapons ? "off" : "on", scores: rows } });
       res.end();
       conn.release();
     });
@@ -1173,7 +1189,7 @@ function get_game( game_public_id, requestCallback, req ) {
 					')';
 			dbpool.getConnection( function( err, conn ) {
 				conn.query( sql1 + sql2, function( err, rows, fields ) {
-					if( err !== null && err.code == 'ER_DUP_ENTRY' ) {
+					if( err && err.code == 'ER_DUP_ENTRY' ) {
 						console.log( err );
 					}
 					else if( err ) { throw err; }
@@ -1318,10 +1334,13 @@ function get_game( game_public_id, requestCallback, req ) {
 						')' );
 				}
 				conn.query( sql3 + sql4.join( ',' ), function( err, rows, fields ) {
-					if( err != null && err.code == 'ER_DUP_ENTRY' ) {
+					if( err && err.code == 'ER_DUP_ENTRY' ) {
 						console.log( err );
 					}
 					else if( err ) { throw err; }
+          if(j.GAME_TYPE == "race") {
+            race.updateMap(conn, j.MAP);
+          }
 				} );
 			}	);
 			if( requestCallback === null ) {
@@ -1334,6 +1353,10 @@ function get_game( game_public_id, requestCallback, req ) {
 				requestCallback.requestComplete( true );
 		}
 	} );
+}
+
+function updateRaceCache(map) {
+  
 }
 
 // 

@@ -69,8 +69,9 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/tags/:tag/players', { controller: TagPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/tags/:tag/players/:player', { controller: TagPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags', { controller: TagsCtrl, templateUrl: 'tags.html' } ).
-	when('/race', { controller: RaceMapsCtrl, templateUrl: 'racemaps.html' }).
-	when('/race/:map', { controller: RaceCtrl, templateUrl: 'race.html' }).
+	when('/race', { controller: RaceCtrl, templateUrl: 'race.html' }).
+	when('/race/map/:map', { controller: RaceMapCtrl, templateUrl: 'racemap.html' }).
+	when('/race/player/:player', { controller: RacePlayerCtrl, templateUrl: 'raceplayer.html' }).
 	otherwise({ redirectTo: '/' });
 } ] );
 
@@ -212,7 +213,7 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		console.log( e );
 		console.log( p );
 		//$( '#player_update_btn' ).attr( 'disabled', 'disabled' );
-		//console.log( $scope.player.$$v.data.player.PLAYER_NICK ); // NICE!
+	  //console.log( $scope.player.$$v.data.player.PLAYER_NICK ); // NICE!
 		$scope.player_updated = theLiz.player_update( p );
 	} );
 }
@@ -430,22 +431,34 @@ function TagPlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	//$scope.thegames = theLiz.owner_games( o );
 	$scope.date = new Date().getTime();
 }
-function RaceMapsCtrl($scope, theLiz, $routeParams, $location, $timeout) {
+function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
   $('#current_url').html(printLocations());
-  var lol = theLiz.racemaps();
+  var lol = theLiz.race();
   $scope.racemaps = lol;
   $scope.ordercolumn = 'MAP';
   $scope.ordertype = false;
+  $scope.showsearch = true;
 }
-function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
+function RaceMapCtrl($scope, theLiz, $routeParams, $location, $timeout) {
   $('#current_url').html(printLocations());
   var m = $routeParams.map;
   var w = $location.search()["weapons"];
   var r = $location.search()["ruleset"];
-  var lol = theLiz.race(m, r, w);
-  $scope.players = lol;
+  var lol = theLiz.racemap(m, r, w);
+  $scope.scores = lol;
   $scope.map = m;
   $scope.ordercolumn = 'RANK';
+  $scope.ordertype = false;
+}
+function RacePlayerCtrl($scope, theLiz, $routeParams, $location, $timeout) {
+  $('#current_url').html(printLocations());
+  var p = $routeParams.player;
+  var w = $location.search()["weapons"];
+  var r = $location.search()["ruleset"];
+  var lol = theLiz.raceplayer(p, r, w);
+  $scope.scores = lol;
+  $scope.player = p;
+  $scope.ordercolumn = 'MAP';
   $scope.ordertype = false;
 }
 
@@ -640,14 +653,20 @@ factory( 'theLiz', function( $http ) {
 			return new theLiz( response.data );
 		} );
 	}
-	theLiz.racemaps = function () {
+	theLiz.race = function () {
 	  return $http({ url: apiurl + 'api/race/?callback=JSON_CALLBACK', method: 'JSONP' }).then(function (response) {
 	    if ('dbug' in parseUrl()) { console.log(response.data); }
 	    return new theLiz(response.data);
 	  });
 	}
-	theLiz.race = function (m, ruleset, weapons) {
-	  return $http({ url: apiurl + 'api/race/' + m + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset="+ruleset, method: 'JSONP' }).then(function (response) {
+	theLiz.racemap = function (m, ruleset, weapons) {
+	  return $http({ url: apiurl + 'api/race/map/' + m + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset="+ruleset, method: 'JSONP' }).then(function (response) {
+	    if ('dbug' in parseUrl()) { console.log(response.data); }
+	    return new theLiz(response.data);
+	  });
+	}
+	theLiz.raceplayer = function (p, ruleset, weapons) {
+	  return $http({ url: apiurl + 'api/race/player/' + p + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset=" + ruleset, method: 'JSONP' }).then(function (response) {
 	    if ('dbug' in parseUrl()) { console.log(response.data); }
 	    return new theLiz(response.data);
 	  });

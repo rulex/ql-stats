@@ -99,3 +99,7 @@ CREATE TABLE `Players`(
 
 -- create table game_tags(tag_id int(11), PUBLIC_ID varchar(36), primary key( tag_id, PUBLIC_ID ) );
 
+DROP TABLE IF EXISTS `Race`;
+CREATE TABLE Race (MODE int not null, MAP varchar(30) not null, SCORE integer not null, PLAYER_NICK varchar(30), RANK integer not null, GAME_TIMESTAMP integer not null) engine=memory;
+CREATE INDEX IX_RaceMap on Race (MAP, MODE, RANK);
+CREATE INDEX IX_RacePlayer on Race (PLAYER_NICK, MODE);
