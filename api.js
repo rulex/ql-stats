@@ -1355,10 +1355,6 @@ function get_game( game_public_id, requestCallback, req ) {
 	} );
 }
 
-function updateRaceCache(map) {
-  
-}
-
 // 
 function roughSizeOfObject( object ) {
 	var objectList = [];
