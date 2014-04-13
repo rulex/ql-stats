@@ -878,7 +878,7 @@ app.get( '/status', function ( req, res ) {
 	}
 });
 app.get('/api/race', function (req, res) {
-  sql = "select distinct MAP from RacePW order by 1"; 
+  sql = "select distinct MAP from Race order by 1"; 
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, function (err, rows, fields) {
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
