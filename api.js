@@ -899,6 +899,7 @@ app.get('/api/race/map/:map', function (req, res) {
   sql = "select MAP,PLAYER_NICK,SCORE,from_unixtime(GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,PUBLIC_ID from Race where MAP=? and MODE=?";
   if(_limit)
     sql += " and (RANK<=? or PLAYER_NICK=?)";
+  sql += " order by RANK";
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, [_mapName, _ruleset + _weapons, _limit, _player], function (err, rows, fields) {
       if( err ) throw err;
@@ -919,6 +920,7 @@ app.get('/api/race/player/:player', function (req, res) {
   sql = "select MAP,PLAYER_NICK,SCORE,from_unixtime(GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,PUBLIC_ID from Race where PLAYER_NICK=? and MODE=?";
   if (queryObject.map)
     sql += " and MAP=?";
+  sql += " order by MAP";
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, [_playerNick, _ruleset + _weapons, _mapName], function (err, rows, fields) {
       if( err ) throw err;
