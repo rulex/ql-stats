@@ -894,12 +894,13 @@ app.get('/api/race/map/:map', function (req, res) {
   var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
   var _weapons = queryObject.weapons == "off" ? 1 : 0;
   var _limit = parseInt(queryObject.limit);
+  var _player = queryObject.player;
 
   sql = "select MAP,PLAYER_NICK,SCORE,from_unixtime(GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,PUBLIC_ID from Race where MAP=? and MODE=?";
   if(_limit)
-    sql += " limit " + _limit;
+    sql += " and (RANK<=? or PLAYER_NICK=?)";
   dbpool.getConnection(function (err, conn) {
-    conn.query(sql, [_mapName, _ruleset + _weapons], function (err, rows, fields) {
+    conn.query(sql, [_mapName, _ruleset + _weapons, _limit, _player], function (err, rows, fields) {
       if( err ) throw err;
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
       res.jsonp({ data: { ruleset: _ruleset ? "vql" : "pql", weapons: _weapons ? "on" : "off", scores: rows } });
