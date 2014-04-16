@@ -1,18 +1,26 @@
 <a href="#/players">Show by player</a>
-<br/>
-<br />
+
+<h1>Race leaders</h1>
 
 <div class="row-fluid">
 	<div class="span12 well">
 		<table class="table table-condensed table-striped table-hover">
 			<thead>
 				<tr>
-					<th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">RACE MAPS</a></th>
+					<th>MAP</th>
+          <th>PQL weapons</th>
+          <th>PQL strafe</th>
+          <th>VQL weapons</th>
+          <th>VQL strafe</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in racemaps.data.maps | orderBy:ordercolumn:ordertype">
-					<td><a href="#/race/maps/{{ z.MAP }}"><img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ z.MAP }}_v2011071903.0.jpg" alt="{{ z.MAP }}" title="{{ z.MAP }}" style="height:42px;width:56px;border-width:0px;"> {{ z.MAP }}</a></td>
+					<td><a href="#/race/maps/{{ z.MAP }}">{{ z.MAP }}</a></td>
+          <td><a href="#/race/players/{{ z.LEADERS[0].PLAYER_NICK }}">{{ z.LEADERS[0].PLAYER_NICK }}</a>: {{ z.LEADERS[0].SCORE }}</td>
+          <td><a href="#/race/players/{{ z.LEADERS[1].PLAYER_NICK }}">{{ z.LEADERS[1].PLAYER_NICK }}</a>: {{ z.LEADERS[1].SCORE }}</td>
+          <td><a href="#/race/players/{{ z.LEADERS[2].PLAYER_NICK }}">{{ z.LEADERS[2].PLAYER_NICK }}</a>: {{ z.LEADERS[2].SCORE }}</td>
+          <td><a href="#/race/players/{{ z.LEADERS[3].PLAYER_NICK }}">{{ z.LEADERS[3].PLAYER_NICK }}</a>: {{ z.LEADERS[3].SCORE }}</td>
 				</tr>
 			</tbody>
 		</table>
