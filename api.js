@@ -61,7 +61,8 @@ if( cfg.counter.on ) {
 var CACHE = {};
 try {
 	//fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
-  var _data = fs.readFileSync(__dirname + '/cache.json');
+	var cachefile = cfg.api.cache.file || __dirname + '/cache.json';
+  var _data = fs.readFileSync( cachefile );
   CACHE = JSON.parse(_data);
 	console.log( 'info', 'Parsed Cache file' );
 }
