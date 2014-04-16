@@ -379,7 +379,7 @@ app.get( '/api/games', function ( req, res ) {
 					conn.release();
 					if( err ) { console.log( err ); }
 					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 						if( err ) { console.log( err ); }
 					} );
 				} );
@@ -393,7 +393,7 @@ app.get( '/api/games', function ( req, res ) {
 				conn.release();
 				if( err ) { console.log( err ); }
 				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 					if( err ) { console.log( err ); }
 				} );
 				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -488,7 +488,7 @@ app.get( '/api/owners', function ( req, res ) {
 			dbpool.getConnection( function( err, conn ) {
 				conn.query( sql, function( err, rows ) {
 					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 						if( err ) { console.log( err ); }
 					} );
 				} );
@@ -500,7 +500,7 @@ app.get( '/api/owners', function ( req, res ) {
 			conn.query( sql, function( err, rows ) {
 				conn.release();
 				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 					if( err ) { console.log( err ); }
 				} );
 				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -716,7 +716,7 @@ app.get( '/api/gametypes', function ( req, res ) {
 			dbpool.getConnection( function( err, conn ) {
 				conn.query( sql, function( err, rows, fields ) {
 					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 						if( err ) { console.log( err ); }
 					} );
 				} );
@@ -727,7 +727,7 @@ app.get( '/api/gametypes', function ( req, res ) {
 		dbpool.getConnection( function( err, conn ) {
 			conn.query( sql, function( err, rows, fields ) {
 				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 					if( err ) { console.log( err ); }
 				} );
 				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -761,7 +761,7 @@ app.get( '/api/overview', function ( req, res ) {
 			dbpool.getConnection( function( err, conn ) {
 				conn.query( sql, function( err, rows, fields ) {
 					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 						if( err ) { console.log( err ); }
 					} );
 				} );
@@ -772,7 +772,7 @@ app.get( '/api/overview', function ( req, res ) {
 		dbpool.getConnection( function( err, conn ) {
 			conn.query( sql, function( err, rows, fields ) {
 				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( __dirname + '/cache.json', JSON.stringify( CACHE ), function( err ) {
+				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
 					if( err ) { console.log( err ); }
 				} );
 				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
