@@ -1,0 +1,32 @@
+
+
+<div class="row-fluid">
+  <a href="#/race/player/{{ player }}?ruleset=pql&weapons=on">PQL weapons</a> |
+  <a href="#/race/player/{{ player }}?ruleset=pql&weapons=off">PQL strafe</a> |
+  <a href="#/race/player/{{ player }}?ruleset=vql&weapons=on">VQL weapons</a> |
+  <a href="#/race/player/{{ player }}?ruleset=vql&weapons=off">VQL strafe</a>
+  <p></p>
+  <p><b><a href="#/players/{{ player }}">{{ player }}</a> - {{ scores.data.ruleset | uppercase }} weapons {{ scores.data.weapons | uppercase }}</b></p>
+  <div class="span12 well">
+    <table class="table table-condensed table-striped table-hover">
+      <thead>
+        <tr>
+          <th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">MAP</a></th>
+          <th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">RANK</a></th>
+          <th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">SCORE</a></th>
+          <th><a href="" ng-click="ordercolumn='GAME_TIMESTAMP'; ordertype=!ordertype">DATE</a></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="z in scores.data.scores | orderBy:ordercolumn:ordertype">
+          <td><a href="#/race/map/{{ z.MAP }}">{{ z.MAP }}</a></td>
+          <td>{{ z.RANK | number }}</td>
+          <td>{{ z.SCORE | number }}</td>
+          <td>{{ z.GAME_TIMESTAMP | date:'yyyy-MM-dd HH:mm' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+

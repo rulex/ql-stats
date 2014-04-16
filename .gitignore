@@ -1,2 +1,11 @@
 cfg.json
 games/*
+node_modules/*
+obj
+bin
+Properties
+App.config
+*.cs
+*.log
+*.csproj*
+cache.json
