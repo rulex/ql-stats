@@ -918,7 +918,9 @@ app.get('/api/race/players/:player', function (req, res) {
   var _weapons = queryObject.weapons == "off" ? 1 : 0;
   var _mapName = queryObject.map;
 
-  sql = "select MAP,PLAYER_NICK,SCORE,from_unixtime(GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,PUBLIC_ID from Race where PLAYER_NICK=? and MODE=?";
+  sql = "select r.MAP,r.PLAYER_NICK,r.SCORE,from_unixtime(r.GAME_TIMESTAMP) GAME_TIMESTAMP,r.RANK,r.PUBLIC_ID,leader.PLAYER_NICK LEADER_NICK,leader.SCORE LEADER_SCORE" +
+    " from Race r inner join Race leader on leader.MAP=r.MAP and leader.MODE=r.mode and leader.RANK=1" +
+    " where r.PLAYER_NICK=? and r.MODE=?";
   if (queryObject.map)
     sql += " and MAP=?";
   sql += " order by MAP";

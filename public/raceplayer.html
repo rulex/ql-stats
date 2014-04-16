@@ -15,6 +15,8 @@
           <th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">RANK</a></th>
           <th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">SCORE</a></th>
           <th><a href="" ng-click="ordercolumn='GAME_TIMESTAMP'; ordertype=!ordertype">DATE</a></th>
+          <th><a href="" ng-click="ordercolumn='LEADER_NICK'; ordertype=!ordertype">LEADER_NICK</a></th>
+          <th><a href="" ng-click="ordercolumn='LEADER_SCORE'; ordertype=!ordertype">LEADER_SCORE</a></th>
         </tr>
       </thead>
       <tbody>
@@ -23,6 +25,8 @@
           <td>{{ z.RANK | number }}</td>
           <td>{{ z.SCORE | number }}</td>
           <td>{{ z.GAME_TIMESTAMP | date:'yyyy-MM-dd HH:mm' }}</td>
+          <td>{{ z.LEADER_NICK }}</td>
+          <td>{{ z.LEADER_SCORE | number }}</td>
         </tr>
       </tbody>
     </table>
