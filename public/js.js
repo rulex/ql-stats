@@ -70,8 +70,8 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/tags/:tag/players/:player', { controller: TagPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags', { controller: TagsCtrl, templateUrl: 'tags.html' } ).
 	when('/race', { controller: RaceCtrl, templateUrl: 'race.html' }).
-	when('/race/map/:map', { controller: RaceMapCtrl, templateUrl: 'racemap.html' }).
-	when('/race/player/:player', { controller: RacePlayerCtrl, templateUrl: 'raceplayer.html' }).
+	when('/race/maps/:map', { controller: RaceMapCtrl, templateUrl: 'racemap.html' }).
+	when('/race/players/:player', { controller: RacePlayerCtrl, templateUrl: 'raceplayer.html' }).
 	otherwise({ redirectTo: '/' });
 } ] );
 
@@ -660,13 +660,13 @@ factory( 'theLiz', function( $http ) {
 	  });
 	}
 	theLiz.racemap = function (m, ruleset, weapons) {
-	  return $http({ url: apiurl + 'api/race/map/' + m + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset="+ruleset, method: 'JSONP' }).then(function (response) {
+	  return $http({ url: apiurl + 'api/race/maps/' + m + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset="+ruleset, method: 'JSONP' }).then(function (response) {
 	    if ('dbug' in parseUrl()) { console.log(response.data); }
 	    return new theLiz(response.data);
 	  });
 	}
 	theLiz.raceplayer = function (p, ruleset, weapons) {
-	  return $http({ url: apiurl + 'api/race/player/' + p + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset=" + ruleset, method: 'JSONP' }).then(function (response) {
+	  return $http({ url: apiurl + 'api/race/players/' + p + '/?callback=JSON_CALLBACK&weapons=' + weapons + "&ruleset=" + ruleset, method: 'JSONP' }).then(function (response) {
 	    if ('dbug' in parseUrl()) { console.log(response.data); }
 	    return new theLiz(response.data);
 	  });

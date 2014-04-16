@@ -888,7 +888,7 @@ app.get('/api/race', function (req, res) {
     });
   });
 });
-app.get('/api/race/map/:map', function (req, res) {
+app.get('/api/race/maps/:map', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
   var _mapName = req.params.map;
   var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
@@ -910,7 +910,7 @@ app.get('/api/race/map/:map', function (req, res) {
     });
   });
 });
-app.get('/api/race/player/:player', function (req, res) {
+app.get('/api/race/players/:player', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
   var _playerNick = req.params.player;
   var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
