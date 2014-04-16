@@ -879,11 +879,23 @@ app.get( '/status', function ( req, res ) {
 	}
 });
 app.get('/api/race', function (req, res) {
-  sql = "select distinct MAP from Race order by 1"; 
+  sql = "select MAP,MODE,PLAYER_NICK,SCORE from Race where RANK=1 order by 1"; 
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, function (err, rows, fields) {
+      var mapDict = {};
+      var maps = [];
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { maps: rows, more: 'less' } });
+      for (var i = 0, c = rows.length; i < c; i++) {
+        var row = rows[i];
+        var map = mapDict[row.MAP];
+        if (!map) {
+          map = { MAP: row.MAP, LEADERS: [] }
+          mapDict[row.MAP] = map;
+          maps.push(map);
+        }
+        map.LEADERS[row.MODE] = { MODE: row.MODE, PLAYER_NICK: row.PLAYER_NICK, SCORE: row.SCORE };
+      }
+      res.jsonp({ data: { maps: maps, more: 'less' } });
       res.end();
       conn.release();
     });
