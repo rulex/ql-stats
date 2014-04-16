@@ -1,10 +1,21 @@
 
 
 var cluster = require('cluster');
+var fs = require('fs');
 
 if (cluster.isMaster) {
 	// this is the master control process
 	console.log("Control process running: PID=" + process.pid);
+	// write PID to file
+	fs.writeFile( "cluster.pid", process.pid, function( err ) {
+		if( err ) {
+			console.log( err );
+		}
+		else {
+			console.log( "The PID file saved!" );
+		}
+	} );
+
 	// fork as many times as we have CPUs
 	var numCPUs = require("os").cpus().length;
 	for (var i = 0; i < numCPUs; i++) {

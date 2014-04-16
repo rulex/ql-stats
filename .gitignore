@@ -1,4 +1,5 @@
 cfg.json
+cluster.pid
 games/*
 node_modules/*
 obj
