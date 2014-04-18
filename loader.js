@@ -15,6 +15,7 @@ var LOGLEVEL = log4js.levels.INFO;
 
 var __dirname; // externally defined
 var _logger;
+var _config;
 var _dbpool;
 var _conn;
 var _cache;
@@ -25,32 +26,34 @@ var _cookieJar;
 var _adaptivePollDelaySec = 128; // must be power of 2, will be cut in half after first (=full) batch
 var _lastGameTimestamp = "";
 
+var _replayJsonStats;
+
 main();
 
 function main() {
-  Q.longStackSupport = true;
   var data = fs.readFileSync(__dirname + '/cfg.json');
-  var cfg = JSON.parse(data);
-  cfg.mysql_db.database = "qlstats2";
+  _config = JSON.parse(data);
+  _config.mysql_db.database = "qlstats2";
 
-  _logger = log4js.getLogger();
+  Q.longStackSupport = true;
+  _logger = log4js.getLogger("loader");
   _logger.setLevel(LOGLEVEL);
 
-  _dbpool = mysql.createPool(cfg.mysql_db);
+  _dbpool = mysql.createPool(_config.mysql_db);
   createSqlStatements();
   connect().then(initCaches)
-    .then(function () { return processingLoop(cfg.loader.stream); })
+    .then(processingLoop)
     .fail(function (err) { _logger.error(err); })
     .done(function() { _logger.info("completed"); process.exit(); });
 }
 
-function processingLoop(useStream) {
-  if (useStream) {
+function processingLoop() {
+  if (_config.loader.stream) {
     _logger.info("fetching data from live game tracker");
     return loginToQuakeliveWebsite().then(fetchAndProcessJsonInfiniteLoop);
   } else {
-    _logger.info("fetching data from files in ./jsons/ directory");
-    throw new Error("Not Implemented");
+    _logger.info("fetching data from files in " + _config.loader.jsondir + " directory");
+    return loadAndProcessJsonFileLoop();
   }
 }
 
@@ -167,9 +170,9 @@ function processBatch(json) {
 
   // adapt polling rate
   var len = batch.length;
-  if (len < 40 && _adaptivePollDelaySec < 256) // up to ~4.3min
+  if (len < 40 && _adaptivePollDelaySec < 128) // max ~2min
     _adaptivePollDelaySec *= 2;
-  else if (len > 80 && _adaptivePollDelaySec > 16) // down to 16sec
+  else if (len > 80 && _adaptivePollDelaySec > 16) // min 16sec
     _adaptivePollDelaySec /= 2;
   _logger.info("Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec");
 
@@ -183,7 +186,7 @@ function processBatch(json) {
       tasks.push(processGame(game));
     }
   );
-  return Q.allSettled(tasks); //.then(allSettledErrorHandler);
+  return Q.allSettled(tasks);
 }
 
 function sleepBetweenBatches() {
@@ -199,6 +202,58 @@ function allSettledErrorHandler(promises) {
       throw new Error(promise.reason);
   });
   return true;
+}
+
+//==========================================================================================
+// file data feed
+//==========================================================================================
+
+function Stats() {
+  this.inc = function() {
+    ++this.total;
+    ++this.count;
+  }
+  this.reset = function() {
+    this.timestamp = new Date().getTime();
+    this.count = 0;
+  }
+  this.reset();
+  this.total = 0;
+  this.timestamp0 = this.timestamp;
+}
+
+function loadAndProcessJsonFileLoop() {
+  _replayJsonStats = new Stats();
+  setInterval(function() {
+    _logger.info("" + (_replayJsonStats.count/30) + " games/sec (" + _replayJsonStats.total + " total)");
+    _replayJsonStats.reset();
+  }, 30000);
+
+  return Q
+    .nfcall(fs.readdir, _config.loader.jsondir)
+    .then(function (files) {
+      var tasks = files.map(function(file) {
+        return function() { return processFile(file); }
+      });
+      return tasks.reduce(Q.when, Q(undefined));
+    })
+    .then(function () {
+      var secs = (new Date().getTime() - _replayJsonStats.timestamp0) / 1000;
+      _logger.info("Total time: " + secs + " sec for " + _replayJsonStats.total + " games");
+    });
+}
+
+function processFile(file) {
+  if (!file.match(/.json$/))
+    return undefined;
+  return Q
+    .fcall(function () { _logger.debug("Loading " + file); })
+    .then(function() { return Q.nfcall(fs.readFile, _config.loader.jsondir + file); })
+    .then(function (json) {
+      var game = JSON.parse(json);
+      return processGame(game)
+        .then(function () { _replayJsonStats.inc(); });
+    });
 }
 
 //==========================================================================================
