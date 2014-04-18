@@ -7,16 +7,23 @@ var
   fs = require('graceful-fs'),
   mysql = require('mysql2'),
   async = require('async'),
-  Q = require('q'),
-  $ = require('jquery');
+  request = require('request'),
+  log4js = require('log4js'),
+  Q = require('q');
+
+var LOGLEVEL = log4js.levels.INFO;
 
 var __dirname; // externally defined
+var _logger;
 var _dbpool;
 var _conn;
 var _cache;
 var _sqlInsertGame;
 var _sqlInsertGamePlayer;
-var DEBUG = false;
+var _sqlErrorParams; // can be printed from an error handler for debugging
+var _cookieJar;
+var _adaptivePollDelaySec = 128; // must be power of 2, will be cut in half after first (=full) batch
+var _lastGameTimestamp = "";
 
 main();
 
@@ -25,16 +32,31 @@ function main() {
   var data = fs.readFileSync(__dirname + '/cfg.json');
   var cfg = JSON.parse(data);
   cfg.mysql_db.database = "qlstats2";
+
+  _logger = log4js.getLogger();
+  _logger.setLevel(LOGLEVEL);
+
   _dbpool = mysql.createPool(cfg.mysql_db);
-
   createSqlStatements();
-
-  connect()
-    .then(initCaches)
-    .then(loadJson)
-    .then(processJson)
-    .done(function() { process.exit(); });
+  connect().then(initCaches)
+    .then(function () { return processingLoop(cfg.loader.stream); })
+    .fail(function (err) { _logger.error(err); })
+    .done(function() { _logger.info("completed"); process.exit(); });
 }
+
+function processingLoop(useStream) {
+  if (useStream) {
+    _logger.info("fetching data from live game tracker");
+    return loginToQuakeliveWebsite().then(fetchAndProcessJsonInfiniteLoop);
+  } else {
+    _logger.info("fetching data from files in ./jsons/ directory");
+    throw new Error("Not Implemented");
+  }
+}
+
+//==========================================================================================
+// SQL init
+//==========================================================================================
 
 function createSqlStatements() {
   var cols =
@@ -73,7 +95,7 @@ function connect() {
 function initCaches(conn) {
   _conn = conn;
   _cache = {};
-  return Q.allSettled([initCache("Map"), initCache("Clan"), initCache("Player")]);  
+  return Q.allSettled([initCache("Map"), initCache("Clan"), initCache("Player")]);
 }
 
 function initCache(table) {
@@ -83,30 +105,110 @@ function initCache(table) {
       for (var i = 0, c = rows.length; i < c; i++)
         cache[rows[i].NAME.toLowerCase()] = rows[i].ID;
       _cache[table] = cache;
-      console.log(table + " cache: " + cache.count);
-    return cache;
-  });
+      _logger.info(table + " cache: " + cache.count);
+      return cache;
+    });
 }
 
-function loadJson() {
-  var fileName = "00000000.json";
-  return Q
-    .nfcall(fs.readFile, __dirname + "/jsons/" + fileName)
-    .then(function(json) {
-      debug("loaded " + fileName);
-      return JSON.parse(json);
-  });
+//==========================================================================================
+// QL live data feed
+//==========================================================================================
+
+function loginToQuakeliveWebsite() {
+  var defer = Q.defer();
+  _cookieJar = request.jar();
+  request({
+      uri: "https://secure.quakelive.com/user/login",
+      timeout: 10000,
+      method: "POST",
+      form: { submit: "", email: "horst.beham@gmx.at", pass: "5Chd1995rb" },
+      jar: _cookieJar
+    },
+    function(err) {
+      if (err) {
+        _logger.error("Error logging in to quakelive.com: " + err);
+        defer.reject(new Error(err));
+      } else {
+        _logger.info("Logged on to quakelive.com");
+        defer.resolve(_cookieJar);
+      }
+    });
+  return defer.promise;
 }
 
-function processJson(data) {
-  var promises = data.map(function (game) { return processGame(game); });
-  return Q.allSettled(promises).then(function () { console.log("JSON completed"); });
+function fetchAndProcessJsonInfiniteLoop() {
+  return requestJson()
+    .then(processBatch)
+    .fail(function (err) { _logger.error("Error processing batch: " + err); })
+    .then(sleepBetweenBatches)
+    .then(fetchAndProcessJsonInfiniteLoop);
 }
+
+function requestJson() {
+  var defer = Q.defer();
+  request(
+    {
+      uri: "http://www.quakelive.com/tracker/from/" + _lastGameTimestamp,
+      timeout: 10000,
+      method: "GET",
+      jar: _cookieJar
+    },
+    function (err, resp, body) {
+      if (err)
+        defer.reject(new Error(err));
+      else
+        defer.resolve(body);
+    });
+  return defer.promise;
+}
+
+function processBatch(json) {
+  var batch = JSON.parse(json);
+
+  // adapt polling rate
+  var len = batch.length;
+  if (len < 40 && _adaptivePollDelaySec < 256) // up to ~4.3min
+    _adaptivePollDelaySec *= 2;
+  else if (len > 80 && _adaptivePollDelaySec > 16) // down to 16sec
+    _adaptivePollDelaySec /= 2;
+  _logger.info("Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec");
+
+  if (len == 0)
+    return true; // value doesnt matter
+
+  _lastGameTimestamp = batch[0].GAME_TIMESTAMP;
+  var tasks = [];
+  batch.forEach(function(game) {
+      tasks.push(Q.nfcall(fs.writeFile, __dirname + "/jsons/" + game.PUBLIC_ID, JSON.stringify(game)));
+      tasks.push(processGame(game));
+    }
+  );
+  return Q.allSettled(tasks); //.then(allSettledErrorHandler);
+}
+
+function sleepBetweenBatches() {
+  var defer = Q.defer();
+  setTimeout(function () { defer.resolve(); }, _adaptivePollDelaySec * 1000);
+  return defer.promise;
+}
+
+function allSettledErrorHandler(promises) {
+  if (!Array.isArray(promises)) return true;
+  promises.forEach(function(promise) {
+    if (promise.state == "rejected")
+      throw new Error(promise.reason);
+  });
+  return true;
+}
+
+//==========================================================================================
+// common game data processing
+//==========================================================================================
 
 function processGame(game) {
   return insertGame(game)
     .then(function(gameId) { return processGamePlayers(game, gameId); })
-    .catch(function() { console.log("error/dupe: " + game.PUBLIC_ID); });
+    .catch(function() { _logger.debug("error/dupe: " + game.PUBLIC_ID); });
 }
 
 function insertGame(g) {
@@ -152,7 +254,7 @@ function insertGame(g) {
       data = data.map(function(value) { return Number.isNaN(value) ? null : value; });
       return query(_sqlInsertGame, data)
         .then(function(result) {
-            debug("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
+            _logger.debug("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
           return result.insertId;
         });
     });
@@ -237,7 +339,7 @@ function getCachedItem(table, key) {
     return Q(id); //  cached ID or Promise
   var promise = query("insert into " + table + " (NAME) values (?)", [key])
     .then(function (result) {
-      debug("inserted " + table + " " + key + ": " + result.insertId);
+      _logger.debug("inserted " + table + " " + key + ": " + result.insertId);
       _cache[table][lower] = result.insertId;
       return result.insertId;
     });
@@ -250,7 +352,7 @@ function query(sql, params) {
   params = params || {}; 
   _conn.query(sql, params, function (err, result) {
     if (err) {
-      debug(params);
+      _sqlErrorParams = params;
       defer.reject(new Error(err));
       //throw new Error(err);
       return;
@@ -258,9 +360,4 @@ function query(sql, params) {
     defer.resolve(result);
   });  
   return defer.promise;
-}
-
-function debug(text) {
-  if (DEBUG)
-    console.log(text);
 }
