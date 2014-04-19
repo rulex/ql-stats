@@ -42,7 +42,8 @@ function main() {
 
   _dbpool = mysql.createPool(_config.mysql_db);
   createSqlStatements();
-  connect().then(initCaches)
+  connect()
+    .then(initCaches)
     .then(processingLoop)
     .fail(function (err) { _logger.error(err); })
     .done(function() { _logger.info("completed"); process.exit(); });
@@ -50,10 +51,10 @@ function main() {
 
 function processingLoop() {
   if (_config.loader.stream) {
-    _logger.info("fetching data from live game tracker");
+    _logger.info("Fetching data from http://www.quakelive.com/tracker/from/");
     return loginToQuakeliveWebsite().then(fetchAndProcessJsonInfiniteLoop);
   } else {
-    _logger.info("fetching data from files in " + _config.loader.jsondir + " directory");
+    _logger.info("Loading data from " + _config.loader.jsondir + "*.json[.gz]");
     return loadAndProcessJsonFileLoop();
   }
 }
@@ -99,7 +100,7 @@ function connect() {
 function initCaches(conn) {
   _conn = conn;
   _cache = {};
-  return Q.allSettled([initCache("Map"), initCache("Clan"), initCache("Player")]);
+  return Q.all([initCache("Map"), initCache("Clan"), initCache("Player")]);
 }
 
 function initCache(table) {
@@ -272,7 +273,12 @@ function processFile(file) {
 function processGame(game) {
   return insertGame(game)
     .then(function(gameId) { return processGamePlayers(game, gameId); })
-    .catch(function() { _logger.debug("error/dupe: " + game.PUBLIC_ID); });
+    .catch(function (err) {
+      if (err.toString().match(/uplicate/))
+        _logger.debug("dupe: " + game.PUBLIC_ID);
+      else
+        _logger.error(game.PUBLIC_ID + " - " + err);
+    });
 }
 
 function insertGame(g) {
@@ -282,8 +288,15 @@ function insertGame(g) {
   var TOTAL_ROUNDS = 0;
   var WINNING_TEAM = "";
   var AVG_ACC = 0;
+  var GAME_TIMESTAMP;
   if (!isNaN(g.AVG_ACC) && g.AVG_ACC !== 'undefined') {
     AVG_ACC = g.AVG_ACC;
+  }
+
+  // JSONs loaded from match profiles contain "mm/dd/yyyy h:MM a" format, live tracker contains unixtime int data
+  GAME_TIMESTAMP = parseInt(g.GAME_TIMESTAMP);
+  if (isNaN(GAME_TIMESTAMP)) {
+    GAME_TIMESTAMP = Date.parse(g.GAME_TIMESTAMP).getTime();
   }
 
   for (var i = 0, c = playerStatsFields.length; i < c; i++) {
@@ -295,6 +308,8 @@ function insertGame(g) {
   }
   if (typeof g.TOTAL_ROUNDS !== 'undefined') {
     TOTAL_ROUNDS = g.TOTAL_ROUNDS;
+    if (TOTAL_ROUNDS < 0) // some broken data contains -990
+      TOTAL_ROUNDS = 0;
     WINNING_TEAM = g.WINNING_TEAM;
   }
 
@@ -311,7 +326,7 @@ function insertGame(g) {
         g.PUBLIC_ID, values[5], values[8], g.NUM_PLAYERS, AVG_ACC,
         parseInt(g.PREMIUM), parseInt(g.RANKED), parseInt(g.RESTARTED), parseInt(g.RULESET), parseInt(g.TIER),
         g.TOTAL_KILLS, TOTAL_ROUNDS, WINNING_TEAM, g.TSCORE0, g.TSCORE1,
-        values[6], values[7], g.GAME_LENGTH, g.GAME_TYPE.substr(0,4), g.GAME_TIMESTAMP,
+        values[6], values[7], g.GAME_LENGTH, g.GAME_TYPE.substr(0,4), GAME_TIMESTAMP,
         values[0], playerStatsNum[0], values[1], playerStatsNum[1], values[2], playerStatsNum[2],
         values[3], playerStatsNum[3], values[4], playerStatsNum[4]
       ];
