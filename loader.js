@@ -37,7 +37,7 @@ function main() {
   _config = JSON.parse(data);
   _config.mysql_db.database = "qlstats2";
 
-  Q.longStackSupport = true;
+  Q.longStackSupport = false;
   _logger = log4js.getLogger("loader");
   _logger.setLevel(LOGLEVEL);
 
