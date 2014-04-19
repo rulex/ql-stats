@@ -4,7 +4,7 @@ CREATE TABLE Map(
   NAME varchar(24) not null,
 --
   PRIMARY KEY( ID )
-);
+) ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS Clan;
 CREATE TABLE Clan(
@@ -12,7 +12,7 @@ CREATE TABLE Clan(
   NAME varchar(16) not null,
 --
   PRIMARY KEY( ID )
-);
+) ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS Player;
 CREATE TABLE Player(
@@ -23,7 +23,7 @@ CREATE TABLE Player(
 --
   PRIMARY KEY( ID ),
   UNIQUE KEY IX_NAME( NAME )
-);
+) ENGINE=MyISAM;
 
 
 DROP TABLE IF EXISTS Game;
@@ -63,11 +63,11 @@ CREATE TABLE Game(
 	PRIMARY KEY( ID ),
   UNIQUE KEX( PUBLIC_ID ),
 	KEY IX_GAMETYPE_MAP( GAME_TYPE, MAP_ID )
-);
+) ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS GamePlayer;
 CREATE TABLE GamePlayer(
-    ID integer NOT NULL auto_increment,
+  ID integer NOT NULL auto_increment,
 	GAME_ID integer NOT NULL,
 	PLAYER_ID integer NOT NULL,
 	PLAYER_CLAN_ID integer,
@@ -86,60 +86,48 @@ CREATE TABLE GamePlayer(
 	IMPRESSIVE smallint,
 	EXCELLENT smallint,
 	PLAY_TIME smallint,
-
 	G_K smallint,
-
   BFG_S int,
   BFG_H int,
   BFG_K smallint,
-
   CG_S int,
   CG_H int,
   CG_K smallint,
-
 	GL_S int,
 	GL_H int,
 	GL_K smallint,
-
 	LG_S int,
 	LG_H int,
 	LG_K smallint,
-
 	MG_S int,
 	MG_H int,
 	MG_K smallint,
-
 	NG_S int,
 	NG_H int,
 	NG_K smallint,
-
 	PG_S int,
 	PG_H int,
 	PG_K smallint,
-
 	PM_S int,
 	PM_H int,
 	PM_K smallint,
-
 	RG_S int,
 	RG_H int,
 	RG_K smallint,
-
 	RL_S int,
 	RL_H int,
 	RL_K smallint,
-
 	SG_S int,
 	SG_H int,
 	SG_K smallint,
-
+--
 	PRIMARY KEY( ID ),
 	KEY IX_GAME_PLAYER( GAME_ID, PLAYER_ID ),
   KEY IX_PLAYER_ID( PLAYER_ID )
-);
+) ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS Race;
-CREATE TABLE Race (MODE int not null, MAP varchar(30) not null, SCORE integer not null, PLAYER_NICK varchar(30), RANK integer not null, GAME_TIMESTAMP integer not null) engine=memory;
+CREATE TABLE Race (MODE int not null, MAP varchar(30) not null, SCORE integer not null, PLAYER_NICK varchar(30), RANK integer not null, GAME_TIMESTAMP integer not null) engine=MyISAM;
 CREATE INDEX IX_RaceMap on Race (MAP, MODE, RANK);
 CREATE INDEX IX_RacePlayer on Race (PLAYER_NICK, MODE);
 

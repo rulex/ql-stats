@@ -251,6 +251,10 @@ function processFile(file) {
     .then(function() { return Q.nfcall(fs.readFile, _config.loader.jsondir + file); })
     .then(function (json) {
       var game = JSON.parse(json);
+      if (!game.PUBLIC_ID) {
+        _logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
+        return undefined;
+      }
       return processGame(game)
         .then(function () { _replayJsonStats.inc(); });
     });
