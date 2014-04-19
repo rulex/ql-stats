@@ -14,20 +14,21 @@ var
 
 var LOGLEVEL = log4js.levels.INFO;
 
-var __dirname; // externally defined
-var _logger;
-var _config;
-var _dbpool;
-var _conn;
-var _cache;
-var _sqlInsertGame;
-var _sqlInsertGamePlayer;
-var _sqlErrorParams; // can be printed from an error handler for debugging
-var _cookieJar;
-var _adaptivePollDelaySec = 128; // must be power of 2, will be cut in half after first (=full) batch
-var _lastGameTimestamp = "";
+var __dirname; // current working directory (defined by node.js)
+var _logger; // log4js logger
+var _config; // config data from cfg.json file
+var _dbpool; // DB connection pool
+var _conn; // DB connection
+var _cache = { /*Map: {}, Player: {}, Clan: {}*/ }; // NAME -> { ID [, ...] }; Player cache also contains CLAN_ID and COUNTRY
+var _sqlInsertGame; // SQL statement to insert into Game table
+var _sqlInsertGamePlayer; // SQL statement to insert into GamePlayer table
+var _sqlUpdatePlayer; // SQL statement to update Player CLAN_ID and COUNTRY
+var _sqlErrorQuery, _sqlErrorParams; // if an SQL error occurs, this can be printed for debugging purposes
+var _cookieJar; // www.quakelive.com login cookies
+var _adaptivePollDelaySec = 120; // will be reduced to 60 after first (=full) batch. Values are 15,30,60,120
+var _lastGameTimestamp = ""; // last timestamp retrieved from live game tracker, used to get next incremental set of games
 
-var _replayJsonStats;
+var _profilingInfo;
 
 main();
 
@@ -77,7 +78,7 @@ function createSqlStatements() {
   _sqlInsertGame = 'INSERT INTO Game(' + cols + ") values (" + vals.substr(1) + ")";
 
   cols =
-    'GAME_ID, PLAYER_ID, PLAYER_CLAN_ID, RANK, ' +
+    'GAME_ID, PLAYER_ID, CLAN_ID, RANK, ' +
       'SCORE, QUIT, DAMAGE_DEALT, DAMAGE_TAKEN, KILLS, ' +
       'DEATHS, HITS, SHOTS, TEAM, TEAM_RANK, ' +
       'HUMILIATION, IMPRESSIVE, EXCELLENT, PLAY_TIME, G_K, ' +
@@ -91,6 +92,8 @@ function createSqlStatements() {
   for (i = 0, c = cols.split(",").length; i < c; i++)
     vals += ",?";
   _sqlInsertGamePlayer = "INSERT INTO GamePlayer(" + cols + ") values (" + vals.substr(1) + ")";
+
+  _sqlUpdatePlayer = "UPDATE Player set CLAN_ID=?, COUNTRY=? where ID=?";
 }
 
 function connect() {
@@ -108,7 +111,7 @@ function initCache(table) {
     .then(function (rows) {
       var cache = { count: rows.length };
       for (var i = 0, c = rows.length; i < c; i++)
-        cache[rows[i].NAME.toLowerCase()] = rows[i].ID;
+        cache[rows[i].NAME.toLowerCase()] = { ID: rows[i].ID };
       _cache[table] = cache;
       _logger.info(table + " cache: " + cache.count);
       return cache;
@@ -172,9 +175,9 @@ function processBatch(json) {
 
   // adapt polling rate
   var len = batch.length;
-  if (len < 40 && _adaptivePollDelaySec < 128) // max ~2min
+  if (len < 40 && _adaptivePollDelaySec < 120) // max 2min
     _adaptivePollDelaySec *= 2;
-  else if (len > 80 && _adaptivePollDelaySec > 16) // min 16sec
+  else if (len > 80 && _adaptivePollDelaySec > 15) // min 15sec
     _adaptivePollDelaySec /= 2;
   _logger.info("Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec");
 
@@ -227,10 +230,10 @@ function Stats() {
 }
 
 function loadAndProcessJsonFileLoop() {
-  _replayJsonStats = new Stats();
+  _profilingInfo = new Stats();
   setInterval(function() {
-    _logger.info("" + (_replayJsonStats.count/30) + " games/sec (" + _replayJsonStats.total + " total)");
-    _replayJsonStats.reset();
+    _logger.info("" + (_profilingInfo.count/30) + " games/sec (" + _profilingInfo.total + " total)");
+    _profilingInfo.reset();
   }, 30000);
 
   return Q
@@ -242,8 +245,8 @@ function loadAndProcessJsonFileLoop() {
       return tasks.reduce(Q.when, Q(undefined));
     })
     .then(function () {
-      var secs = (new Date().getTime() - _replayJsonStats.timestamp0) / 1000;
-      _logger.info("Total time: " + secs + " sec for " + _replayJsonStats.total + " games");
+      var secs = (new Date().getTime() - _profilingInfo.timestamp0) / 1000;
+      _logger.info("Total time: " + secs + " sec for " + _profilingInfo.total + " games");
     });
 }
 
@@ -262,7 +265,7 @@ function processFile(file) {
         return undefined;
       }
       return processGame(game)
-        .then(function () { _replayJsonStats.inc(); });
+        .then(function () { _profilingInfo.inc(); });
     });
 }
 
@@ -277,14 +280,14 @@ function processGame(game) {
       if (err.toString().match(/uplicate/))
         _logger.debug("dupe: " + game.PUBLIC_ID);
       else
-        _logger.error(game.PUBLIC_ID + " - " + err);
+        _logger.error(game.PUBLIC_ID + " - " + err.stack + getQueryErrorInfo());
     });
 }
 
 function insertGame(g) {
   var playerStatsFields = ["MOST_ACCURATE", "DMG_DELIVERED", "DMG_TAKEN", "LEAST_DEATHS", "MOST_DEATHS"];
   var playerStatsNum = [0, 0, 0, 0, 0];
-  var lookups = [null, null, null, null, null];
+  var lookups = [{ ID: null }, { ID: null }, { ID: null }, { ID: null }, { ID: null }];
   var TOTAL_ROUNDS = 0;
   var WINNING_TEAM = "";
   var AVG_ACC = 0;
@@ -294,15 +297,15 @@ function insertGame(g) {
   }
 
   // JSONs loaded from match profiles contain "mm/dd/yyyy h:MM a" format, live tracker contains unixtime int data
-  GAME_TIMESTAMP = parseInt(g.GAME_TIMESTAMP);
-  if (isNaN(GAME_TIMESTAMP)) {
-    GAME_TIMESTAMP = Date.parse(g.GAME_TIMESTAMP).getTime();
+  GAME_TIMESTAMP = g.GAME_TIMESTAMP.toString(); // can be either a number, an Object-number, a string, ... 
+  if (GAME_TIMESTAMP.indexOf("/") >= 0) {
+    GAME_TIMESTAMP = new Date(GAME_TIMESTAMP).getTime() / 1000;
   }
 
   for (var i = 0, c = playerStatsFields.length; i < c; i++) {
     var obj = g[playerStatsFields[i]];
     if (obj) {
-      lookups[i] = getCachedItem("Player", obj.PLAYER_NICK);
+      lookups[i] = getCachedPlayer(obj);
       playerStatsNum[i] = obj.NUM;
     }
   }
@@ -313,22 +316,22 @@ function insertGame(g) {
     WINNING_TEAM = g.WINNING_TEAM;
   }
 
-  lookups.push(getCachedItem("Player", g.OWNER));
-  lookups.push(getCachedItem("Player", g.FIRST_SCORER));
-  lookups.push(getCachedItem("Player", g.LAST_SCORER));
-  lookups.push(getCachedItem("Map", g.MAP));
+  lookups.push(getCachedPlayer(g.OWNER));
+  lookups.push(getCachedPlayer(g.FIRST_SCORER));
+  lookups.push(getCachedPlayer(g.LAST_SCORER));
+  lookups.push(getCachedMap(g.MAP));
 
   return Q
-    .allSettled(lookups)
+    .all(lookups)
     .then(function(promises) {
-      var values = promises.map(function(promise) { return promise.value; });
+      var values = getPromisedValues(promises);
       var data = [
-        g.PUBLIC_ID, values[5], values[8], g.NUM_PLAYERS, AVG_ACC,
+        g.PUBLIC_ID, values[5].ID, values[8].ID, g.NUM_PLAYERS, AVG_ACC,
         parseInt(g.PREMIUM), parseInt(g.RANKED), parseInt(g.RESTARTED), parseInt(g.RULESET), parseInt(g.TIER),
         g.TOTAL_KILLS, TOTAL_ROUNDS, WINNING_TEAM, g.TSCORE0, g.TSCORE1,
-        values[6], values[7], g.GAME_LENGTH, g.GAME_TYPE.substr(0,4), GAME_TIMESTAMP,
-        values[0], playerStatsNum[0], values[1], playerStatsNum[1], values[2], playerStatsNum[2],
-        values[3], playerStatsNum[3], values[4], playerStatsNum[4]
+        values[6].ID, values[7].ID, g.GAME_LENGTH, g.GAME_TYPE.substr(0,4), GAME_TIMESTAMP,
+        values[0].ID, playerStatsNum[0], values[1].ID, playerStatsNum[1], values[2].ID, playerStatsNum[2],
+        values[3].ID, playerStatsNum[3], values[4].ID, playerStatsNum[4]
       ];
       data = data.map(function(value) { return Number.isNaN(value) ? null : value; });
       return query(_sqlInsertGame, data)
@@ -382,18 +385,16 @@ function insertGamePlayer(p, gameId) {
     TEAM_RANK = p.TEAM_RANK;
   }
 
-  var lookups = [
-    getCachedItem("Player", p.PLAYER_NICK),
-    getCachedItem("Clan", p.PLAYER_CLAN)
-  ];
+  var tasks = [getCachedPlayer(p), getCachedClan(p.PLAYER_CLAN)];
 
-  return Q
-    .allSettled(lookups)
+  return Q.
+    all(tasks)
     .then(function (promises) {
-      var values = promises.map(function(promise) { return promise.value; });
-
+      var values = getPromisedValues(promises);
+      var player = values[0];
+      var clan = values[1];
       var data = [
-        gameId, values[0], values[1], p.RANK,
+        gameId, player.ID, player.CLAN_ID, p.RANK,
         SCORE, parseInt(QUIT), p.DAMAGE_DEALT, p.DAMAGE_TAKEN, p.KILLS,
         p.DEATHS, p.HITS, p.SHOTS, TEAM, TEAM_RANK,
         p.HUMILIATION, IMPRESSIVE, EXCELLENT, p.PLAY_TIME, p.GAUNTLET_KILLS,
@@ -404,23 +405,66 @@ function insertGamePlayer(p, gameId) {
         p.RAILGUN_HITS, p.RAILGUN_KILLS, p.RAILGUN_SHOTS, p.ROCKET_HITS, p.ROCKET_KILLS, p.ROCKET_SHOTS,
         p.SHOTGUN_HITS, p.SHOTGUN_KILLS, p.SHOTGUN_SHOTS
       ];
-      data = data.map(function (value) { return Number.isNaN(value) ? null : value; });
+      data = data.map(function(value) { return Number.isNaN(value) ? null : value; });
+
+      // check if player has changed clan or country
+      if (player.CLAN_ID != clan.ID && clan.ID || player.COUNTRY != p.PLAYER_COUNTRY && p.PLAYER_COUNTRY) {
+        _logger.debug("Updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY
+          + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
+        if (clan.ID)
+          player.CLAN_ID = clan.ID;
+        if (p.COUNTRY)
+          player.COUNTRY = p.PLAYER_COUNTRY;
+        return query(_sqlUpdatePlayer, [player.CLAN_ID, player.COUNTRY, player.ID]).then(function () { return data; });
+      }
+
       return data;
     })
     .then(function(data) { return query(_sqlInsertGamePlayer, data); })
-    .then(function () {  });
+    .fail(function (err) { _logger.error("#" + gameId + ", " + p.PLAYER_NICK + ": " + err.stack + getQueryErrorInfo()); });
 }
 
-function getCachedItem(table, key) {
-  var lower = key.toLowerCase();
-  var id = _cache[table][lower];
-  if (typeof id !== "undefined")
-    return Q(id); //  cached ID or Promise
-  var promise = query("insert into " + table + " (NAME) values (?)", [key])
+function getCachedMap(name) {
+  return getCachedItem("Map", { NAME: name });
+}
+
+function getCachedClan(name) {
+  if (!name || name == "None")
+    return Q({ID: null});
+  return getCachedItem("Clan", { NAME: name });
+}
+
+function getCachedPlayer(obj) {
+  return getCachedClan(obj.PLAYER_CLAN)
+    .then(function (clan) { return getCachedItem("Player", { NAME: obj.PLAYER_NICK, CLAN_ID: clan.ID, COUNTRY: obj.PLAYER_COUNTRY }); });
+}
+
+function getCachedItem(table, objWithName) {
+  if (!objWithName.NAME)
+    return Q({ ID: null });
+  var lower = objWithName.NAME.toLowerCase();
+  if (!_cache[table])
+    _cache[table] = {};
+  var entry = _cache[table][lower];
+  if (typeof entry !== "undefined")
+    return Q.isPromise(entry) ? entry : Q(entry); //  cached object or Promise
+
+  var fields = "";
+  var placeholders = "";
+  var values = [];
+  for (var key in objWithName) {
+    fields += "," + key;
+    placeholders += ",?";
+    values.push(objWithName[key]);
+  }
+  var clone = JSON.parse(JSON.stringify(objWithName));
+  var promise =
+    query("insert into " + table + " (" + fields.substr(1) + ") values (" + placeholders.substr(1) + ")", values)
     .then(function (result) {
-      _logger.debug("inserted " + table + " " + key + ": " + result.insertId);
-      _cache[table][lower] = result.insertId;
-      return result.insertId;
+      _logger.debug("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
+      clone.ID = result.insertId;
+      _cache[table][lower] = clone;
+      return clone;
     });
   _cache[table][lower] = promise;
   return promise;
@@ -428,15 +472,28 @@ function getCachedItem(table, key) {
 
 function query(sql, params) {
   var defer = Q.defer();
-  params = params || {}; 
+  params = params || [];
   _conn.query(sql, params, function (err, result) {
     if (err) {
-      _sqlErrorParams = params;
+      _sqlErrorQuery = sql;
+      _sqlErrorParams = JSON.stringify(params);
       defer.reject(new Error(err));
       //throw new Error(err);
       return;
     }
+    _sqlErrorQuery = undefined;
+    _sqlErrorParams = undefined;
     defer.resolve(result);
-  });  
+  });
   return defer.promise;
+}
+
+function getQueryErrorInfo() {
+  return _sqlErrorQuery ? "\nQuery: " + _sqlErrorQuery + "\nParams: " + _sqlErrorParams : "";
+}
+
+function getPromisedValues(promisesOrValues) {
+  return promisesOrValues.map(function(promiseOrValue) {
+    return Q.isPromise(promiseOrValue) ? promiseOrValue.value : promiseOrValue;
+  });
 }

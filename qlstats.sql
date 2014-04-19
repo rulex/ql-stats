@@ -18,7 +18,7 @@ DROP TABLE IF EXISTS Player;
 CREATE TABLE Player(
   ID integer NOT NULL auto_increment,
   NAME varchar(16) not null,
-  CLAN integer,
+  CLAN_ID integer,
   COUNTRY varchar(2),
 --
   PRIMARY KEY( ID ),
@@ -70,7 +70,7 @@ CREATE TABLE GamePlayer(
   ID integer NOT NULL auto_increment,
 	GAME_ID integer NOT NULL,
 	PLAYER_ID integer NOT NULL,
-	PLAYER_CLAN_ID integer,
+	CLAN_ID integer,
 	QUIT bit,
 	RANK tinyint,
 	SCORE integer,
