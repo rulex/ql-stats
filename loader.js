@@ -9,6 +9,7 @@ var
   async = require('async'),
   request = require('request'),
   log4js = require('log4js'),
+  zlib = require('zlib'),
   Q = require('q');
 
 var LOGLEVEL = log4js.levels.INFO;
@@ -124,7 +125,7 @@ function loginToQuakeliveWebsite() {
       uri: "https://secure.quakelive.com/user/login",
       timeout: 10000,
       method: "POST",
-      form: { submit: "", email: "horst.beham@gmx.at", pass: "5Chd1995rb" },
+      form: { submit: "", email: _config.loader.ql_email, pass: _config.loader.ql_pass },
       jar: _cookieJar
     },
     function(err) {
@@ -177,31 +178,33 @@ function processBatch(json) {
   _logger.info("Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec");
 
   if (len == 0)
-    return true; // value doesnt matter
+    return undefined; // value doesnt matter
 
   _lastGameTimestamp = batch[0].GAME_TIMESTAMP;
   var tasks = [];
   batch.forEach(function(game) {
-      tasks.push(Q.nfcall(fs.writeFile, __dirname + "/jsons/" + game.PUBLIC_ID, JSON.stringify(game)));
+      tasks.push(saveGameJson(game));
       tasks.push(processGame(game));
     }
   );
   return Q.allSettled(tasks);
 }
 
+function saveGameJson(game) {
+  return Q
+    .fcall(function() {
+      var json = JSON.stringify(game);
+      return Q.nfcall(zlib.gzip, json);
+    })
+    .then(function(gzip) {
+      return Q.nfcall(fs.writeFile, __dirname + "/jsons/" + game.PUBLIC_ID + ".json.gz", gzip);
+    });
+}
+
 function sleepBetweenBatches() {
   var defer = Q.defer();
   setTimeout(function () { defer.resolve(); }, _adaptivePollDelaySec * 1000);
   return defer.promise;
-}
-
-function allSettledErrorHandler(promises) {
-  if (!Array.isArray(promises)) return true;
-  promises.forEach(function(promise) {
-    if (promise.state == "rejected")
-      throw new Error(promise.reason);
-  });
-  return true;
 }
 
 //==========================================================================================
@@ -244,11 +247,13 @@ function loadAndProcessJsonFileLoop() {
 }
 
 function processFile(file) {
-  if (!file.match(/.json$/))
+  if (!file.match(/.json(.gz)?$/))
     return undefined;
+  var isGzip = file.slice(-3) == ".gz";
   return Q
     .fcall(function () { _logger.debug("Loading " + file); })
-    .then(function() { return Q.nfcall(fs.readFile, _config.loader.jsondir + file); })
+    .then(function () { return Q.nfcall(fs.readFile, _config.loader.jsondir + file); })
+    .then(function (data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
     .then(function (json) {
       var game = JSON.parse(json);
       if (!game.PUBLIC_ID) {
