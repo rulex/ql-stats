@@ -275,7 +275,7 @@ function processFile(file) {
 
 function processGame(game) {
   return insertGame(game)
-    .then(function(gameId) { return processGamePlayers(game, gameId); })
+    .then(function(gameIdAndTimestamp) { return processGamePlayers(game, gameIdAndTimestamp[0], gameIdAndTimestamp[1]); })
     .catch(function (err) {
       if (err.toString().match(/uplicate/))
         _logger.debug("dupe: " + game.PUBLIC_ID);
@@ -336,13 +336,13 @@ function insertGame(g) {
       data = data.map(function(value) { return Number.isNaN(value) ? null : value; });
       return query(_sqlInsertGame, data)
         .then(function(result) {
-            _logger.debug("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
-          return result.insertId;
+          //_logger.trace("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
+          return [ result.insertId, GAME_TIMESTAMP ];
         });
     });
 }
 
-function processGamePlayers(g, gameId) {
+function processGamePlayers(g, gameId, gameTimestamp) {
   var players = [];
   var boardNames = [
     "SCOREBOARD", "SCOREBOARD_QUITTERS", "RACE_SCOREBOARD", "RACE_SCOREBOARD_QUITTERS",
@@ -358,11 +358,11 @@ function processGamePlayers(g, gameId) {
     }
   });
 
-  var promises = players.map(function(player) { return insertGamePlayer(player, gameId); });
+  var promises = players.map(function(player) { return insertGamePlayer(player, gameId, gameTimestamp); });
   return Q.allSettled(promises);
 }
 
-function insertGamePlayer(p, gameId) {
+function insertGamePlayer(p, gameId, timestamp) {
   var IMPRESSIVE = 0;
   var EXCELLENT = 0;
   var SCORE = 0;
@@ -408,13 +408,14 @@ function insertGamePlayer(p, gameId) {
       data = data.map(function(value) { return Number.isNaN(value) ? null : value; });
 
       // check if player has changed clan or country
-      if (player.CLAN_ID != clan.ID && clan.ID || player.COUNTRY != p.PLAYER_COUNTRY && p.PLAYER_COUNTRY) {
-        _logger.debug("Updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY
-          + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
+      var isNewerData = !player.timestamp || player.timestamp < timestamp;
+      if (isNewerData && (player.CLAN_ID != clan.ID && clan.ID || player.COUNTRY != p.PLAYER_COUNTRY && p.PLAYER_COUNTRY)) {
+        //_logger.trace("updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
         if (clan.ID)
           player.CLAN_ID = clan.ID;
         if (p.COUNTRY)
           player.COUNTRY = p.PLAYER_COUNTRY;
+        player.timestamp = timestamp;
         return query(_sqlUpdatePlayer, [player.CLAN_ID, player.COUNTRY, player.ID]).then(function () { return data; });
       }
 
@@ -461,7 +462,7 @@ function getCachedItem(table, objWithName) {
   var promise =
     query("insert into " + table + " (" + fields.substr(1) + ") values (" + placeholders.substr(1) + ")", values)
     .then(function (result) {
-      _logger.debug("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
+      //_logger.trace("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
       clone.ID = result.insertId;
       _cache[table][lower] = clone;
       return clone;
