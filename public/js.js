@@ -10,6 +10,9 @@ var dynatable_writers = {
 	PUBLIC_ID: function( obj ) {
 		return '<a href="#/games/'+ obj.PUBLIC_ID +'">' + shortenPID( obj.PUBLIC_ID ) + '</a>';
 	},
+	PLAYER_NICK: function( obj ) {
+		return '<a href="#/players/'+ obj.PLAYER_NICK +'">' + obj.PLAYER_NICK + '</a>';
+	},
 	GAME_TIMESTAMP: function( obj ) {
 		return timediff( ( obj.GAME_TIMESTAMP *1000 )+60*60*6*1000, new Date().getTime() ) + ' ago';
 		//return convertTimestamp( obj.GAME_TIMESTAMP );
@@ -53,6 +56,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/owners/:owner/players', { controller: OwnerPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/owners/:owner/games', { controller: OwnerGamesCtrl, templateUrl: 'games2.html' } ).
 	when( '/owners/:owner/players/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
+	when( '/owners/:owner/top/last30days', { controller: OwnerTopCtrl, templateUrl: 'top.html' } ).
 	//when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
 	when( '/clans', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/clan/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
@@ -243,6 +247,39 @@ function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 					perPageDefault: 50,
 					perPageOptions: [10,20,50,100,200],
 					records: data.data.owners
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+			//console.log( data );
+		},
+	} );
+}
+function OwnerTopCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	$( '#current_url' ).html( printLocations() );
+	var o = $routeParams.owner;
+	$.ajax( {
+		url: apiurl + 'api/owners/' + o + '/top/last30days/kills',
+		success: function( data ) {
+			//console.log( data );
+			$( '#table_top_kills_' ).hide();
+			$( '#table_top_kills' ).dynatable( {
+				features: {
+					sort: true,
+					perPageSelect: false,
+					paginate: true,
+					search: false,
+					recordCount: false,
+					pushState: false,
+				},
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 10,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
 				}
 			} );
 		},

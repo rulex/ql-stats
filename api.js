@@ -601,6 +601,31 @@ app.get( '/api/owners/:owner/games', function ( req, res ) {
 		} );
 	} );
 } );
+app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
+	var owner = mysql_real_escape_string( req.params.owner );
+	sql = 'select p.PLAYER_NICK,' +
+		'count(g.PUBLIC_ID) as MATCHES_PLAYED,' +
+		'sum(p.KILLS) as KILLS,' +
+		'round(KILLS/DEATHS,2) as RATIO,' +
+		'sum(IMPRESSIVE) as IMPRESSIVE,' +
+		'sum(EXCELLENT) as EXCELLENT,' +
+		'sum(HUMILIATION) as HUMILIATION' +
+		' from Games g' +
+		' left join Players p on p.PUBLIC_ID=g.PUBLIC_ID' +
+		' where OWNER="'+ owner +'"' +
+		' and GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) )' +
+		' group by PLAYER_NICK' +
+		' order by KILLS desc' +
+		' limit 50;';
+	dbpool.getConnection( function( err, conn ) {
+		conn.query( sql, function( err, rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
 app.get( '/api/owners/:owner', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	var sql = [];
