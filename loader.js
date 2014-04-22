@@ -55,7 +55,6 @@ function processingLoop() {
     _logger.info("Fetching data from http://www.quakelive.com/tracker/from/");
     return loginToQuakeliveWebsite().then(fetchAndProcessJsonInfiniteLoop);
   } else {
-    _logger.info("Loading data from " + _config.loader.jsondir + "*.json[.gz]");
     return loadAndProcessJsonFileLoop();
   }
 }
@@ -195,14 +194,38 @@ function processBatch(json) {
 }
 
 function saveGameJson(game) {
-  return Q
-    .fcall(function() {
+  // JSONs loaded from match profiles contain "mm/dd/yyyy h:MM a" format, live tracker contains unixtime int data
+  var GAME_TIMESTAMP = game.GAME_TIMESTAMP; // can be either a number, an Object-number, a string, ... 
+  if (GAME_TIMESTAMP.indexOf("/") >= 0) {
+    GAME_TIMESTAMP = new Date(GAME_TIMESTAMP).getTime() / 1000;
+  }
+  var date = new Date(GAME_TIMESTAMP * 1000);
+  var dirName1 = _config.loader.jsondir + date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2);
+  var dirName2 = dirName1 + "/" + ("0" + date.getDate()).slice(-2);
+  var filePath = dirName2 + "/" + game.PUBLIC_ID + ".json.gz";
+  //_logger.debug("saving JSON: " + filePath);
+  return createDir(dirName1)
+    .then(createDir(dirName2))
+    .then(function() {
       var json = JSON.stringify(game);
       return Q.nfcall(zlib.gzip, json);
     })
-    .then(function(gzip) {
-      return Q.nfcall(fs.writeFile, __dirname + "/jsons/" + game.PUBLIC_ID + ".json.gz", gzip);
-    });
+    .then(function (gzip) {
+      return Q.nfcall(fs.writeFile, filePath, gzip);
+    })
+    .fail(function(err) { _logger.error("Can't save game JSON: " + err.stack); });
+}
+
+function createDir(dir) {
+  var defer = Q.defer();
+  // fs.mkdir returns an error when the directory already exists
+  fs.mkdir(dir, function (err) {
+    if (err && err.code != "EEXIST")
+      defer.reject(err);
+    else
+      defer.resolve(dir);
+  });
+  return defer.promise;
 }
 
 function sleepBetweenBatches() {
@@ -232,21 +255,36 @@ function Stats() {
 function loadAndProcessJsonFileLoop() {
   _profilingInfo = new Stats();
   setInterval(function() {
-    _logger.info("" + (_profilingInfo.count/30) + " games/sec (" + _profilingInfo.total + " total)");
+    _logger.info("" + (_profilingInfo.count / 30) + " games/sec (" + _profilingInfo.total + " total)");
     _profilingInfo.reset();
   }, 30000);
 
-  return Q
-    .nfcall(fs.readdir, _config.loader.jsondir)
-    .then(function (files) {
-      var tasks = files.map(function(file) {
-        return function() { return processFile(file); }
-      });
-      return tasks.reduce(Q.when, Q(undefined));
-    })
-    .then(function () {
+  return loadAndProcessJsonFilesInDirectory(_config.loader.jsondir)
+    .then(function() {
       var secs = (new Date().getTime() - _profilingInfo.timestamp0) / 1000;
       _logger.info("Total time: " + secs + " sec for " + _profilingInfo.total + " games");
+    });
+}
+
+function loadAndProcessJsonFilesInDirectory(dir) {
+  _logger.info("Loading data from " + dir + "*.json[.gz]");
+  return Q
+    .nfcall(fs.readdir, dir)
+    .then(function (files) {
+      var subDirs = [];
+      var tasks = files.map(function (file) {
+        var path = dir + file;
+        var stats = fs.statSync(path);
+        if (stats.isDirectory()) {
+          subDirs.push(path + "/");
+          return undefined;
+        } else
+          return function() { return processFile(path); }
+      });
+      subDirs.forEach(function(subdir) {
+        tasks.push(function() { return loadAndProcessJsonFilesInDirectory(subdir); });
+      });
+      return tasks.reduce(Q.when, Q(undefined));
     });
 }
 
@@ -256,7 +294,7 @@ function processFile(file) {
   var isGzip = file.slice(-3) == ".gz";
   return Q
     .fcall(function () { _logger.debug("Loading " + file); })
-    .then(function () { return Q.nfcall(fs.readFile, _config.loader.jsondir + file); })
+    .then(function () { return Q.nfcall(fs.readFile, file); })
     .then(function (data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
     .then(function (json) {
       var game = JSON.parse(json);
@@ -266,7 +304,8 @@ function processFile(file) {
       }
       return processGame(game)
         .then(function () { _profilingInfo.inc(); });
-    });
+    })
+    .catch(function (err) { _logger.error(file + ": " + err); });
 }
 
 //==========================================================================================
