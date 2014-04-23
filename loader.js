@@ -260,7 +260,7 @@ function Stats() {
 function loadAndProcessJsonFileLoop() {
   _profilingInfo = new Stats();
   setInterval(function() {
-    _logger.info("" + (_profilingInfo.count / 30) + " games/sec (" + _profilingInfo.total + " total)");
+    _logger.info("" + (_profilingInfo.processed / 30) + " games/sec (" + _profilingInfo.total + " total)");
     _profilingInfo.reset();
   }, 30000);
 
