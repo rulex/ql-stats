@@ -239,13 +239,18 @@ function sleepBetweenBatches() {
 //==========================================================================================
 
 function Stats() {
-  this.inc = function() {
+  this.incProcessed = function() {
     ++this.total;
-    ++this.count;
+    ++this.processed;
   }
-  this.reset = function() {
+  this.incSkipped = function () {
+    ++this.total;
+    ++this.skipped;
+  }
+  this.reset = function () {
     this.timestamp = new Date().getTime();
-    this.count = 0;
+    this.processed = 0;
+    this.skipped = 0;
   }
   this.reset();
   this.total = 0;
@@ -262,7 +267,8 @@ function loadAndProcessJsonFileLoop() {
   return loadAndProcessJsonFilesInDirectory(_config.loader.jsondir)
     .then(function() {
       var secs = (new Date().getTime() - _profilingInfo.timestamp0) / 1000;
-      _logger.info("Total time: " + secs + " sec for " + _profilingInfo.total + " games");
+      _logger.info("Total time: " + secs + " sec. Game files found: " + _profilingInfo.total
+        + ", loaded: " + _profilingInfo.processed + ", skipped: " + _profilingInfo.skipped);
     });
 }
 
@@ -292,18 +298,31 @@ function processFile(file) {
   if (!file.match(/.json(.gz)?$/))
     return undefined;
   var isGzip = file.slice(-3) == ".gz";
+  var basename;
+  var match = file.match(/.*[\/\\]([^\.]*).*/);
+  if (match)
+    basename = match[1];
   return Q
-    .fcall(function () { _logger.debug("Loading " + file); })
-    .then(function () { return Q.nfcall(fs.readFile, file); })
-    .then(function (data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
-    .then(function (json) {
-      var game = JSON.parse(json);
-      if (!game.PUBLIC_ID) {
-        _logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
-        return undefined;
+    .fcall(function() { return basename ? query("select ID from Game where PUBLIC_ID=?", [basename]) : []; })
+    .then(function (result) {
+      if (result.length > 0) {
+        _logger.debug("Skipping " + file + " (already in database)");
+        _profilingInfo.incSkipped();
+        return true;
       }
-      return processGame(game)
-        .then(function () { _profilingInfo.inc(); });
+      return Q
+        .fcall(function() { _logger.debug("Loading " + file); })
+        .then(function() { return Q.nfcall(fs.readFile, file); })
+        .then(function(data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
+        .then(function(json) {
+          var game = JSON.parse(json);
+          if (!game.PUBLIC_ID) {
+            _logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
+            return undefined;
+          }
+          return processGame(game)
+            .then(function() { _profilingInfo.incProcessed(); });
+        });
     })
     .catch(function (err) { _logger.error(file + ": " + err); });
 }
@@ -505,6 +524,18 @@ function getCachedItem(table, objWithName) {
       clone.ID = result.insertId;
       _cache[table][lower] = clone;
       return clone;
+    })
+    .fail(function (err) {
+      // if another loader runs in parallel, it might have already inserted the object
+      return query("select ID from " + table + " where NAME=?", [objWithName.NAME])
+        .then(function(result) {
+          if (result.length == 1) {
+            clone.ID = result[0].ID;
+            _cache[table][lower] = clone;
+            return clone;
+          }
+        throw err;
+        });
     });
   _cache[table][lower] = promise;
   return promise;
