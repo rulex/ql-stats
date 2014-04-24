@@ -10,3 +10,4 @@ App.config
 *.log
 *.csproj*
 cache.json
+jsons/*

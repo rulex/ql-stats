@@ -14,6 +14,12 @@
 			"gamesdir": "./games/"
 		}
 	},
+  "loader": {
+    "stream": false,
+    "ql_email": "your-QL-datafeed-login-email",
+    "ql_pass": "your-QL-datafeed-login-pass",
+    "jsondir": "./jsons/"
+  },
 	"counter": {
 		"on": true,
 		"path": "/tmp/ql-stats-dev.counter"
