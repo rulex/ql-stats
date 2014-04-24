@@ -7,7 +7,11 @@
 
 exports.init = init;
 exports.processGame = processGame;
+exports.query = query;
 exports.saveGameJson = saveGameJson;
+exports.getCachedMap = getCachedMap;
+exports.getCachedClan = getCachedClan;
+exports.getCachedPlayer = getCachedPlayer;
 
 var _sqlErrorQuery, _sqlErrorParams; // if an SQL error occurs, this can be printed for debugging purposes
 var _conn; // DB connection
@@ -101,10 +105,15 @@ function insertGame(g) {
   var TOTAL_ROUNDS = 0;
   var WINNING_TEAM = "";
   var AVG_ACC = 0;
+  var GAME_TYPE;
   var GAME_TIMESTAMP;
   if (!isNaN(g.AVG_ACC) && g.AVG_ACC !== 'undefined') {
     AVG_ACC = g.AVG_ACC;
   }
+
+  GAME_TYPE = g.GAME_TYPE.substr(0, 4).toLowerCase();
+  if (GAME_TYPE == "dm") GAME_TYPE = "ffa";
+  else if (GAME_TYPE == "tour") GAME_TYPE = "duel";
 
   // JSONs loaded from match profiles contain "mm/dd/yyyy h:MM a" format, live tracker contains unixtime int data
   GAME_TIMESTAMP = g.GAME_TIMESTAMP.toString(); // can be either a number, an Object-number, a string, ... 
@@ -126,9 +135,9 @@ function insertGame(g) {
     WINNING_TEAM = g.WINNING_TEAM;
   }
 
-  lookups.push(getCachedPlayer(g.OWNER));
-  lookups.push(getCachedPlayer(g.FIRST_SCORER));
-  lookups.push(getCachedPlayer(g.LAST_SCORER));
+  lookups.push(getCachedPlayer({NAME: g.OWNER}));
+  lookups.push(getCachedPlayer({NAME: g.FIRST_SCORER}));
+  lookups.push(getCachedPlayer({NAME: g.LAST_SCORER_NICK}));
   lookups.push(getCachedMap(g.MAP));
 
   return Q
@@ -139,7 +148,7 @@ function insertGame(g) {
         g.PUBLIC_ID, values[5].ID, values[8].ID, g.NUM_PLAYERS, AVG_ACC,
         parseInt(g.PREMIUM), parseInt(g.RANKED), parseInt(g.RESTARTED), parseInt(g.RULESET), parseInt(g.TIER),
         g.TOTAL_KILLS, TOTAL_ROUNDS, WINNING_TEAM, g.TSCORE0, g.TSCORE1,
-        values[6].ID, values[7].ID, g.GAME_LENGTH, g.GAME_TYPE.substr(0, 4), GAME_TIMESTAMP,
+        values[6].ID, values[7].ID, g.GAME_LENGTH, GAME_TYPE, GAME_TIMESTAMP,
         values[0].ID, playerStatsNum[0], values[1].ID, playerStatsNum[1], values[2].ID, playerStatsNum[2],
         values[3].ID, playerStatsNum[3], values[4].ID, playerStatsNum[4]
       ];
@@ -223,7 +232,7 @@ function insertGamePlayer(p, gameId, timestamp) {
         //_logger.trace("updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
         if (clan.ID)
           player.CLAN_ID = clan.ID;
-        if (p.COUNTRY)
+        if (p.PLAYER_COUNTRY)
           player.COUNTRY = p.PLAYER_COUNTRY;
         player.timestamp = timestamp;
         return query(_sqlUpdatePlayer, [player.CLAN_ID, player.COUNTRY, player.ID]).then(function () { return data; });
