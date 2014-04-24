@@ -41,7 +41,7 @@ CREATE TABLE Game(
 	TIER tinyint,
 	TOTAL_KILLS smallint,
 	TOTAL_ROUNDS tinyint,
-	WINNING_TEAM varchar(5),
+	WINNING_TEAM tinyint,
 	TSCORE0 smallint,
 	TSCORE1 smallint,
 	FIRST_SCORER_ID integer,

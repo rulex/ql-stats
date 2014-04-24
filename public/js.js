@@ -73,7 +73,10 @@ angular.module( 'liz', ['lizzy'] )
 	when('/race/maps/:map', { controller: RaceMapCtrl, templateUrl: 'racemap.html' }).
 	when('/race/players/:player', { controller: RacePlayerCtrl, templateUrl: 'raceplayer.html' }).
 	otherwise({ redirectTo: '/' });
-} ] );
+}])
+.filter('gametype', function() {
+  return function (input) { return input == "harv" ? "harvester" : input; }
+});
 
 function EmptyCtrl( $scope, $timeout, $routeParams ) {
 }

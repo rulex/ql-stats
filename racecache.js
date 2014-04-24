@@ -8,7 +8,7 @@ var
   async = require('async');
 
 exports.updateMap = function (conn, mapId, onDone) {
-  var sql = "select MAP_ID,PLAYER_ID,SCORE,GAME_TIMESTAMP,GL_S+RL_S+PG_S SHOTS, RULESET "
+  var sql = "select MAP_ID,PLAYER_ID,SCORE,GAME_ID,GAME_TIMESTAMP,GL_S+RL_S+PG_S SHOTS, RULESET "
     + "from Game g inner join GamePlayer gp on gp.GAME_ID=g.ID "
     + "where g.GAME_TYPE='race' and g.RANKED=1 and gp.SCORE>0";
   if (mapId)
