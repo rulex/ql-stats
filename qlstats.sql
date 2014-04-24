@@ -126,8 +126,21 @@ CREATE TABLE GamePlayer(
   KEY IX_PLAYER_ID( PLAYER_ID )
 ) ENGINE=MyISAM;
 
+
 DROP TABLE IF EXISTS Race;
 CREATE TABLE Race (MODE int not null, MAP varchar(30) not null, SCORE integer not null, PLAYER_NICK varchar(30), RANK integer not null, GAME_TIMESTAMP integer not null) engine=MyISAM;
 CREATE INDEX IX_RaceMap on Race (MAP, MODE, RANK);
 CREATE INDEX IX_RacePlayer on Race (PLAYER_NICK, MODE);
 
+create view Games as 
+select g.*,m.NAME as MAP 
+from Game g 
+inner join Map m on m.ID=g.MAP_ID;
+
+drop view if exists Players;
+create view Players as
+select g.PUBLIC_ID,gp.*,p.NAME as PLAYER_NICK,c.NAME as PLAYER_CLAN,p.COUNTRY as PLAYER_COUNTRY
+from GamePlayer gp
+inner join Game g on g.ID=gp.GAME_ID
+inner join Player p on p.ID=gp.PLAYER_ID
+inner join Clan c on c.ID=gp.CLAN_ID;
