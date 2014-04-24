@@ -15,7 +15,8 @@
 		}
 	},
   "loader": {
-    "stream": false,
+    "saveDownloadedJson": true,
+    "importDownloadedJson": true,
     "ql_email": "your-QL-datafeed-login-email",
     "ql_pass": "your-QL-datafeed-login-pass",
     "jsondir": "./jsons/"

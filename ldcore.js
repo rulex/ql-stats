@@ -1,67 +1,34 @@
-﻿/*
-
-*/
-'use strict';
-
-var
+﻿var
   fs = require('graceful-fs'),
-  mysql = require('mysql2'),
-  async = require('async'),
-  request = require('request'),
-  log4js = require('log4js'),
   zlib = require('zlib'),
+  mysql = require('mysql2'),
+  log4js = require('log4js'),
   Q = require('q');
 
-var LOGLEVEL = log4js.levels.INFO;
+exports.init = init;
+exports.processGame = processGame;
+exports.saveGameJson = saveGameJson;
 
-var __dirname; // current working directory (defined by node.js)
-var _logger; // log4js logger
-var _config; // config data from cfg.json file
-var _dbpool; // DB connection pool
+var _sqlErrorQuery, _sqlErrorParams; // if an SQL error occurs, this can be printed for debugging purposes
 var _conn; // DB connection
 var _cache = { /*Map: {}, Player: {}, Clan: {}*/ }; // NAME -> { ID [, ...] }; Player cache also contains CLAN_ID and COUNTRY
 var _sqlInsertGame; // SQL statement to insert into Game table
 var _sqlInsertGamePlayer; // SQL statement to insert into GamePlayer table
 var _sqlUpdatePlayer; // SQL statement to update Player CLAN_ID and COUNTRY
-var _sqlErrorQuery, _sqlErrorParams; // if an SQL error occurs, this can be printed for debugging purposes
-var _cookieJar; // www.quakelive.com login cookies
-var _adaptivePollDelaySec = 120; // will be reduced to 60 after first (=full) batch. Values are 15,30,60,120
-var _lastGameTimestamp = ""; // last timestamp retrieved from live game tracker, used to get next incremental set of games
-
-var _profilingInfo;
-
-main();
-
-function main() {
-  var data = fs.readFileSync(__dirname + '/cfg.json');
-  _config = JSON.parse(data);
-  _config.mysql_db.database = "qlstats2";
-
-  Q.longStackSupport = false;
-  _logger = log4js.getLogger("loader");
-  _logger.setLevel(LOGLEVEL);
-
-  _dbpool = mysql.createPool(_config.mysql_db);
-  createSqlStatements();
-  connect()
-    .then(initCaches)
-    .then(processingLoop)
-    .fail(function (err) { _logger.error(err); })
-    .done(function() { _logger.info("completed"); process.exit(); });
-}
-
-function processingLoop() {
-  if (_config.loader.stream) {
-    _logger.info("Fetching data from http://www.quakelive.com/tracker/from/");
-    return loginToQuakeliveWebsite().then(fetchAndProcessJsonInfiniteLoop);
-  } else {
-    return loadAndProcessJsonFileLoop();
-  }
-}
+var _logger; // log4js logger
 
 //==========================================================================================
 // SQL init
 //==========================================================================================
+
+function init(conn) {
+  _logger = log4js.getLogger("ldcore");
+  _logger.setLevel(log4js.levels.INFO);
+ 
+  _conn = conn;
+  createSqlStatements();
+  return initCaches();
+}
 
 function createSqlStatements() {
   var cols =
@@ -95,12 +62,7 @@ function createSqlStatements() {
   _sqlUpdatePlayer = "UPDATE Player set CLAN_ID=?, COUNTRY=? where ID=?";
 }
 
-function connect() {
-  return Q.ninvoke(_dbpool, "getConnection");
-}
-
-function initCaches(conn) {
-  _conn = conn;
+function initCaches() {
   _cache = {};
   return Q.all([initCache("Map"), initCache("Clan"), initCache("Player")]);
 }
@@ -118,222 +80,12 @@ function initCache(table) {
 }
 
 //==========================================================================================
-// QL live data feed
-//==========================================================================================
-
-function loginToQuakeliveWebsite() {
-  var defer = Q.defer();
-  _cookieJar = request.jar();
-  request({
-      uri: "https://secure.quakelive.com/user/login",
-      timeout: 10000,
-      method: "POST",
-      form: { submit: "", email: _config.loader.ql_email, pass: _config.loader.ql_pass },
-      jar: _cookieJar
-    },
-    function(err) {
-      if (err) {
-        _logger.error("Error logging in to quakelive.com: " + err);
-        defer.reject(new Error(err));
-      } else {
-        _logger.info("Logged on to quakelive.com");
-        defer.resolve(_cookieJar);
-      }
-    });
-  return defer.promise;
-}
-
-function fetchAndProcessJsonInfiniteLoop() {
-  return requestJson()
-    .then(processBatch)
-    .fail(function (err) { _logger.error("Error processing batch: " + err); })
-    .then(sleepBetweenBatches)
-    .then(fetchAndProcessJsonInfiniteLoop);
-}
-
-function requestJson() {
-  var defer = Q.defer();
-  request(
-    {
-      uri: "http://www.quakelive.com/tracker/from/" + _lastGameTimestamp,
-      timeout: 10000,
-      method: "GET",
-      jar: _cookieJar
-    },
-    function (err, resp, body) {
-      if (err)
-        defer.reject(new Error(err));
-      else
-        defer.resolve(body);
-    });
-  return defer.promise;
-}
-
-function processBatch(json) {
-  var batch = JSON.parse(json);
-
-  // adapt polling rate
-  var len = batch.length;
-  if (len < 40 && _adaptivePollDelaySec < 120) // max 2min
-    _adaptivePollDelaySec *= 2;
-  else if (len > 80 && _adaptivePollDelaySec > 15) // min 15sec
-    _adaptivePollDelaySec /= 2;
-  _logger.info("Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec");
-
-  if (len == 0)
-    return undefined; // value doesnt matter
-
-  _lastGameTimestamp = batch[0].GAME_TIMESTAMP;
-  var tasks = [];
-  batch.forEach(function(game) {
-      tasks.push(saveGameJson(game));
-      tasks.push(processGame(game));
-    }
-  );
-  return Q.allSettled(tasks);
-}
-
-function saveGameJson(game) {
-  // JSONs loaded from match profiles contain "mm/dd/yyyy h:MM a" format, live tracker contains unixtime int data
-  var GAME_TIMESTAMP = game.GAME_TIMESTAMP; // can be either a number, an Object-number, a string, ... 
-  if (GAME_TIMESTAMP.indexOf("/") >= 0) {
-    GAME_TIMESTAMP = new Date(GAME_TIMESTAMP).getTime() / 1000;
-  }
-  var date = new Date(GAME_TIMESTAMP * 1000);
-  var dirName1 = _config.loader.jsondir + date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2);
-  var dirName2 = dirName1 + "/" + ("0" + date.getDate()).slice(-2);
-  var filePath = dirName2 + "/" + game.PUBLIC_ID + ".json.gz";
-  //_logger.debug("saving JSON: " + filePath);
-  return createDir(dirName1)
-    .then(createDir(dirName2))
-    .then(function() {
-      var json = JSON.stringify(game);
-      return Q.nfcall(zlib.gzip, json);
-    })
-    .then(function (gzip) {
-      return Q.nfcall(fs.writeFile, filePath, gzip);
-    })
-    .fail(function(err) { _logger.error("Can't save game JSON: " + err.stack); });
-}
-
-function createDir(dir) {
-  var defer = Q.defer();
-  // fs.mkdir returns an error when the directory already exists
-  fs.mkdir(dir, function (err) {
-    if (err && err.code != "EEXIST")
-      defer.reject(err);
-    else
-      defer.resolve(dir);
-  });
-  return defer.promise;
-}
-
-function sleepBetweenBatches() {
-  var defer = Q.defer();
-  setTimeout(function () { defer.resolve(); }, _adaptivePollDelaySec * 1000);
-  return defer.promise;
-}
-
-//==========================================================================================
-// file data feed
-//==========================================================================================
-
-function Stats() {
-  this.incProcessed = function() {
-    ++this.total;
-    ++this.processed;
-  }
-  this.incSkipped = function () {
-    ++this.total;
-    ++this.skipped;
-  }
-  this.reset = function () {
-    this.timestamp = new Date().getTime();
-    this.processed = 0;
-    this.skipped = 0;
-  }
-  this.reset();
-  this.total = 0;
-  this.timestamp0 = this.timestamp;
-}
-
-function loadAndProcessJsonFileLoop() {
-  _profilingInfo = new Stats();
-  setInterval(function() {
-    _logger.info("" + (_profilingInfo.processed / 30) + " games/sec (" + _profilingInfo.total + " total)");
-    _profilingInfo.reset();
-  }, 30000);
-
-  return loadAndProcessJsonFilesInDirectory(_config.loader.jsondir)
-    .then(function() {
-      var secs = (new Date().getTime() - _profilingInfo.timestamp0) / 1000;
-      _logger.info("Total time: " + secs + " sec. Game files found: " + _profilingInfo.total
-        + ", loaded: " + _profilingInfo.processed + ", skipped: " + _profilingInfo.skipped);
-    });
-}
-
-function loadAndProcessJsonFilesInDirectory(dir) {
-  _logger.info("Loading data from " + dir + "*.json[.gz]");
-  return Q
-    .nfcall(fs.readdir, dir)
-    .then(function (files) {
-      var subDirs = [];
-      var tasks = files.map(function (file) {
-        var path = dir + file;
-        var stats = fs.statSync(path);
-        if (stats.isDirectory()) {
-          subDirs.push(path + "/");
-          return undefined;
-        } else
-          return function() { return processFile(path); }
-      });
-      subDirs.forEach(function(subdir) {
-        tasks.push(function() { return loadAndProcessJsonFilesInDirectory(subdir); });
-      });
-      return tasks.reduce(Q.when, Q(undefined));
-    });
-}
-
-function processFile(file) {
-  if (!file.match(/.json(.gz)?$/))
-    return undefined;
-  var isGzip = file.slice(-3) == ".gz";
-  var basename;
-  var match = file.match(/.*[\/\\]([^\.]*).*/);
-  if (match)
-    basename = match[1];
-  return Q
-    .fcall(function() { return basename ? query("select ID from Game where PUBLIC_ID=?", [basename]) : []; })
-    .then(function (result) {
-      if (result.length > 0) {
-        _logger.debug("Skipping " + file + " (already in database)");
-        _profilingInfo.incSkipped();
-        return true;
-      }
-      return Q
-        .fcall(function() { _logger.debug("Loading " + file); })
-        .then(function() { return Q.nfcall(fs.readFile, file); })
-        .then(function(data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
-        .then(function(json) {
-          var game = JSON.parse(json);
-          if (!game.PUBLIC_ID) {
-            _logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
-            return undefined;
-          }
-          return processGame(game)
-            .then(function() { _profilingInfo.incProcessed(); });
-        });
-    })
-    .catch(function (err) { _logger.error(file + ": " + err); });
-}
-
-//==========================================================================================
 // common game data processing
 //==========================================================================================
 
 function processGame(game) {
   return insertGame(game)
-    .then(function(gameIdAndTimestamp) { return processGamePlayers(game, gameIdAndTimestamp[0], gameIdAndTimestamp[1]); })
+    .then(function (gameIdAndTimestamp) { return processGamePlayers(game, gameIdAndTimestamp[0], gameIdAndTimestamp[1]); })
     .catch(function (err) {
       if (err.toString().match(/uplicate/))
         _logger.debug("dupe: " + game.PUBLIC_ID);
@@ -381,21 +133,21 @@ function insertGame(g) {
 
   return Q
     .all(lookups)
-    .then(function(promises) {
+    .then(function (promises) {
       var values = getPromisedValues(promises);
       var data = [
         g.PUBLIC_ID, values[5].ID, values[8].ID, g.NUM_PLAYERS, AVG_ACC,
         parseInt(g.PREMIUM), parseInt(g.RANKED), parseInt(g.RESTARTED), parseInt(g.RULESET), parseInt(g.TIER),
         g.TOTAL_KILLS, TOTAL_ROUNDS, WINNING_TEAM, g.TSCORE0, g.TSCORE1,
-        values[6].ID, values[7].ID, g.GAME_LENGTH, g.GAME_TYPE.substr(0,4), GAME_TIMESTAMP,
+        values[6].ID, values[7].ID, g.GAME_LENGTH, g.GAME_TYPE.substr(0, 4), GAME_TIMESTAMP,
         values[0].ID, playerStatsNum[0], values[1].ID, playerStatsNum[1], values[2].ID, playerStatsNum[2],
         values[3].ID, playerStatsNum[3], values[4].ID, playerStatsNum[4]
       ];
-      data = data.map(function(value) { return Number.isNaN(value) ? null : value; });
+      data = data.map(function (value) { return Number.isNaN(value) ? null : value; });
       return query(_sqlInsertGame, data)
-        .then(function(result) {
+        .then(function (result) {
           //_logger.trace("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
-          return [ result.insertId, GAME_TIMESTAMP ];
+          return [result.insertId, GAME_TIMESTAMP];
         });
     });
 }
@@ -410,13 +162,13 @@ function processGamePlayers(g, gameId, gameTimestamp) {
   boardNames.forEach(function (boardName) {
     var board = g[boardName];
     if (board && board.length) {
-      board.forEach(function(p) {
+      board.forEach(function (p) {
         players.push(p);
       });
     }
   });
 
-  var promises = players.map(function(player) { return insertGamePlayer(player, gameId, gameTimestamp); });
+  var promises = players.map(function (player) { return insertGamePlayer(player, gameId, gameTimestamp); });
   return Q.allSettled(promises);
 }
 
@@ -463,7 +215,7 @@ function insertGamePlayer(p, gameId, timestamp) {
         p.RAILGUN_HITS, p.RAILGUN_KILLS, p.RAILGUN_SHOTS, p.ROCKET_HITS, p.ROCKET_KILLS, p.ROCKET_SHOTS,
         p.SHOTGUN_HITS, p.SHOTGUN_KILLS, p.SHOTGUN_SHOTS
       ];
-      data = data.map(function(value) { return Number.isNaN(value) ? null : value; });
+      data = data.map(function (value) { return Number.isNaN(value) ? null : value; });
 
       // check if player has changed clan or country
       var isNewerData = !player.timestamp || player.timestamp < timestamp;
@@ -479,7 +231,7 @@ function insertGamePlayer(p, gameId, timestamp) {
 
       return data;
     })
-    .then(function(data) { return query(_sqlInsertGamePlayer, data); })
+    .then(function (data) { return query(_sqlInsertGamePlayer, data); })
     .fail(function (err) { _logger.error("#" + gameId + ", " + p.PLAYER_NICK + ": " + err.stack + getQueryErrorInfo()); });
 }
 
@@ -489,7 +241,7 @@ function getCachedMap(name) {
 
 function getCachedClan(name) {
   if (!name || name == "None")
-    return Q({ID: null});
+    return Q({ ID: null });
   return getCachedItem("Clan", { NAME: name });
 }
 
@@ -528,13 +280,13 @@ function getCachedItem(table, objWithName) {
     .fail(function (err) {
       // if another loader runs in parallel, it might have already inserted the object
       return query("select ID from " + table + " where NAME=?", [objWithName.NAME])
-        .then(function(result) {
+        .then(function (result) {
           if (result.length == 1) {
             clone.ID = result[0].ID;
             _cache[table][lower] = clone;
             return clone;
           }
-        throw err;
+          throw err;
         });
     });
   _cache[table][lower] = promise;
@@ -564,7 +316,46 @@ function getQueryErrorInfo() {
 }
 
 function getPromisedValues(promisesOrValues) {
-  return promisesOrValues.map(function(promiseOrValue) {
+  return promisesOrValues.map(function (promiseOrValue) {
     return Q.isPromise(promiseOrValue) ? promiseOrValue.value : promiseOrValue;
   });
+}
+
+//==========================================================================================
+// File system functions
+//==========================================================================================
+
+function saveGameJson(game, basedir) {
+  // JSONs loaded from match profiles contain "mm/dd/yyyy h:MM a" format, live tracker contains unixtime int data
+  var GAME_TIMESTAMP = game.GAME_TIMESTAMP; // can be either a number, an Object-number, a string, ... 
+  if (GAME_TIMESTAMP.indexOf("/") >= 0) {
+    GAME_TIMESTAMP = new Date(GAME_TIMESTAMP).getTime() / 1000;
+  }
+  var date = new Date(GAME_TIMESTAMP * 1000);
+  var dirName1 = basedir + date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2);
+  var dirName2 = dirName1 + "/" + ("0" + date.getDate()).slice(-2);
+  var filePath = dirName2 + "/" + game.PUBLIC_ID + ".json.gz";
+  _logger.debug("saving JSON: " + filePath);
+  return createDir(dirName1)
+    .then(createDir(dirName2))
+    .then(function () {
+      var json = JSON.stringify(game);
+      return Q.nfcall(zlib.gzip, json);
+    })
+    .then(function (gzip) {
+      return Q.nfcall(fs.writeFile, filePath, gzip);
+    })
+    .fail(function (err) { _logger.error("Can't save game JSON: " + err.stack); });
+}
+
+function createDir(dir) {
+  var defer = Q.defer();
+  // fs.mkdir returns an error when the directory already exists
+  fs.mkdir(dir, function (err) {
+    if (err && err.code != "EEXIST")
+      defer.reject(err);
+    else
+      defer.resolve(dir);
+  });
+  return defer.promise;
 }
