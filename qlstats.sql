@@ -128,9 +128,9 @@ CREATE TABLE GamePlayer(
 
 
 DROP TABLE IF EXISTS Race;
-CREATE TABLE Race (MODE int not null, MAP varchar(30) not null, SCORE integer not null, PLAYER_NICK varchar(30), RANK integer not null, GAME_TIMESTAMP integer not null) engine=MyISAM;
-CREATE INDEX IX_RaceMap on Race (MAP, MODE, RANK);
-CREATE INDEX IX_RacePlayer on Race (PLAYER_NICK, MODE);
+CREATE TABLE Race (MODE int not null, MAP_ID integer not null, SCORE integer not null, PLAYER_ID integer not null, RANK integer not null, GAME_TIMESTAMP integer not null, GAME_ID integer) engine=MyISAM;
+CREATE INDEX IX_RaceMap on Race (MAP_ID, MODE, RANK);
+CREATE INDEX IX_RacePlayer on Race (PLAYER_ID, MODE);
 
 create view Games as 
 select g.*,m.NAME as MAP 
