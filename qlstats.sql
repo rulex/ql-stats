@@ -1,10 +1,13 @@
+CREATE DATABASE qlstats CHARACTER SET ascii;
+use qlstats;
+
 DROP TABLE IF EXISTS Map;
 CREATE TABLE Map(
   ID integer NOT NULL auto_increment,
   NAME varchar(24) not null,
 --
   PRIMARY KEY( ID )
-) ENGINE=MyISAM;
+) CHARACTER SET ascii ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS Clan;
 CREATE TABLE Clan(
@@ -12,18 +15,18 @@ CREATE TABLE Clan(
   NAME varchar(16) not null,
 --
   PRIMARY KEY( ID )
-) ENGINE=MyISAM;
+) CHARACTER SET ascii ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS Player;
 CREATE TABLE Player(
   ID integer NOT NULL auto_increment,
   NAME varchar(16) not null,
   CLAN_ID integer,
-  COUNTRY varchar(2),
+  COUNTRY char(2),
 --
   PRIMARY KEY( ID ),
   UNIQUE KEY IX_NAME( NAME )
-) ENGINE=MyISAM;
+) CHARACTER SET ascii ENGINE=MyISAM;
 
 
 DROP TABLE IF EXISTS Game;
@@ -63,7 +66,7 @@ CREATE TABLE Game(
 	PRIMARY KEY( ID ),
   UNIQUE KEX( PUBLIC_ID ),
 	KEY IX_GAMETYPE_MAP( GAME_TYPE, MAP_ID )
-) ENGINE=MyISAM;
+) CHARACTER SET ascii ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS GamePlayer;
 CREATE TABLE GamePlayer(
@@ -124,11 +127,11 @@ CREATE TABLE GamePlayer(
 	PRIMARY KEY( ID ),
 	KEY IX_GAME_PLAYER( GAME_ID, PLAYER_ID ),
   KEY IX_PLAYER_ID( PLAYER_ID )
-) ENGINE=MyISAM;
+) CHARACTER SET ascii ENGINE=MyISAM;
 
 
 DROP TABLE IF EXISTS Race;
-CREATE TABLE Race (MODE int not null, MAP_ID integer not null, SCORE integer not null, PLAYER_ID integer not null, RANK integer not null, GAME_TIMESTAMP integer not null, GAME_ID integer) engine=MyISAM;
+CREATE TABLE Race (MODE int not null, MAP_ID integer not null, SCORE integer not null, PLAYER_ID integer not null, RANK integer not null, GAME_TIMESTAMP integer not null, GAME_ID integer) CHARACTER SET ascii engine=MyISAM;
 CREATE INDEX IX_RaceMap on Race (MAP_ID, MODE, RANK);
 CREATE INDEX IX_RacePlayer on Race (PLAYER_ID, MODE);
 
