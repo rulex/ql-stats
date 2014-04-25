@@ -50,19 +50,19 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/players/:player', { controller: PlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/owners', { controller: OwnersCtrl, templateUrl: 'owners.html' } ).
 	when( '/owners/:owner', { controller: OwnerCtrl, templateUrl: 'owner.html' } ).
-	when( '/owners/:owner/players', { controller: OwnerPlayersCtrl, templateUrl: 'players.html' } ).
-	when( '/owners/:owner/games', { controller: OwnerGamesCtrl, templateUrl: 'games2.html' } ).
-	when( '/owners/:owner/players/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
+	//when( '/owners/:owner/players', { controller: OwnerPlayersCtrl, templateUrl: 'players.html' } ).
+	//when( '/owners/:owner/games', { controller: OwnerGamesCtrl, templateUrl: 'games2.html' } ).
+	//when( '/owners/:owner/players/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
 	//when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
-	when( '/clans', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/clans', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/clan/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
-	when( '/clan/:clan', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/clan/:clan', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/maps', { controller: MapsCtrl, templateUrl: 'maps.html' } ).
-	when( '/maps', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/maps', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/map/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
-	when( '/map/:map', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/map/:map', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
-	when( '/countries', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	//when( '/countries', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
 	when( '/tags/:tag', { controller: TagCtrl, templateUrl: 'tag.html' } ).
 	when( '/tags/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games.html' } ).
@@ -73,10 +73,7 @@ angular.module( 'liz', ['lizzy'] )
 	when('/race/maps/:map', { controller: RaceMapCtrl, templateUrl: 'racemap.html' }).
 	when('/race/players/:player', { controller: RacePlayerCtrl, templateUrl: 'raceplayer.html' }).
 	otherwise({ redirectTo: '/' });
-}])
-.filter('gametype', function() {
-  return function (input) { return input == "harv" ? "harvester" : input; }
-});
+}]);
 
 function EmptyCtrl( $scope, $timeout, $routeParams ) {
 }
@@ -762,8 +759,8 @@ factory( 'theLiz', function( $http ) {
 } )
 .filter( 'team', function() {
 	return function( t ) {
-		if( t == 'Blue' ) { return "success" }
-		else if( t == 'Red' ) { return "danger" }
+		if( t == '2' ) { return "success" }
+		else if( t == '1' ) { return "danger" }
 		else return "";
 	}
 } )
@@ -777,7 +774,13 @@ factory( 'theLiz', function( $http ) {
 		if( c == 'None' ) { return '' }
 		else { return c; }
 	}
-} );
+} )
+.filter('gametype', function () {
+  return function (input) { return input == "harv" ? "harvester" : input.toLowerCase(); }
+})
+.filter('teamname', function () {
+  return function (input) { input = parseInt(input); return input == 1 ? "Red" : input == 2 ? "Blue" : ""; }
+});
 
 function convertTimestamp(timestamp) {
 	var d = new Date(timestamp * 1000), // Convert to milliseconds

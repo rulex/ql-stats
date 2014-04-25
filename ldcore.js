@@ -99,7 +99,7 @@ function processGame(game) {
 }
 
 function insertGame(g) {
-  var playerStatsFields = ["MOST_ACCURATE", "DMG_DELIVERED", "DMG_TAKEN", "LEAST_DEATHS", "MOST_DEATHS"];
+  var playerStatsFields = ["DMG_DELIVERED", "DMG_TAKEN", "LEAST_DEATHS", "MOST_DEATHS", "MOST_ACCURATE"];
   var playerStatsNum = [0, 0, 0, 0, 0];
   var lookups = [{ ID: null }, { ID: null }, { ID: null }, { ID: null }, { ID: null }];
   var TOTAL_ROUNDS = 0;

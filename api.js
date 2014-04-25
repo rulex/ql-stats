@@ -390,7 +390,7 @@ app.get( '/api/games', function ( req, res ) {
   + 'left outer join Player ld on ld.ID=g.LEAST_DEATHS_ID '
   + 'left outer join Player md on md.ID=g.MOST_DEATHS_ID '
   + 'left outer join Player ma on ma.ID=g.MOST_ACCURATE_ID '
-  + 'order by GAME_ID desc LIMIT 5000';
+  + 'order by g.GAME_TIMESTAMP desc LIMIT 5000';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { games: CACHE[req.route.path].data } } );
 		res.end();
@@ -430,8 +430,8 @@ app.get( '/api/games', function ( req, res ) {
 app.get('/api/games/:game', function (req, res) {
   var game = mysql_real_escape_string(req.params.game);
   var sql = [];
-  sql[0] = 'SELECT * FROM Games WHERE PUBLIC_ID=\'' + game + '\'';
-  sql[1] = 'SELECT * FROM Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID WHERE gp.GAME_ID=(select ID from Game where PUBLIC_ID=\'' + game + '\')';
+  sql[0] = 'SELECT g.*, m.NAME as MAP FROM Game g inner join Map m on m.ID=g.MAP_ID WHERE g.PUBLIC_ID=\'' + game + '\'';
+  sql[1] = 'SELECT p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN, gp.* FROM Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID left outer join Clan c on c.ID=p.CLAN_ID WHERE gp.GAME_ID=(select ID from Game where PUBLIC_ID=\'' + game + '\') order by TEAM';
   sql[2] = 'select gp.TEAM, count(1) as PLAYERS, sum(gp.SCORE) as SCORE_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, '
   + ' avg(gp.SCORE) as SCORE_AVG, sum(gp.KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, avg(gp.DEATHS) as DEATHS_AVG, sum(gp.DEATHS) as DEATHS_SUM, '
   + 'sum(gp.SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(gp.HITS) as HITS_SUM, avg(HITS) as HITS_AVG, avg(gp.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, '
@@ -440,8 +440,8 @@ app.get('/api/games/:game', function (req, res) {
   + 'avg(HUMILIATION) as HUMILIATION_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, avg(RL_H) as RL_H_AVG, sum(RL_H) as RL_H_SUM, avg(RL_S) as RL_S_AVG, sum(RL_S) as RL_S_SUM, '
   + 'sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, avg(LG_H) as LG_H_AVG, sum(LG_H) as LG_H_SUM, avg(LG_S) as LG_S_AVG, sum(LG_S) as LG_S_SUM, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, '
   + 'avg(RG_H) as RG_H_AVG, sum(RG_H) as RG_H_SUM, avg(RG_S) as RG_S_AVG, sum(RG_S) as RG_S_SUM '
-  + 'from GamePlayer gp inner join Game g on gp.GAME_ID=g.ID '
-  + 'where g.PUBLIC_ID="' + game + '" group by TEAM with rollup ';
+  + 'from GamePlayer gp inner join Game g on g.ID=gp.GAME_ID '
+  + 'where g.PUBLIC_ID="' + game + '" and team in (1,2) group by TEAM with rollup';
   dbpool.getConnection(function (err, conn) {
     if (err) { console.log(err); }
     conn.query(sql.join(';'), function (err, resulty) {
@@ -640,11 +640,11 @@ app.get( '/api/owners/:owner/games', function ( req, res ) {
 } );
 */
 app.get( '/api/owners/:owner', function ( req, res ) {
-	var owner = mysql_real_escape_string( req.params.owner );
-	var sql = [];
-	sql = 'SELECT OWNER, count(*) as MATCHES_PLAYED, sum(PREMIUM) as PREMIUM_COUNT, avg(GAME_LENGTH) as GAME_LENGTH_AVG,  sum(GAME_LENGTH) as GAME_LENGTH_SUM,'
+	var sql;
+	sql = 'SELECT o.NAME as OWNER, count(1) as MATCHES_PLAYED, sum(PREMIUM) as PREMIUM_COUNT, avg(GAME_LENGTH) as GAME_LENGTH_AVG,  sum(GAME_LENGTH) as GAME_LENGTH_SUM,'
 	+ 'avg(NUM_PLAYERS) as NUM_PLAYERS_AVG, avg(TOTAL_KILLS) as TOTAL_KILLS_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS_SUM, avg(DMG_DELIVERED_NUM) as DMG_DELIVERED_NUM_AVG, '
-  + 'avg(TSCORE0) as TSCORE0_AVG, avg(TSCORE1) as TSCORE1_AVG FROM Games where OWNER="' + owner + '" order by null';
+  + 'avg(TSCORE0) as TSCORE0_AVG, avg(TSCORE1) as TSCORE1_AVG '
+  + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID where o.NAME=?';
 	//sql[1] = 'select MAP, count(*) as MATCHES_PLAYED from Games where OWNER="'+ owner +'" group by MAP order by NULL';
 	// unique players
 	//sql[1] = 'select count(*) as UNIQUE_PLAYERS from ( select PLAYER_NICK from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by PLAYER_NICK order by NULL ) as a';
@@ -653,7 +653,7 @@ app.get( '/api/owners/:owner', function ( req, res ) {
 	// players
 	//sql[4] = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [ req.params.owner], function( err2, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { owner: rows[0] } } );
 			res.end();
