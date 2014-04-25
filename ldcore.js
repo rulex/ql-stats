@@ -15,7 +15,7 @@ exports.getCachedPlayer = getCachedPlayer;
 
 var _sqlErrorQuery, _sqlErrorParams; // if an SQL error occurs, this can be printed for debugging purposes
 var _conn; // DB connection
-var _cache = { /*Map: {}, Player: {}, Clan: {}*/ }; // NAME -> { ID [, ...] }; Player cache also contains CLAN_ID and COUNTRY
+var _cache = { Map: {}, Clan: {}, Player: {} }; // NAME -> { ID [, ...] }; Player cache also contains CLAN_ID and COUNTRY
 var _sqlInsertGame; // SQL statement to insert into Game table
 var _sqlInsertGamePlayer; // SQL statement to insert into GamePlayer table
 var _sqlUpdatePlayer; // SQL statement to update Player CLAN_ID and COUNTRY
@@ -25,13 +25,16 @@ var _logger; // log4js logger
 // SQL init
 //==========================================================================================
 
-function init(conn) {
+// returns a Q promise to initialze the cache
+function init(conn, options) {
   _logger = log4js.getLogger("ldcore");
   _logger.setLevel(log4js.levels.INFO);
  
   _conn = conn;
   createSqlStatements();
-  return initCaches();
+  if (!options || options.useCache !== false)
+    return initCaches();
+  return Q(undefined);
 }
 
 function createSqlStatements() {
@@ -67,7 +70,6 @@ function createSqlStatements() {
 }
 
 function initCaches() {
-  _cache = {};
   return Q.all([initCache("Map"), initCache("Clan"), initCache("Player")]);
 }
 
@@ -103,7 +105,7 @@ function insertGame(g) {
   var playerStatsNum = [0, 0, 0, 0, 0];
   var lookups = [{ ID: null }, { ID: null }, { ID: null }, { ID: null }, { ID: null }];
   var TOTAL_ROUNDS = 0;
-  var WINNING_TEAM = "";
+  var WINNING_TEAM;
   var AVG_ACC = 0;
   var GAME_TYPE;
   var GAME_TIMESTAMP;
@@ -132,8 +134,8 @@ function insertGame(g) {
     TOTAL_ROUNDS = g.TOTAL_ROUNDS;
     if (TOTAL_ROUNDS < 0) // some broken data contains -990
       TOTAL_ROUNDS = 0;
-    WINNING_TEAM = g.WINNING_TEAM;
   }
+  WINNING_TEAM = g.WINNING_TEAM == "Red" ? 1 : g.WINNING_TEAM == "Blue" ? 2 : 0;
 
   lookups.push(getCachedPlayer({NAME: g.OWNER}));
   lookups.push(getCachedPlayer({NAME: g.FIRST_SCORER}));
