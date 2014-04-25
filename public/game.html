@@ -160,7 +160,7 @@
 			<tbody>
 				<tr ng-repeat="z in game.data.players | orderBy: ordercolumn:ordertype" class="{{ z.TEAM | team }}">
 					<td><a href="#/clans/{{z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
-					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
+					<td><img ng-show="z.PLAYER_COUNTRY" src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
 					<td>{{ z.RANK }}</td>
 					<td>{{ z.TEAM | teamname }}</td>
 					<td>{{ z.SCORE }}</td>

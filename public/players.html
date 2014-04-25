@@ -12,15 +12,16 @@
 		<table class="table table-condensed table-striped ">
 			<thead>
 				<tr>
-          <th><a href="" ng-click="ordercolumn='PLAYER_COUNTRY'; ordertype=!ordertype">PLAYER_COUNTRY</a></th>
 					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
 					<th><a href="" ng-click="ordercolumn='PLAYER_CLAN'; ordertype=!ordertype">PLAYER_CLAN</a></th>
 				</tr>
 			</thead>
 			<tbody>
 			  <tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
-			    <td><img ng-if="z.PLAYER_COUNTRY" src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /></td>
-			    <td><a href="#/{{theurl}}players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
+			    <td>
+			      <img ng-show="z.PLAYER_COUNTRY" src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" />
+			      <a href="#/{{theurl}}players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a>
+          </td>
 			    <td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
 			  </tr>
 			</tbody>

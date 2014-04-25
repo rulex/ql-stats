@@ -306,12 +306,11 @@ app.get('/api/players/:player', function (req, res) {
   });
 });
 app.get('/api/players/:player/games', function (req, res) {
-	var nick = mysql_real_escape_string( req.params.player );
-	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, RULESET, RANKED, PREMIUM, DAMAGE_DEALT/PLAY_TIME as DAMAGE_DEALT_PER_SEC_AVG, '
-	+ 'Players.PLAYER_NICK, Players.PLAYER_CLAN from Games g inner join Map m on m.ID=g.MAP_ID left join Player o on o.ID=g.OWNER_ID '
-  + 'left join Player on Games.PUBLIC_ID=Players.PUBLIC_ID where Players.PLAYER_NICK="' + nick + '" order by NULL';
+	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, RULESET, RANKED, PREMIUM, DAMAGE_DEALT/PLAY_TIME as DAMAGE_DEALT_PER_SEC_AVG, p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN'
+  + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Clan c on c.ID=gp.CLAN_ID left join Player o on o.ID=g.OWNER_ID '
+  + ' where p.NAME=? order by GAME_TIMESTAMP desc';
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [req.params.player], function( err, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { games: rows } } );
 			res.end();
