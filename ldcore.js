@@ -28,7 +28,7 @@ var _logger; // log4js logger
 // returns a Q promise to initialze the cache
 function init(conn, options) {
   _logger = log4js.getLogger("ldcore");
-  _logger.setLevel(log4js.levels.INFO);
+  _logger.setLevel(log4js.levels.DEBUG);
  
   _conn = conn;
   createSqlStatements();
@@ -126,7 +126,7 @@ function insertGame(g) {
   for (var i = 0, c = playerStatsFields.length; i < c; i++) {
     var obj = g[playerStatsFields[i]];
     if (obj) {
-      lookups[i] = getCachedPlayer(obj);
+      lookups[i] = getCachedItem( "Player", { NAME: obj.PLAYER_NICK } );
       playerStatsNum[i] = obj.NUM;
     }
   }
@@ -137,9 +137,9 @@ function insertGame(g) {
   }
   WINNING_TEAM = g.WINNING_TEAM == "Red" ? 1 : g.WINNING_TEAM == "Blue" ? 2 : 0;
 
-  lookups.push(getCachedPlayer({NAME: g.OWNER}));
-  lookups.push(getCachedPlayer({NAME: g.FIRST_SCORER}));
-  lookups.push(getCachedPlayer({NAME: g.LAST_SCORER_NICK}));
+  lookups.push(getCachedItem( "Player", { NAME: g.OWNER } ));
+  lookups.push(getCachedItem( "Player", { NAME: g.FIRST_SCORER } ));
+  lookups.push(getCachedItem( "Player", { NAME: g.LAST_SCORER } ));
   lookups.push(getCachedMap(g.MAP));
 
   return Q
@@ -157,7 +157,7 @@ function insertGame(g) {
       data = data.map(function (value) { return Number.isNaN(value) ? null : value; });
       return query(_sqlInsertGame, data)
         .then(function (result) {
-          //_logger.trace("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
+          _logger.debug("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
           return [result.insertId, GAME_TIMESTAMP];
         });
     });
@@ -231,7 +231,7 @@ function insertGamePlayer(p, gameId, timestamp) {
       // check if player has changed clan or country
       var isNewerData = !player.timestamp || player.timestamp < timestamp;
       if (isNewerData && (player.CLAN_ID != clan.ID && clan.ID || player.COUNTRY != p.PLAYER_COUNTRY && p.PLAYER_COUNTRY)) {
-        //_logger.trace("updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
+        _logger.debug("updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
         if (clan.ID)
           player.CLAN_ID = clan.ID;
         if (p.PLAYER_COUNTRY)
@@ -251,19 +251,19 @@ function getCachedMap(name) {
 }
 
 function getCachedClan(name) {
-  if (!name || name == "None")
+  if( !name || name == "None" )
     return Q({ ID: null });
-  return getCachedItem("Clan", { NAME: name });
+  return getCachedItem( "Clan", { NAME: name } );
 }
 
 function getCachedPlayer(obj) {
-  return getCachedClan(obj.PLAYER_CLAN)
-    .then(function (clan) { return getCachedItem("Player", { NAME: obj.PLAYER_NICK, CLAN_ID: clan.ID, COUNTRY: obj.PLAYER_COUNTRY }); });
+	return getCachedClan( obj.PLAYER_CLAN )
+		.then( function( clan ) { return getCachedItem( "Player", { NAME: obj.PLAYER_NICK, CLAN_ID: clan.ID, COUNTRY: obj.PLAYER_COUNTRY } ); } );
 }
 
 function getCachedItem(table, objWithName) {
-  if (!objWithName.NAME)
-    return Q({ ID: null });
+  if( ! 'NAME' in objWithName )
+    return Q( { ID: null } );
   var lower = objWithName.NAME.toLowerCase();
   if (!_cache[table])
     _cache[table] = {};
@@ -283,7 +283,7 @@ function getCachedItem(table, objWithName) {
   var promise =
     query("insert into " + table + " (" + fields.substr(1) + ") values (" + placeholders.substr(1) + ")", values)
     .then(function (result) {
-      //_logger.trace("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
+      _logger.debug("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
       clone.ID = result.insertId;
       _cache[table][lower] = clone;
       return clone;
