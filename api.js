@@ -386,7 +386,7 @@ app.get( '/api/players/:player/update', function ( req, res ) {
 app.get( '/api/games', function ( req, res ) {
   var sql = 'SELECT g.*, m.NAME as MAP, o.NAME as OWNER, fs.NAME FIRST_SCORER, ls.NAME as LAST_SCORER, dd.NAME as DAMAGE_DELIVERED_NICK, dt.NAME as DAMAGE_TAKEN_NICK, '
   + 'ld.NAME as LEAST_DEATHS_NICK, md.NAME as MOST_DEATHS_NICK, ma.NAME as MOST_ACCURATE_NICK '
-  + 'FROM Game g inner join MAP m on m.ID=g.MAP_ID '
+  + 'FROM Game g inner join Map m on m.ID=g.MAP_ID '
   + 'left outer join Player o on o.ID=g.OWNER_ID '
   + 'left outer join Player fs on fs.ID=g.FIRST_SCORER_ID '
   + 'left outer join Player ls on ls.ID=g.LAST_SCORER_ID '
