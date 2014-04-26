@@ -23,9 +23,9 @@
 					<td>{{ sum( overview.data.overview, 'MATCHES_PLAYED' ) | number }}</td>
 				</tr>
 				<tr ng-repeat="z in overview.data.overview | orderBy:ordercolumn:ordertype">
-					<td><img style="float: left;" src="http://cdn.quakelive.com/web/2013121709/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013121709.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" /></td>
+					<td><img style="float: left;" src="http://cdn.quakelive.com/web/2013121709/images/gametypes/sm/{{ z.GAME_TYPE | gametype }}_v2013121709.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" /></td>
 							
-					<td>{{ z.GAME_TYPE }}</td>
+					<td>{{ z.GAME_TYPE | gametype }}</td>
 					<td>{{ z.TOTAL_KILLS | number }}</td>
 					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>
 					<td>{{ z.MATCHES_PLAYED | number }}</td>

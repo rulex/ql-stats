@@ -9,6 +9,7 @@ var http = require( 'http' );
 var url = require( 'url' );
 var server = http.createServer( app );
 var zlib = require( 'zlib' );
+var Q = require( 'q' );
 var race = require('./racecache.js');
 var allow_update = false;
 
@@ -120,11 +121,10 @@ app.get( '/api', function ( req, res ) {
 	res.end();
 } );
 app.get( '/api/search/players/:search_str', function ( req, res ) {
-	var search_str = mysql_real_escape_string( req.params.search_str );
-	var sql = 'select PLAYER_NICK from Players WHERE PLAYER_NICK like \'' + search_str + '%\' GROUP BY PLAYER_NICK ORDER BY NULL desc LIMIT 200';
+	var sql = 'select NAME from Player WHERE NAME like ? ORDER BY 1 LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) throw err;
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [ req.params.search_str + "%" ], function( err, rows ) {
 			conn.release();
 			if( err ) throw err;
 			res.jsonp( { data: { players: rows } } );
@@ -133,12 +133,33 @@ app.get( '/api/search/players/:search_str', function ( req, res ) {
 	} );
 } );
 app.get( '/api/search/players_with_details/:search_str', function ( req, res ) {
-	var search_str = mysql_real_escape_string( req.params.search_str );
-	//var sql = 'select * from Players WHERE PLAYER_NICK like \'' + search_str + '%\' GROUP BY PLAYER_NICK ORDER BY NULL desc LIMIT 200';
-	var sql = 'SELECT PLAYER_NICK, PLAYER_CLAN, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID WHERE PLAYER_NICK  like \''+ search_str +'%\' GROUP BY PLAYER_NICK order by NULL LIMIT 200';
+	var sql = 'SELECT p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN, p.COUNTRY as PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, '
+    + 'sum(case when gp.TEAM = g.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, '
+    + 'sum(case when gp.TEAM = g.WINNING_TEAM then 1 else 0 end)/count(1)*100 as WIN_PERCENT, '
+    + 'sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, '
+    + 'sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, '
+    + 'sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, '
+    + 'sum(KILLS) as KILLS, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(gp.KILLS)/sum(gp.DEATHS) as RATIO, '
+    + 'sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, '
+    + 'avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, '
+    + 'sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, '
+    + 'sum(PLAY_TIME) as PLAY_TIME, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, '
+    + 'sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, '
+    + 'sum(BFG_H) as BFG_H_SUM, avg(BFG_H) as BFG_H_AVG, sum(BFG_K) as BFG_K_SUM, avg(BFG_K) as BFG_K_AVG, sum(BFG_S) as BFG_S_SUM, avg(BFG_S) as BFG_S_AVG, '
+    + 'sum(CG_H) as CG_H_SUM, avg(CG_H) as CG_H_AVG, sum(CG_K) as CG_K_SUM, avg(CG_K) as CG_K_AVG, sum(CG_S) as CG_S_SUM, avg(CG_S) as CG_S_AVG, '
+    + 'sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, '
+    + 'sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, '
+    + 'sum(NG_H) as NG_H_SUM, avg(NG_H) as NG_H_AVG, sum(NG_K) as NG_K_SUM, avg(NG_K) as NG_K_AVG, sum(NG_S) as NG_S_SUM, avg(NG_S) as NG_S_AVG, '
+    + 'sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, '
+    + 'sum(PM_H) as PM_H_SUM, avg(PM_H) as PM_H_AVG, sum(PM_K) as PM_K_SUM, avg(PM_K) as PM_K_AVG, sum(PM_S) as PM_S_SUM, avg(PM_S) as PM_S_AVG, '
+    + 'sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, '
+    + 'sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, '
+    + 'sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG '
+    + 'FROM Player p left join CLAN c on c.ID=p.CLAN_ID left join GamePlayer gp on gp.PLAYER_ID=p.ID left join Game g on g.ID=gp.GAME_ID '
+    + 'WHERE p.NAME like ? GROUP BY PLAYER_NICK order by 1 LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { console.log( err ); }
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [ req.params.search_str + "%" ], function( err, rows ) {
 			conn.release();
 			if( err ) { console.log( err ); }
 			res.jsonp( { data: { players: rows } } );
@@ -257,9 +278,10 @@ app.get( '/api/search/teams', function ( req, res ) {
 		} );
 	} );
 } );
-//app.get( '/api/search/games', function ( req, res ) 
-app.get( '/api/players', function ( req, res ) {
-	var sql = 'select PLAYER_NICK as PLAYER_NICK, PLAYER_COUNTRY as PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(KILLS) as KILLS, sum(DEATHS) as DEATHS, sum(KILLS)/sum(DEATHS) as RATIO,sum(HITS) as HITS,avg(HITS) as HITS_AVG,sum(SHOTS) as SHOTS,avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(PLAY_TIME) as PLAY_TIME,sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG,sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG,sum(DAMAGE_DEALT) as DAMAGE_DEALT,avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players GROUP BY PLAYER_NICK ORDER BY PLAYER_NICK desc LIMIT ' + page*_perpage + ',' + _perpage;
+app.get('/api/players', function (req, res) {
+  var queryObject = url.parse(req.url, true).query;
+  var page = parseInt(queryObject.page);
+	var sql = 'select NAME as PLAYER_NICK, COUNTRY as PLAYER_COUNTRY from Player LIMIT ' + page*_perpage + ',' + _perpage;
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -269,11 +291,24 @@ app.get( '/api/players', function ( req, res ) {
 		} );
 	} );
 } );
-app.get( '/api/players/:player/games', function ( req, res ) {
-	var nick = mysql_real_escape_string( req.params.player );
-	var sql = 'select Games.PUBLIC_ID, Games.GAME_TIMESTAMP, Games.MAP, Games.GAME_TYPE, Games.OWNER, Games.RULESET, Games.RANKED, Games.PREMIUM, DAMAGE_DEALT/PLAY_TIME as DAMAGE_DEALT_PER_SEC_AVG, Players.PLAYER_NICK, Players.PLAYER_CLAN from Games left join Players on Games.PUBLIC_ID=Players.PUBLIC_ID where Players.PLAYER_NICK="'+ nick +'" order by NULL';
+app.get('/api/players/:player', function (req, res) {
+  var nick = mysql_real_escape_string(req.params.player);
+  var sql = 'SELECT PLAYER_NICK, PLAYER_CLAN, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID WHERE PLAYER_NICK=\'' + nick + '\' GROUP BY PLAYER_NICK order by NULL';
+  dbpool.getConnection(function (err, conn) {
+    conn.query(sql, function (err, rows) {
+      res.set('Cache-Control', 'public, max-age=' + http_cache_time);
+      res.jsonp({ data: { player: rows[0] } });
+      res.end();
+      conn.release();
+    });
+  });
+});
+app.get('/api/players/:player/games', function (req, res) {
+	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, RULESET, RANKED, PREMIUM, DAMAGE_DEALT/PLAY_TIME as DAMAGE_DEALT_PER_SEC_AVG, p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN'
+  + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Clan c on c.ID=gp.CLAN_ID left join Player o on o.ID=g.OWNER_ID '
+  + ' where p.NAME=? order by GAME_TIMESTAMP desc';
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [req.params.player], function( err, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { games: rows } } );
 			res.end();
@@ -282,10 +317,10 @@ app.get( '/api/players/:player/games', function ( req, res ) {
 	} );
 } );
 app.get( '/api/players/:player/clans', function ( req, res ) {
-	var nick = mysql_real_escape_string( req.params.player );
-	var sql = 'select PLAYER_NICK, PLAYER_CLAN, count(*) as MATCHES_PLAYED from Players where PLAYER_NICK="'+ nick +'" group by PLAYER_CLAN order by NULL';
+	var sql = 'select p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN, count(*) as MATCHES_PLAYED from Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID inner join Clan c on c.ID=gp.CLAN_ID '
+	  + ' where p.NAME=? group by p.NAME, c.NAME';
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [ req.params.player ], function( err, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { clans: rows } } );
 			res.end();
@@ -293,79 +328,74 @@ app.get( '/api/players/:player/clans', function ( req, res ) {
 		} );
 	} );
 } );
-app.get( '/api/players/:player/countries', function ( req, res ) {
-	var nick = mysql_real_escape_string( req.params.player );
-	var sql = 'select PLAYER_NICK, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED from Players where PLAYER_NICK="'+ nick +'" group by PLAYER_COUNTRY order by NULL';
-	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { countries: rows } } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
 app.get( '/api/players/:player/update', function ( req, res ) {
-	var nick = mysql_real_escape_string( req.params.player );
+  if (!allow_update) {
+    res.jsonp({ data: {}, error: [{ not_allowed: "" }] });
+    res.end();
+    return;
+  }
+
+  var nick = mysql_real_escape_string(req.params.player);
 	var d = new Date();
 	var url = 'http://www.quakelive.com/profile/matches_by_week/' + nick + '/' + d.getFullYear() + '-' + ( d.getMonth() + 1 ) + '-' + d.getUTCDate();
-	if( allow_update ) {
-		request( url, function( err, resp, body ) {
-			if( err ) { throw err; }
-			$ = cheerio.load( body );
-			var lastgame = "";
-			var _lastgame = $( '.areaMapC' ).length-1;
-			var nrcallbacks = $( '.areaMapC' ).length;
-			if( nrcallbacks === 0 ) {
-				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-				res.jsonp( { data: { player: nick, updated: 0, scanned: nrcallbacks, updated_games: lastgames } } );
-				return;
-			}
-			var requestCallback = new MyRequestsCompleted( {
-				numRequest: nrcallbacks,
-				singleCallback: function() {
-					res.jsonp( { data: { player: nick, updated: lastgames.length, scanned: nrcallbacks, updated_games: lastgames } } );
-					lastgames = [];
-					res.end();
-				}
-			} );
-			dbpool.getConnection( function( err, conn ) {
-				$( '.areaMapC' ).each( function( i ) {
-					lastgame = $(this).attr( 'id' ).split( '_' )[1];
-					var last_game_public_id = lastgame;
-					conn.query( 'SELECT PUBLIC_ID FROM Games WHERE PUBLIC_ID=\''+ lastgame +'\'', function( err, rows ) {
-						conn.release();
-						if( err ) { throw err; }
-						if( rows.length > 0 ) {
-							requestCallback.requestComplete( true );
-						}
-						else {
-							get_game( last_game_public_id, requestCallback, req );
-						}
-					} );
-				} );
-			} );
-		} );
-	}
-	else {
-		res.jsonp( { data: {}, error: [ { not_allowed: "" } ] } );
-		res.end();
-	}
-} );
-app.get( '/api/players/:player', function ( req, res ) {
-	var nick = mysql_real_escape_string( req.params.player );
-	var sql = 'SELECT PLAYER_NICK, PLAYER_CLAN, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID WHERE PLAYER_NICK=\''+ nick +'\' GROUP BY PLAYER_NICK order by NULL';
-	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { player: rows[0] } } );
-			res.end();
-			conn.release();
+
+  request( url, function( err, resp, body ) {
+		if( err ) { throw err; }
+		$ = cheerio.load( body );
+
+		var loader = require('./ldcore.js');
+		var conn;
+		var updatedGames = [];
+		var scanned = 0;
+    Q.ninvoke(dbpool, "getConnection")
+			.then(function(c) { conn = c; })
+			.then(function() { return loader.init(conn, { useCache: false })
+			.then(function() {
+        var tasks = [];
+        $('.areaMapC').each(function () {
+          ++scanned;
+          var publicId = $(this).attr('id').split('_')[1];
+          tasks.push(
+            loader.query('SELECT PUBLIC_ID FROM Game WHERE PUBLIC_ID=?', [publicId])
+            .then(function(result) {
+              if (result.length == 0) {
+                updatedGames.push(publicId);
+                return get_game(loader, publicId);
+              } else {
+                return undefined;
+              }
+            })
+          );
+        });
+        return Q.allSettled(tasks);
+      })
+      .then(function() {
+        res.jsonp({ data: { player: nick, updated: updatedGames.length, scanned: scanned, updated_games: updatedGames } });
+        res.end();
+        })
+      .fail(function (err) {
+        res.jsonp({ data: { }, error: err });
+        res.end();
+      })
+			.finally(function () {
+			  conn.release();			    
+      });
 		} );
 	} );
 } );
 app.get( '/api/games', function ( req, res ) {
-	var sql = 'SELECT * FROM Games order by GAME_TIMESTAMP desc LIMIT 5000';
+  var sql = 'SELECT g.*, m.NAME as MAP, o.NAME as OWNER, fs.NAME FIRST_SCORER, ls.NAME as LAST_SCORER, dd.NAME as DAMAGE_DELIVERED_NICK, dt.NAME as DAMAGE_TAKEN_NICK, '
+  + 'ld.NAME as LEAST_DEATHS_NICK, md.NAME as MOST_DEATHS_NICK, ma.NAME as MOST_ACCURATE_NICK '
+  + 'FROM Game g inner join MAP m on m.ID=g.MAP_ID '
+  + 'left outer join Player o on o.ID=g.OWNER_ID '
+  + 'left outer join Player fs on fs.ID=g.FIRST_SCORER_ID '
+  + 'left outer join Player ls on ls.ID=g.LAST_SCORER_ID '
+  + 'left outer join Player dd on dd.ID=g.DMG_DELIVERED_ID '
+  + 'left outer join Player dt on dt.ID=g.DMG_TAKEN_ID '
+  + 'left outer join Player ld on ld.ID=g.LEAST_DEATHS_ID '
+  + 'left outer join Player md on md.ID=g.MOST_DEATHS_ID '
+  + 'left outer join Player ma on ma.ID=g.MOST_ACCURATE_ID '
+  + 'order by g.GAME_TIMESTAMP desc LIMIT 5000';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { games: CACHE[req.route.path].data } } );
 		res.end();
@@ -402,7 +432,34 @@ app.get( '/api/games', function ( req, res ) {
 		} );
 	}
 } );
-app.get( '/api/games/:game/player/:player', function ( req, res ) {
+app.get('/api/games/:game', function (req, res) {
+  var game = mysql_real_escape_string(req.params.game);
+  var sql = [];
+  sql[0] = 'SELECT g.*, m.NAME as MAP FROM Game g inner join Map m on m.ID=g.MAP_ID WHERE g.PUBLIC_ID=\'' + game + '\'';
+  sql[1] = 'SELECT p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN, gp.* FROM Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID left outer join Clan c on c.ID=p.CLAN_ID WHERE gp.GAME_ID=(select ID from Game where PUBLIC_ID=\'' + game + '\') order by TEAM';
+  sql[2] = 'select gp.TEAM, count(1) as PLAYERS, sum(gp.SCORE) as SCORE_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, '
+  + ' avg(gp.SCORE) as SCORE_AVG, sum(gp.KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, avg(gp.DEATHS) as DEATHS_AVG, sum(gp.DEATHS) as DEATHS_SUM, '
+  + 'sum(gp.SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(gp.HITS) as HITS_SUM, avg(HITS) as HITS_AVG, avg(gp.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, '
+  + 'sum(gp.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(gp.DAMAGE_DEALT)/sum(gp.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(gp.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, '
+  + 'sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(HUMILIATION) as HUMILIATION_SUM, '
+  + 'avg(HUMILIATION) as HUMILIATION_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, avg(RL_H) as RL_H_AVG, sum(RL_H) as RL_H_SUM, avg(RL_S) as RL_S_AVG, sum(RL_S) as RL_S_SUM, '
+  + 'sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, avg(LG_H) as LG_H_AVG, sum(LG_H) as LG_H_SUM, avg(LG_S) as LG_S_AVG, sum(LG_S) as LG_S_SUM, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, '
+  + 'avg(RG_H) as RG_H_AVG, sum(RG_H) as RG_H_SUM, avg(RG_S) as RG_S_AVG, sum(RG_S) as RG_S_SUM '
+  + 'from GamePlayer gp inner join Game g on g.ID=gp.GAME_ID '
+  + 'where g.PUBLIC_ID="' + game + '" and team in (1,2) group by TEAM with rollup';
+  dbpool.getConnection(function (err, conn) {
+    if (err) { console.log(err); }
+    conn.query(sql.join(';'), function (err, resulty) {
+      if (err) { console.log(err); }
+      conn.release();
+      res.set('Cache-Control', 'public, max-age=' + http_cache_time);
+      res.jsonp({ data: { game: resulty[0][0], teams: resulty[2], players: resulty[1] } });
+      res.end();
+    });
+  });
+});
+/*
+app.get('/api/games/:game/player/:player', function (req, res) {
 	var game = mysql_real_escape_string( req.params.game );
 	var nick = mysql_real_escape_string( req.params.player );
 	var sql = 'SELECT PLAYER_NICK, PLAYER_CLAN, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players WHERE Players.PUBLIC_ID=\'' + game + '\' and Players.PLAYER_NICK=\''+ nick +'\' ';
@@ -428,21 +485,30 @@ app.get( '/api/games/:game/tags', function( req, res ) {
 		} );
 	} );
 } );
-app.get( '/api/games/:game/get', function( req, res ) {
-	var game = mysql_real_escape_string( req.params.game );
-	var sql = 'select PUBLIC_ID from Games where PUBLIC_ID=\''+ game +'\'';
-	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
-			if( rows.length === 0 ) {
-				get_game( game, null, res );
-			}
-			else {
-				res.jsonp( { data: {}, error: "already exist" } );
-				res.end();
-				conn.release();
-			}
-		} );
-	} );
+*/
+app.get('/api/games/:game/get', function (req, res) {
+  var publicId = req.params.game;
+	var sql = 'select PUBLIC_ID from Game where PUBLIC_ID=?';
+	var loader = require('./ldcore.js');
+  var conn;
+  Q.ninvoke(dbpool, "getConnection")
+    .then(function(c) { conn = c; })
+    .then(function() { return loader.init(conn, { useCache: false }); })
+    .then(function() { return loader.query(sql, [publicId]); })
+    .then(function(rows) {
+      if (rows.length)
+        throw new Error("already exist");
+      return get_game(loader, publicId);
+    })
+    .then(function() {
+      res.jsonp({ data: { PUBLIC_ID: publicId } });
+      res.end();
+    })
+    .fail(function (err) {
+      res.jsonp({ data: {}, error: err });
+      res.end();
+    })
+    .finally(function() { conn.Release(); });
 } );
 app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
 	// move this to /game/* ?
@@ -459,25 +525,9 @@ app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
 	} );
 } );
 //app.get( '/api/game/*/tag/del/*',
-app.get( '/api/games/:game', function ( req, res ) {
-	var game = mysql_real_escape_string( req.params.game );
-	var sql = [];
-	sql[0] = 'SELECT * FROM Games WHERE PUBLIC_ID=\'' + game + '\'';
-	sql[1] = 'SELECT * FROM Players WHERE PUBLIC_ID=\'' + game + '\'';
-	sql[2] = 'select Players.TEAM, count(Players.PLAYER_NICK) as PLAYERS, sum(Players.SCORE) as SCORE_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(Players.SCORE) as SCORE_AVG, sum(Players.KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, avg(Players.DEATHS) as DEATHS_AVG, sum(Players.DEATHS) as DEATHS_SUM, sum(Players.SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(Players.HITS) as HITS_SUM, avg(HITS) as HITS_AVG, avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(Players.DAMAGE_DEALT)/sum(Players.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, avg(RL_H) as RL_H_AVG, sum(RL_H) as RL_H_SUM, avg(RL_S) as RL_S_AVG, sum(RL_S) as RL_S_SUM, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, avg(LG_H) as LG_H_AVG, sum(LG_H) as LG_H_SUM, avg(LG_S) as LG_S_AVG, sum(LG_S) as LG_S_SUM, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, avg(RG_H) as RG_H_AVG, sum(RG_H) as RG_H_SUM, avg(RG_S) as RG_S_AVG, sum(RG_S) as RG_S_SUM from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Players.PUBLIC_ID="'+ game +'" group by TEAM with rollup ';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { console.log( err ); }
-		conn.query( sql.join( ';' ), function( err, resulty ) {
-			if( err ) { console.log( err ); }
-			conn.release();
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { game: resulty[0][0], teams: resulty[2], players: resulty[1] } } );
-			res.end();
-		} );
-	} );
-} );
 app.get( '/api/owners', function ( req, res ) {
-	var sql = 'SELECT OWNER, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC FROM Games group by OWNER order by NULL';
+  var sql = 'SELECT o.NAME as OWNER, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC '
+  + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID group by o.NAME';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { owners: CACHE[req.route.path].data } } );
 		res.end();
@@ -508,7 +558,8 @@ app.get( '/api/owners', function ( req, res ) {
 			} );
 		} );
 	}
-} );
+});
+/*
 app.get( '/api/owners/:owner/players', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	// players
@@ -548,7 +599,7 @@ app.get( '/api/owners/:owner/tags', function( req, res ) {
 		} );
 	} );
 } );
-//app.get( '/api/owner/*/clan/*'
+//app.get( '/api/owner/*  ....  /clan/*'
 app.get( '/api/owners/:owner/player/:player/games', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	var nick = mysql_real_escape_string( req.params.player );
@@ -600,6 +651,7 @@ app.get( '/api/owners/:owner/games', function ( req, res ) {
 		} );
 	} );
 } );
+*/
 app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	sql = 'select p.PLAYER_NICK,' +
@@ -626,9 +678,11 @@ app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
 	} );
 } );
 app.get( '/api/owners/:owner', function ( req, res ) {
-	var owner = mysql_real_escape_string( req.params.owner );
-	var sql = [];
-	sql = 'SELECT OWNER, count(*) as MATCHES_PLAYED, sum(PREMIUM) as PREMIUM_COUNT, avg(GAME_LENGTH) as GAME_LENGTH_AVG,  sum(GAME_LENGTH) as GAME_LENGTH_SUM,avg(NUM_PLAYERS) as NUM_PLAYERS_AVG, avg(TOTAL_KILLS) as TOTAL_KILLS_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS_SUM, avg(DMG_DELIVERED_NUM) as DMG_DELIVERED_NUM_AVG, avg(TSCORE0) as TSCORE0_AVG, avg(TSCORE1) as TSCORE1_AVG FROM Games where OWNER="'+ owner +'" order by null';
+	var sql;
+	sql = 'SELECT o.NAME as OWNER, count(1) as MATCHES_PLAYED, sum(PREMIUM) as PREMIUM_COUNT, avg(GAME_LENGTH) as GAME_LENGTH_AVG,  sum(GAME_LENGTH) as GAME_LENGTH_SUM,'
+	+ 'avg(NUM_PLAYERS) as NUM_PLAYERS_AVG, avg(TOTAL_KILLS) as TOTAL_KILLS_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS_SUM, avg(DMG_DELIVERED_NUM) as DMG_DELIVERED_NUM_AVG, '
+  + 'avg(TSCORE0) as TSCORE0_AVG, avg(TSCORE1) as TSCORE1_AVG '
+  + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID where o.NAME=?';
 	//sql[1] = 'select MAP, count(*) as MATCHES_PLAYED from Games where OWNER="'+ owner +'" group by MAP order by NULL';
 	// unique players
 	//sql[1] = 'select count(*) as UNIQUE_PLAYERS from ( select PLAYER_NICK from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by PLAYER_NICK order by NULL ) as a';
@@ -637,7 +691,7 @@ app.get( '/api/owners/:owner', function ( req, res ) {
 	// players
 	//sql[4] = 'select Players.PLAYER_NICK, count(*) as MATCHES_PLAYED, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_NICK order by NULL';
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [ req.params.owner], function( err2, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { owner: rows[0] } } );
 			res.end();
@@ -730,7 +784,7 @@ app.get( '/api/countries', function ( req, res ) {
 } );
 */
 app.get( '/api/gametypes', function ( req, res ) {
-	var sql = 'SELECT GAME_TYPE, count(*) as MATCHES_PLAYED, sum( GAME_LENGTH ) as GAME_LENGTH FROM Games group by GAME_TYPE order by null';
+	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH FROM Game group by GAME_TYPE order by 1';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { gametypes: CACHE[req.route.path].data } } );
 		res.end();
@@ -763,10 +817,9 @@ app.get( '/api/gametypes', function ( req, res ) {
 	}
 } );
 app.get( '/api/gametypes/:gametype', function ( req, res ) {
-	var gametype = mysql_real_escape_string( req.params.gametype );
-	var sql = 'SELECT GAME_TYPE, count(*) as MATCHES_PLAYED, avg( GAME_LENGTH ) as GAME_LENGTH, avg( NUM_PLAYERS ) as NUM_PLAYERS from Games where GAME_TYPE="'+ gametype +'" group by GAME_TYPE';
+	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, avg(GAME_LENGTH) as GAME_LENGTH, avg(NUM_PLAYERS) as NUM_PLAYERS from Game where GAME_TYPE=? group by GAME_TYPE';
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows, fields ) {
+		conn.query( sql, [req.params.gametype], function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { gametypes: rows } } );
 			res.end();
@@ -775,7 +828,7 @@ app.get( '/api/gametypes/:gametype', function ( req, res ) {
 	} );
 } );
 app.get( '/api/overview', function ( req, res ) {
-	var sql = 'select GAME_TYPE, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Games group by GAME_TYPE order by NULL';
+	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game group by GAME_TYPE order by 1';
 	if( req.route.path in CACHE ) {
 		res.jsonp( { data: { overview: CACHE[req.route.path].data } } );
 		res.end();
@@ -806,7 +859,8 @@ app.get( '/api/overview', function ( req, res ) {
 			} );
 		} );
 	}
-} );
+});
+/*
 app.get( '/api/tags', function ( req, res ) {
 	var sql = 'SELECT id, name, count(*) as tagged_games FROM tags left join game_tags on tags.id=game_tags.tag_id group by id';
 	dbpool.getConnection( function( err, conn ) {
@@ -882,6 +936,7 @@ app.get( '/api/tags/:tag/players', function ( req, res ) {
 		} );
 	} );
 } );
+*/
 app.get( '/api/status/cache', function ( req, res ) {
 	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 	var _cache = [];
@@ -903,9 +958,9 @@ app.get( '/status', function ( req, res ) {
 	}
 });
 app.get('/api/race', function (req, res) {
-  sql = "select MAP,MODE,PLAYER_NICK,SCORE from Race where RANK=1 order by 1"; 
+  sql = "select m.NAME MAP,MODE,p.NAME PLAYER_NICK,SCORE from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID where RANK=1 order by 1"; 
   dbpool.getConnection(function (err, conn) {
-    conn.query(sql, function (err, rows, fields) {
+    conn.query(sql, function (err2, rows) {
       var mapDict = {};
       var maps = [];
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
@@ -933,9 +988,10 @@ app.get('/api/race/maps/:map', function (req, res) {
   var _limit = parseInt(queryObject.limit);
   var _player = queryObject.player;
 
-  sql = "select MAP,PLAYER_NICK,SCORE,from_unixtime(GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,PUBLIC_ID from Race where MAP=? and MODE=?";
+  sql = "select m.NAME MAP,p.NAME PLAYER_NICK,SCORE,from_unixtime(r.GAME_TIMESTAMP) GAME_TIMESTAMP,RANK,g.PUBLIC_ID "
+    + "from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID left outer join Game g on g.ID=r.GAME_ID where m.NAME=? and MODE=?";
   if(_limit)
-    sql += " and (RANK<=? or PLAYER_NICK=?)";
+    sql += " and (RANK<=? or p.NAME=?)";
   sql += " order by RANK";
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, [_mapName, _ruleset + _weapons, _limit, _player], function (err, rows, fields) {
@@ -954,19 +1010,21 @@ app.get('/api/race/players/:player', function (req, res) {
   var _weapons = queryObject.weapons == "off" ? 1 : 0;
   var _mapName = queryObject.map;
 
-  sql = "select r.MAP,r.PLAYER_NICK,r.SCORE,from_unixtime(r.GAME_TIMESTAMP) GAME_TIMESTAMP,r.RANK,r.PUBLIC_ID,leader.PLAYER_NICK LEADER_NICK,leader.SCORE LEADER_SCORE" +
-    " from Race r inner join Race leader on leader.MAP=r.MAP and leader.MODE=r.mode and leader.RANK=1" +
-    " where r.PLAYER_NICK=? and r.MODE=?";
+  sql = "select m.NAME MAP,p.NAME PLAYER_NICK,r.SCORE,from_unixtime(r.GAME_TIMESTAMP) GAME_TIMESTAMP,r.RANK,g.PUBLIC_ID, " +
+    " leader.NAME LEADER_NICK,best.SCORE LEADER_SCORE" +
+    " from Race r inner join Player p on p.ID=r.PLAYER_ID inner join Map m on m.ID=r.MAP_ID left outer join Game g on g.ID=r.GAME_ID " +
+    " left outer join Race best on best.MAP_ID=r.MAP_ID and best.MODE=r.mode and best.RANK=1 left outer join Player leader on leader.ID=best.PLAYER_ID" +
+    " where p.NAME=? and r.MODE=?";
   if (queryObject.map)
-    sql += " and MAP=?";
-  sql += " order by MAP";
-  dbpool.getConnection(function (err, conn) {
-    conn.query(sql, [_playerNick, _ruleset + _weapons, _mapName], function (err, rows, fields) {
-      if( err ) throw err;
+    sql += " and m.NAME=?";
+  sql += " order by m.NAME";
+
+  dbpool.getConnection(function(err, conn) {
+    conn.query(sql, [_playerNick, _ruleset + _weapons, _mapName], function(err2, rows) {
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
       res.jsonp({ data: { ruleset: _ruleset ? "vql" : "pql", weapons: _weapons ? "off" : "on", scores: rows } });
-      res.end();
       conn.release();
+      res.end();
     });
   });
 });
@@ -1042,7 +1100,7 @@ var MyRequestsCompleted = ( function() {
 				fireCallbacks();
 			}
 		};
-		this.setCallback = function( callback ) {
+		this.setCallback = function( callBack ) {
 			callBacks.push( callBack );
 		};
 	};
@@ -1055,345 +1113,15 @@ function isNumber( n ) {
 
 // get game
 
-function get_game( game_public_id, requestCallback, req ) {
+function get_game(loader, game_public_id) {
 	var url2 = 'http://www.quakelive.com/stats/matchdetails/' + "";
 	request( url2 + game_public_id, function( err, resp, body ) {
 		var j = JSON.parse( body );
 		// save to disk
 		if( j.UNAVAILABLE != 1 ) {
-			if( cfg.api.games.save ) {
-				fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
-					if( err ) { console.log( err ); }
-					else {
-						var gzip = zlib.createGzip();
-						var inp = fs.createReadStream( cfg.api.games.tempdir  + j.PUBLIC_ID + '.json' );
-						var out = fs.createWriteStream( cfg.api.games.gamesdir + j.PUBLIC_ID + '.json.gz' );
-						inp.pipe( gzip ).pipe( out );
-						fs.unlink( cfg.api.games.tempdir + j.PUBLIC_ID + '.json' );
-					}
-				} );
-			}
-			//
-			var players_array = [];
-			if( "SCOREBOARD" in j ) {
-				for( var i in j.SCOREBOARD ) {
-					var p = j.SCOREBOARD[i];
-					players_array.push( p );
-				}
-			}
-			if( "SCOREBOARD_QUITTERS" in j ) {
-				for( var i in j.SCOREBOARD_QUITTERS ) {
-					var p = j.SCOREBOARD_QUITTERS[i];
-					players_array.push( p );
-				}
-			}
-			if( "RACE_SCOREBOARD" in j ) {
-				for( var i in j.RACE_SCOREBOARD ) {
-					var p = j.RACE_SCOREBOARD[i];
-					players_array.push( p );
-				}
-			}
-			if( "RACE_SCOREBOARD_QUITTERS" in j ) {
-				for( var i in j.RACE_SCOREBOARD_QUITTERS ) {
-					var p = j.RACE_SCOREBOARD_QUITTERS[i];
-					players_array.push( p );
-				}
-			}
-			if( "RED_SCOREBOARD" in j ) {
-				for( var i in j.RED_SCOREBOARD ) {
-					var p = j.RED_SCOREBOARD[i];
-					players_array.push( p );
-				}
-			}
-			if( "RED_SCOREBOARD_QUITTERS" in j ) {
-				for( var i in j.RED_SCOREBOARD_QUITTERS ) {
-					var p = j.RED_SCOREBOARD_QUITTERS[i];
-					players_array.push( p );
-				}
-			}
-			if( "BLUE_SCOREBOARD" in j ) {
-				for( var i in j.BLUE_SCOREBOARD ) {
-					var p = j.BLUE_SCOREBOARD[i];
-					players_array.push( p );
-				}
-			}
-			if( "BLUE_SCOREBOARD_QUITTERS" in j ) {
-				for( var i in j.BLUE_SCOREBOARD_QUITTERS ) {
-					var p = j.BLUE_SCOREBOARD_QUITTERS[i];
-					players_array.push( p );
-				}
-			}
-			var AVG_ACC = 0;
-			var MOST_ACCURATE_NICK = "";
-			var MOST_ACCURATE_NUM = 0;
-			var DMG_DELIVERED_NICK = "";
-			var DMG_DELIVERED_NUM = 0;
-			var DMG_TAKEN_NICK = "";
-			var DMG_TAKEN_NUM = 0;
-			var LEAST_DEATHS_NICK = "";
-			var LEAST_DEATHS_NUM = 0;
-			var MOST_DEATHS_NICK = "";
-			var MOST_DEATHS_NUM = 0;
-			var TOTAL_ROUNDS = 0;
-			var WINNING_TEAM = "";
-			if( !isNaN( j.AVG_ACC ) && j.AVG_ACC !== 'undefined' ) {
-				AVG_ACC = j.AVG_ACC;
-			}
-			if( typeof j.MOST_ACCURATE !== 'undefined' ) {
-				MOST_ACCURATE_NICK = j.MOST_ACCURATE.PLAYER_NICK;
-				MOST_ACCURATE_NUM = j.MOST_ACCURATE.NUM;
-			}
-			if( typeof j.DMG_DELIVERED !== 'undefined' ) {
-				DMG_DELIVERED_NICK = j.DMG_DELIVERED.PLAYER_NICK;
-				DMG_DELIVERED_NUM = j.DMG_DELIVERED.NUM;
-			}
-			if( typeof j.DMG_TAKEN !== 'undefined' ) {
-				DMG_TAKEN_NICK = j.DMG_TAKEN.PLAYER_NICK;
-				DMG_TAKEN_NUM = j.DMG_TAKEN.NUM;
-			}
-			if( typeof j.LEAST_DEATHS !== 'undefined' ) {
-				LEAST_DEATHS_NICK = j.LEAST_DEATHS.PLAYER_NICK;
-				LEAST_DEATHS_NUM = j.LEAST_DEATHS.NUM;
-			}
-			if( typeof j.MOST_DEATHS !== 'undefined' ) {
-				MOST_DEATHS_NICK = j.MOST_DEATHS.PLAYER_NICK;
-				MOST_DEATHS_NUM = j.MOST_DEATHS.NUM;
-			}
-			if( typeof j.TOTAL_ROUNDS !== 'undefined' ) {
-				TOTAL_ROUNDS = j.TOTAL_ROUNDS;
-				WINNING_TEAM = j.WINNING_TEAM;
-			}
-			var sql1 = 'INSERT INTO Games(' +
-				'PUBLIC_ID,' +
-				'OWNER, ' +
-				'MAP, ' +
-				'NUM_PLAYERS, ' +
-				'AVG_ACC, ' +
-				'PREMIUM, ' +
-				'RANKED, ' +
-				//'RESTARTED, ' +
-				'RULESET, ' +
-				//'TIER, ' +
-				'TOTAL_KILLS, ' +
-				'TOTAL_ROUNDS, ' +
-				'WINNING_TEAM, ' +
-				'TSCORE0, ' +
-				'TSCORE1, ' +
-				'FIRST_SCORER, ' +
-				'LAST_SCORER, ' +
-				'GAME_LENGTH, ' +
-				'GAME_TYPE, ' +
-				'GAME_TIMESTAMP, ' +
-				'DMG_DELIVERED_NICK, ' +
-				'DMG_DELIVERED_NUM, ' +
-				'DMG_TAKEN_NICK, ' +
-				'DMG_TAKEN_NUM, ' +
-				'LEAST_DEATHS_NICK, ' +
-				'LEAST_DEATHS_NUM, ' +
-				'MOST_DEATHS_NICK, ' +
-				'MOST_DEATHS_NUM, ' +
-
-				'MOST_ACCURATE_NICK, ' +
-				'MOST_ACCURATE_NUM ' +
-				') values( ';
-					var sql2 = '' +
-					'\"' + j.PUBLIC_ID + '\",' +
-					'\"' + j.OWNER + '\",' +
-					'\"' + j.MAP + '\",' +
-					'' + j.NUM_PLAYERS + ',' +
-					'' + AVG_ACC + ',' +
-					'' + j.PREMIUM + ',' +
-					'' + j.RANKED + ',' +
-					//'' + j.RESTARTED + ',' +
-					'' + j.RULESET + ',' +
-					//'' + j.TIER + ',' +
-					'' + j.TOTAL_KILLS + ',' +
-					'' + TOTAL_ROUNDS + ',' +
-					'\"' + WINNING_TEAM + '\",' +
-					'' + j.TSCORE0 + ',' +
-					'' + j.TSCORE1 + ',' +
-					'\"' + j.FIRST_SCORER + '\",' +
-					'\"' + j.LAST_SCORER + '\",' +
-					'' + j.GAME_LENGTH + ',' +
-					'\"' + j.GAME_TYPE + '\",' +
-					'' + new Date( j.GAME_TIMESTAMP ).getTime()/1000 + ',' +
-					'\"' + DMG_DELIVERED_NICK + '\",' +
-					'' + DMG_DELIVERED_NUM + ',' +
-					'\"' + DMG_TAKEN_NICK + '\",' +
-					'' + DMG_TAKEN_NUM + ',' +
-					'\"' + LEAST_DEATHS_NICK + '\",' +
-					'' + LEAST_DEATHS_NUM + ',' +
-					'\"' + MOST_DEATHS_NICK + '\",' +
-					'' + MOST_DEATHS_NUM + ',' +
-
-					'\"' + MOST_ACCURATE_NICK + '\",' +
-					'' + MOST_ACCURATE_NUM +
-					')';
-			dbpool.getConnection( function( err, conn ) {
-				conn.query( sql1 + sql2, function( err, rows, fields ) {
-					if( err && err.code == 'ER_DUP_ENTRY' ) {
-						console.log( err );
-					}
-					else if( err ) { throw err; }
-					else {
-						var _game = {
-							PUBLIC_ID: j.PUBLIC_ID,
-							MAP: j.MAP,
-							OWNER: j.OWNER,
-							GAME_TYPE: j.GAME_TYPE,
-							GAME_TIMESTAMP: new Date( j.GAME_TIMESTAMP ).getTime()/1000,
-							GAME_TIMESTAMP2: j.GAME_TIMESTAMP,
-							GAME_TIMESTAMP_NICE: j.GAME_TIMESTAMP_NICE
-						};
-						if( 'long' in req.query ) {
-							_game.players = players_array;
-						}
-						lastgames.push( _game );
-						if( requestCallback !== null )
-					requestCallback.requestComplete( true );
-					}
-				} );
-				// ------------------------------ Players ----------------------------
-				var sql3;
-				var sql4 = [];
-				sql3 = 'INSERT INTO Players(' +
-					'PUBLIC_ID, ' +
-					'PLAYER_NICK, ' +
-					'PLAYER_CLAN, ' +
-					'PLAYER_COUNTRY, ' +
-					'RANK, ' +
-					'SCORE, ' +
-					'QUIT, ' +
-					'DAMAGE_DEALT, ' +
-					'DAMAGE_TAKEN, ' +
-					'KILLS, ' +
-					'DEATHS, ' +
-					'HITS, ' +
-					'SHOTS, ' +
-					'TEAM, ' +
-					'TEAM_RANK, ' +
-					'HUMILIATION, ' +
-					'IMPRESSIVE, ' +
-					'EXCELLENT, ' +
-					'PLAY_TIME, ' +
-
-					'G_K, ' +
-
-					'GL_H, ' +
-					'GL_K, ' +
-					'GL_S, ' +
-
-					'LG_H, ' +
-					'LG_K, ' +
-					'LG_S, ' +
-
-					'MG_H, ' +
-					'MG_K, ' +
-					'MG_S, ' +
-
-					'PG_H, ' +
-					'PG_K, ' +
-					'PG_S, ' +
-
-					'RG_H, ' +
-					'RG_K, ' +
-					'RG_S, ' +
-
-					'RL_H, ' +
-					'RL_K, ' +
-					'RL_S, ' +
-
-					'SG_H, ' +
-					'SG_K, ' +
-					'SG_S' +
-
-					') values ';
-				for( var i in players_array ) {
-					var p = players_array[i];
-					var IMPRESSIVE = 0;
-					var EXCELLENT = 0;
-					var SCORE = 0;
-					var QUIT = 1;
-					var TEAM = "";
-					var TEAM_RANK = 16;
-					if( typeof p.IMPRESSIVE !== 'undefined' ) { IMPRESSIVE = p.IMPRESSIVE; }
-					if( typeof p.EXCELLENT !== 'undefined' ) { EXCELLENT = p.EXCELLENT; }
-					if( typeof p.SCORE !== 'undefined' ) { SCORE = p.SCORE; }
-					if( typeof p.QUIT !== 'undefined' ) { QUIT = p.QUIT; }
-					if( typeof p.TEAM !== 'undefined' ) { TEAM = p.TEAM; }
-					if( typeof p.TEAM_RANK !== 'undefined' ) { TEAM_RANK = p.TEAM_RANK; }
-					//console.log( obj.PUBLIC_ID + " " + p.PLAYER_NICK + " " + p.TEAM );
-					sql4.push( '(' +
-						'\"' + j.PUBLIC_ID + '\",' +
-						'\"' + p.PLAYER_NICK + '\",' +
-						'\"' + p.PLAYER_CLAN + '\",' +
-						'\"' + p.PLAYER_COUNTRY + '\",' +
-						'' + p.RANK + ',' +
-						'' + SCORE + ',' +
-						'' + QUIT + ',' +
-						'' + p.DAMAGE_DEALT + ',' +
-						'' + p.DAMAGE_TAKEN + ',' +
-						'' + p.KILLS + ',' +
-						'' + p.DEATHS + ',' +
-						'' + p.HITS + ',' +
-						'' + p.SHOTS + ',' +
-						'\"' + TEAM + '\",' +
-						'' + TEAM_RANK + ',' +
-						'' + p.HUMILIATION + ',' +
-						'' + IMPRESSIVE + ',' +
-						'' + EXCELLENT + ',' +
-						'' + p.PLAY_TIME + ',' +
-
-						'' + p.GAUNTLET_KILLS + ',' +
-
-						'' + p.GRENADE_HITS + ',' +
-						'' + p.GRENADE_KILLS + ',' +
-						'' + p.GRENADE_SHOTS + ',' +
-
-						'' + p.LIGHTNING_HITS + ',' +
-						'' + p.LIGHTNING_KILLS + ',' +
-						'' + p.LIGHTNING_SHOTS + ',' +
-
-						'' + p.MACHINEGUN_HITS + ',' +
-						'' + p.MACHINEGUN_KILLS + ',' +
-						'' + p.MACHINEGUN_SHOTS + ',' +
-
-						'' + p.PLASMA_HITS + ',' +
-						'' + p.PLASMA_KILLS + ',' +
-						'' + p.PLASMA_SHOTS + ',' +
-
-						'' + p.RAILGUN_HITS + ',' +
-						'' + p.RAILGUN_KILLS + ',' +
-						'' + p.RAILGUN_SHOTS + ',' +
-
-						'' + p.ROCKET_HITS + ',' +
-						'' + p.ROCKET_KILLS + ',' +
-						'' + p.ROCKET_SHOTS + ',' +
-
-						'' + p.SHOTGUN_HITS + ',' +
-						'' + p.SHOTGUN_KILLS + ',' +
-						'' + p.SHOTGUN_SHOTS +
-						')' );
-				}
-				conn.query( sql3 + sql4.join( ',' ), function( err, rows, fields ) {
-					if( err && err.code == 'ER_DUP_ENTRY' ) {
-						console.log( err );
-					}
-					else if( err ) { throw err; }
-          if(j.GAME_TYPE == "race") {
-            race.updateMap(conn, j.MAP);
-          }
-				} );
-			}	);
-			if( requestCallback === null ) {
-				res.jsonp( { data: { PUBLIC_ID: j.PUBLIC_ID, game: {} } } );
-				res.end();
-			}
+		  return loader.processGame(j);
 		}
-		else {
-			if( requestCallback !== null )
-				requestCallback.requestComplete( true );
-		}
+	  return Q(undefined);
 	} );
 }
 
