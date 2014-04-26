@@ -36,7 +36,6 @@ function main() {
       _conn = conn;
       return ld.init(conn);
     })
-    .then(loginToQuakeliveWebsite)
     .then(loadAndProcessJsonFileLoop)
     .fail(function (err) { _logger.error(err.stack); })
     .done(function () { _logger.info("completed"); process.exit(); });
@@ -68,7 +67,7 @@ function Stats() {
 function loadAndProcessJsonFileLoop() {
   _profilingInfo = new Stats();
   setInterval(function() {
-    _logger.info("" + (_profilingInfo.processed / 30) + " games/sec (" + _profilingInfo.total + " total)");
+    _logger.info("" + (_profilingInfo.processed / 30) + " games per sec (" + _profilingInfo.total + " total)");
     _profilingInfo.reset();
   }, 30000);
 
@@ -111,13 +110,15 @@ function processFile(file) {
   if (match)
     basename = match[1];
   return Q
-    .fcall(function() { return basename ? query("select ID from Game where PUBLIC_ID=?", [basename]) : []; })
+    .fcall(function() { return basename ? ld.query("select ID from Game where PUBLIC_ID=?", [basename]) : []; })
     .then(function (result) {
+			/*
       if (result.length > 0) {
         _logger.debug("Skipping " + file + " (already in database)");
         _profilingInfo.incSkipped();
         return true;
       }
+			*/
       return Q
         .fcall(function() { _logger.debug("Loading " + file); })
         .then(function() { return Q.nfcall(fs.readFile, file); })
