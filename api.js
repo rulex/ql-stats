@@ -121,7 +121,7 @@ app.get( '/api', function ( req, res ) {
 	res.end();
 } );
 app.get( '/api/search/players/:search_str', function ( req, res ) {
-	var sql = 'select NAME from Player WHERE NAME like ? ORDER BY 1 LIMIT 200';
+	var sql = 'select p.NAME as PLAYER_NICK, p.COUNTRY as PLAYER_COUNTRY, c.NAME as PLAYER_CLAN from Player p left join Clan c on c.ID=p.CLAN_ID WHERE p.NAME like ? ORDER BY NULL LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) throw err;
 		conn.query( sql, [ req.params.search_str + "%" ], function( err, rows ) {
@@ -155,7 +155,7 @@ app.get( '/api/search/players_with_details/:search_str', function ( req, res ) {
     + 'sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, '
     + 'sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, '
     + 'sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG '
-    + 'FROM Player p left join CLAN c on c.ID=p.CLAN_ID left join GamePlayer gp on gp.PLAYER_ID=p.ID left join Game g on g.ID=gp.GAME_ID '
+    + 'FROM Player p left join Clan c on c.ID=p.CLAN_ID left join GamePlayer gp on gp.PLAYER_ID=p.ID left join Game g on g.ID=gp.GAME_ID '
     + 'WHERE p.NAME like ? GROUP BY PLAYER_NICK order by 1 LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { console.log( err ); }
@@ -293,11 +293,53 @@ app.get('/api/players', function (req, res) {
 } );
 app.get('/api/players/:player', function (req, res) {
   var nick = mysql_real_escape_string(req.params.player);
-  var sql = 'SELECT PLAYER_NICK, PLAYER_CLAN, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID WHERE PLAYER_NICK=\'' + nick + '\' GROUP BY PLAYER_NICK order by NULL';
+  var sql = 'SELECT ' +
+		'p.NAME, ' +
+		'p.NAME as PLAYER_NICK, ' +
+		'gp.PLAYER_ID, ' +
+		'c.NAME as CLAN, ' +
+		'p.COUNTRY, ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		//'sum(case when gp.TEAM = g.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, ' +
+		//'sum(case when gp.TEAM = g.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, ' +
+		'sum(gp.QUIT) as QUIT_SUM, avg(gp.QUIT) as QUIT_AVG, ' +
+		'avg(gp.RANK) as RANK_AVG, ' +
+		'sum(gp.SCORE) as SCORE_SUM, avg(gp.SCORE) as SCORE_AVG, ' +
+		'sum(gp.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, ' +
+		'avg(gp.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, ' +
+		'avg(gp.DAMAGE_DEALT)/avg(gp.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, ' +
+		'sum(gp.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, ' +
+		'avg(gp.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, ' +
+		'avg(gp.DAMAGE_DEALT-gp.DAMAGE_TAKEN) as DAMAGE_NET_AVG, ' +
+		'sum(gp.KILLS) as KILLS_SUM, avg(gp.KILLS) as KILLS_AVG, ' +
+		'sum(gp.DEATHS) as DEATHS_SUM, avg(gp.DEATHS) as DEATHS_AVG, ' +
+		'sum(gp.KILLS)/sum(gp.DEATHS) as RATIO, ' +
+		'sum(gp.HITS) as HITS_SUM, avg(gp.HITS) as HITS_AVG, ' +
+		'sum(gp.SHOTS) as SHOTS_SUM, avg(gp.SHOTS) as SHOTS_AVG, ' +
+		'sum(gp.HITS)/sum(gp.SHOTS)*100 as ACC_AVG, avg(gp.RANK) as RANK_AVG, avg(gp.TEAM_RANK) as TEAM_RANK_AVG, ' +
+		'sum(gp.HUMILIATION) as HUMILIATION_SUM, avg(gp.HUMILIATION) as HUMILIATION_AVG, sum(gp.IMPRESSIVE) as IMPRESSIVE_SUM, avg(gp.IMPRESSIVE) as IMPRESSIVE_AVG, ' +
+		'sum(gp.EXCELLENT) as EXCELLENT_SUM, avg(gp.EXCELLENT) as EXCELLENT_AVG, sum(gp.PLAY_TIME) as PLAY_TIME_SUM, avg(gp.PLAY_TIME) as PLAY_TIME_AVG, ' +
+		'sum(gp.G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, ' +
+		'sum(gp.GL_S) as GL_S_SUM, avg(gp.GL_S) as GL_S_AVG, sum(gp.LG_H) as LG_H_SUM, avg(gp.LG_H) as LG_H_AVG, sum(gp.LG_K) as LG_K_SUM, avg(gp.LG_K) as LG_K_AVG, ' +
+		'sum(gp.LG_S) as LG_S_SUM, avg(gp.LG_S) as LG_S_AVG, sum(gp.MG_H) as MG_H_SUM, avg(gp.MG_H) as MG_H_AVG, sum(gp.MG_K) as MG_K_SUM, avg(gp.MG_K) as MG_K_AVG, ' +
+		'sum(gp.MG_S) as MG_S_SUM, avg(gp.MG_S) as MG_S_AVG, sum(gp.PG_H) as PG_H_SUM, avg(gp.PG_H) as PG_H_AVG, sum(gp.PG_K) as PG_K_SUM, avg(gp.PG_K) as PG_K_AVG, ' +
+		'sum(gp.PG_S) as PG_S_SUM, avg(gp.PG_S) as PG_S_AVG, sum(gp.RG_H) as RG_H_SUM, avg(gp.RG_H) as RG_H_AVG, sum(gp.RG_K) as RG_K_SUM, avg(gp.RG_K) as RG_K_AVG, ' +
+		'sum(gp.RG_S) as RG_S_SUM, avg(gp.RG_S) as RG_S_AVG, sum(gp.RL_H) as RL_H_SUM, avg(gp.RL_H) as RL_H_AVG, sum(gp.RL_K) as RL_K_SUM, avg(gp.RL_K) as RL_K_AVG, ' +
+		'sum(gp.RL_S) as RL_S_SUM, avg(gp.RL_S) as RL_S_AVG, sum(gp.SG_H) as SG_H_SUM, avg(gp.SG_H) as SG_H_AVG, sum(gp.SG_K) as SG_K_SUM, avg(gp.SG_K) as SG_K_AVG, ' +
+		'sum(gp.SG_S) as SG_S_SUM, avg(gp.SG_S) as SG_S_AVG ' +
+		'FROM GamePlayer gp ' +
+		//'left join Game g on gp.GAME_ID=g.ID ' +
+		'left join Player p on gp.PLAYER_ID=p.ID ' +
+		'left join Clan c on gp.CLAN_ID=c.ID ' +
+		//'WHERE p.NAME=\'' + nick + '\' ' +
+		'WHERE gp.PLAYER_ID=( select ID from Player where NAME=? ) ' +
+		'GROUP BY PLAYER_ID ' +
+		'order by NULL';
   dbpool.getConnection(function (err, conn) {
-    conn.query(sql, function (err, rows) {
+    conn.query(sql, [nick], function (err, rows) {
+			if( err ) { console.log( err ); }
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { player: rows[0] } });
+      res.jsonp( { data: { player: rows[0] } } );
       res.end();
       conn.release();
     });
@@ -378,7 +420,7 @@ app.get( '/api/players/:player/update', function ( req, res ) {
         res.end();
       })
 			.finally(function () {
-			  conn.release();			    
+			  conn.release();
       });
 		} );
 	} );

@@ -679,7 +679,7 @@ factory( 'theLiz', function( $http ) {
 		} );
 	}
 	theLiz.players_search = function( p ) {
-		return $http( { url: apiurl + 'api/search/players_with_details/' + p + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+		return $http( { url: apiurl + 'api/search/players/' + p + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			if( 'dbug' in parseUrl() ) { console.log( response.data ); }
 			return new theLiz( response.data );
 		} );
