@@ -157,7 +157,7 @@ function GamesCtrl( $scope, theLiz, $timeout ) {
 				dataset: {
 					perPageDefault: 50,
 					perPageOptions: [10,20,50,100,200],
-					records: data.data.games.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
+					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
 				}
 			} );
 		},
@@ -246,7 +246,7 @@ function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				dataset: {
 					perPageDefault: 50,
 					perPageOptions: [10,20,50,100,200],
-					records: data.data.owners
+					records: data.data
 				}
 			} );
 		},

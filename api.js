@@ -10,18 +10,21 @@ var url = require( 'url' );
 var server = http.createServer( app );
 var zlib = require( 'zlib' );
 var Q = require( 'q' );
+var log4js = require( 'log4js' );
 var race = require('./racecache.js');
 var allow_update = false;
+_logger = log4js.getLogger( "api" );
+_logger.setLevel( log4js.levels.DEBUG );
 
 // read cfg.json
 var data = fs.readFileSync( __dirname + '/cfg.json' );
 var cfg;
 try {
 	cfg = JSON.parse( data );
-	console.log( 'info', 'Parsed cfg' );
+	_logger.info( 'Parsed config file' );
 }
 catch( err ) {
-	console.log( 'warn', 'failed to parse cfg: ' + err );
+	_logger.error( 'failed to parse cfg: ' + err );
 }
 
 //multipleStatements: true,
@@ -29,46 +32,16 @@ cfg.mysql_db.multipleStatements = true;
 cfg.mysql_db.waitForConnections = false;
 cfg.mysql_db.connectionLimit = 15;
 var dbpool = mysql.createPool( cfg.mysql_db );
-//var db = mysql.createConnection( cfg.mysql_db );
-//db.connect();
-// db timeout
-
-/*
-setInterval( function() {
-	db.ping();
-}, 10*60*1000 );
-*/
 
 // counter
 var requests_counter = 0;
 var requests_counter_api = 0;
 var requests_counter_pub = 0;
 var requests_counter_total = 0;
-if( cfg.counter.on ) {
-	/*
-	setInterval( function() {
-		// write counter to file for use in external app
-		fs.writeFile( cfg.counter.path, requests_counter, function ( err ) {
-			if( err ) { throw err; }
-			requests_counter = 0;
-		} );
-	}, 5*1000 );
-	*/
-}
 
 // cache
-// read cfg.json
-var CACHE = {};
-try {
-	//fs.writeFile( cfg.api.games.tempdir + j.PUBLIC_ID + '.json', body, function( err ) {
-	var cachefile = cfg.api.cachefile || __dirname + '/cache.json';
-  var _data = fs.readFileSync( cachefile );
-  CACHE = JSON.parse(_data);
-	console.log( 'info', 'Parsed Cache file' );
-}
-catch( err ) {
-	console.log( 'warn', 'failed to parse Cache file: ' + err );
-}
+var qlscache = require( './qlscache.js' );
+qlscache.init( cfg );
 
 var maxAge_public, maxAge_api, http_cache_time;
 app.configure( 'development', function() {
@@ -438,40 +411,36 @@ app.get( '/api/games', function ( req, res ) {
   + 'left outer join Player md on md.ID=g.MOST_DEATHS_ID '
   + 'left outer join Player ma on ma.ID=g.MOST_ACCURATE_ID '
   + 'order by g.GAME_TIMESTAMP desc LIMIT 5000';
-	if( req.route.path in CACHE ) {
-		res.jsonp( { data: { games: CACHE[req.route.path].data } } );
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is old, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
 		res.end();
-		if( CACHE[req.route.path].ts < new Date().getTime() &&
-			!CACHE[req.route.path].fetching ) {
-			CACHE[req.route.path].fetching = true;
-			dbpool.getConnection( function( err, conn ) {
-				if( err ) { console.log( err ); }
-				conn.query( sql, function( err, rows ) {
-					conn.release();
-					if( err ) { console.log( err ); }
-					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-						if( err ) { console.log( err ); }
-					} );
-				} );
-			} );
-		}
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
 	}
 	else {
-		dbpool.getConnection( function( err, conn ) {
-			if( err ) { console.log( err ); }
-			conn.query( sql, function( err, rows ) {
-				conn.release();
-				if( err ) { console.log( err ); }
-				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-					if( err ) { console.log( err ); }
-				} );
-				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-				res.jsonp( { data: { games: rows } } );
-				res.end();
-			} );
-		} );
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
 	}
 } );
 app.get('/api/games/:game', function (req, res) {
@@ -553,10 +522,8 @@ app.get('/api/games/:game/get', function (req, res) {
     .finally(function() { conn.Release(); });
 } );
 app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
-	// move this to /game/* ?
 	var game = mysql_real_escape_string( req.params.game );
 	var tag = mysql_real_escape_string( req.params.tag );
-	// if game/tag exists...
 	var sql = 'insert into game_tags( tag_id, PUBLIC_ID ) values( '+ tag +', \''+ game +'\' )';
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
@@ -566,39 +533,39 @@ app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
 		} );
 	} );
 } );
-//app.get( '/api/game/*/tag/del/*',
 app.get( '/api/owners', function ( req, res ) {
   var sql = 'SELECT o.NAME as OWNER, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC '
   + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID group by o.NAME';
-	if( req.route.path in CACHE ) {
-		res.jsonp( { data: { owners: CACHE[req.route.path].data } } );
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is old, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
 		res.end();
-		if( CACHE[req.route.path].ts < new Date().getTime() &&
-			!CACHE[req.route.path].fetching ) {
-			CACHE[req.route.path].fetching = true;
-			dbpool.getConnection( function( err, conn ) {
-				conn.query( sql, function( err, rows ) {
-					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-						if( err ) { console.log( err ); }
-					} );
-				} );
-			} );
-		}
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
 	}
 	else {
-		dbpool.getConnection( function( err, conn ) {
-			conn.query( sql, function( err, rows ) {
-				conn.release();
-				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-					if( err ) { console.log( err ); }
-				} );
-				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-				res.jsonp( { data: { owners: rows } } );
-				res.end();
-			} );
-		} );
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
 	}
 });
 /*
@@ -827,35 +794,36 @@ app.get( '/api/countries', function ( req, res ) {
 */
 app.get( '/api/gametypes', function ( req, res ) {
 	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH FROM Game group by GAME_TYPE order by 1';
-	if( req.route.path in CACHE ) {
-		res.jsonp( { data: { gametypes: CACHE[req.route.path].data } } );
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is old, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
 		res.end();
-		if( CACHE[req.route.path].ts < new Date().getTime() &&
-			!CACHE[req.route.path].fetching ) {
-			CACHE[req.route.path].fetching = true;
-			dbpool.getConnection( function( err, conn ) {
-				conn.query( sql, function( err, rows, fields ) {
-					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-						if( err ) { console.log( err ); }
-					} );
-				} );
-			} );
-		}
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
 	}
 	else {
-		dbpool.getConnection( function( err, conn ) {
-			conn.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-					if( err ) { console.log( err ); }
-				} );
-				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-				res.jsonp( { data: { gametypes: rows } } );
-				res.end();
-				conn.release();
-			} );
-		} );
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
 	}
 } );
 app.get( '/api/gametypes/:gametype', function ( req, res ) {
@@ -871,35 +839,36 @@ app.get( '/api/gametypes/:gametype', function ( req, res ) {
 } );
 app.get( '/api/overview', function ( req, res ) {
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game group by GAME_TYPE order by 1';
-	if( req.route.path in CACHE ) {
-		res.jsonp( { data: { overview: CACHE[req.route.path].data } } );
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is old, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
 		res.end();
-		if( CACHE[req.route.path].ts < new Date().getTime() &&
-			!CACHE[req.route.path].fetching ) {
-			CACHE[req.route.path].fetching = true;
-			dbpool.getConnection( function( err, conn ) {
-				conn.query( sql, function( err, rows, fields ) {
-					CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-					fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-						if( err ) { console.log( err ); }
-					} );
-				} );
-			} );
-		}
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
 	}
 	else {
-		dbpool.getConnection( function( err, conn ) {
-			conn.query( sql, function( err, rows, fields ) {
-				CACHE[req.route.path] = { ts: new Date().getTime() + maxAge_api_long, data: rows, fetching: false };
-				fs.writeFile( cachefile, JSON.stringify( CACHE ), function( err ) {
-					if( err ) { console.log( err ); }
-				} );
-				res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-				res.jsonp( { data: { overview: rows } } );
-				res.end();
-				conn.release();
-			} );
-		} );
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
 	}
 });
 /*
@@ -983,10 +952,8 @@ app.get( '/api/status/cache', function ( req, res ) {
 	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 	var _cache = [];
 	var now = new Date().getTime();
-	for( var i in CACHE ) {
-		_cache.push( { route: i, ts: CACHE[i].ts, diff: CACHE[i].ts - now } );
-	}
-	res.jsonp( { now: now, size: roughSizeOfObject( CACHE ), cached: _cache } );
+	qlscache.readCacheFile();
+	res.jsonp( { now: now, cached: qlscache.cacheControl } );
 	res.end();
 } );
 app.get( '/status', function ( req, res ) {
