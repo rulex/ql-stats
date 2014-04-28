@@ -648,19 +648,34 @@ app.get( '/api/owners/:owner/countries', function ( req, res ) {
 		} );
 	} );
 } );
+*/
 app.get( '/api/owners/:owner/games', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
-	sql = 'select * from Games where OWNER="'+ owner +'"';
+	//var sql = 'select g.* from Game g left join Player p on p.ID=g.OWNER_ID where p.NAME=?';
+  var sql = 'SELECT g.*, m.NAME as MAP, o.NAME as OWNER, fs.NAME FIRST_SCORER, ls.NAME as LAST_SCORER, dd.NAME as DAMAGE_DELIVERED_NICK, dt.NAME as DAMAGE_TAKEN_NICK, '
+  + 'ld.NAME as LEAST_DEATHS_NICK, md.NAME as MOST_DEATHS_NICK, ma.NAME as MOST_ACCURATE_NICK '
+  + 'FROM Game g inner join Map m on m.ID=g.MAP_ID '
+  + 'left outer join Player o on o.ID=g.OWNER_ID '
+  + 'left outer join Player fs on fs.ID=g.FIRST_SCORER_ID '
+  + 'left outer join Player ls on ls.ID=g.LAST_SCORER_ID '
+  + 'left outer join Player dd on dd.ID=g.DMG_DELIVERED_ID '
+  + 'left outer join Player dt on dt.ID=g.DMG_TAKEN_ID '
+  + 'left outer join Player ld on ld.ID=g.LEAST_DEATHS_ID '
+  + 'left outer join Player md on md.ID=g.MOST_DEATHS_ID '
+  + 'left outer join Player ma on ma.ID=g.MOST_ACCURATE_ID '
+	+ 'where o.NAME=? '
+  + 'order by g.GAME_TIMESTAMP desc '
+	;
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
+		conn.query( sql, [owner], function( err, rows ) {
+			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { games: rows, more: 'less' } } );
+			res.jsonp( { data: rows } );
 			res.end();
 			conn.release();
 		} );
 	} );
 } );
-*/
 app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	sql = 'select p.PLAYER_NICK,' +

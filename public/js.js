@@ -345,7 +345,7 @@ function OwnerGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				dataset: {
 					perPageDefault: 20,
 					perPageOptions: [10,20,50,100,200],
-					records: data.data.games
+					records: data.data
 				}
 			} );
 		},
