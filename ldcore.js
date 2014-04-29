@@ -116,6 +116,7 @@ function insertGame(g) {
   GAME_TYPE = g.GAME_TYPE.substr(0, 4).toLowerCase();
   if (GAME_TYPE == "dm") GAME_TYPE = "ffa";
   else if (GAME_TYPE == "tour") GAME_TYPE = "duel";
+  else if (GAME_TYPE == "1fct") GAME_TYPE = "fctf";
 
   // JSONs loaded from match profiles contain "mm/dd/yyyy h:MM a" format, live tracker contains unixtime int data
   GAME_TIMESTAMP = g.GAME_TIMESTAMP.toString(); // can be either a number, an Object-number, a string, ... 
