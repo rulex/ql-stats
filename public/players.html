@@ -13,7 +13,7 @@
 			<thead>
 				<tr>
 					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
-					<th><a href="" ng-click="ordercolumn='PLAYER_CLAN'; ordertype=!ordertype">PLAYER_CLAN</a></th>
+					<th><a href="" ng-click="ordercolumn='CLAN'; ordertype=!ordertype">CLAN</a></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -22,60 +22,10 @@
 			      <img ng-show="z.PLAYER_COUNTRY" src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" />
 			      <a href="#/{{theurl}}players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a>
           </td>
-			    <td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
+			    <td><a href="#/clans/{{ z.CLAN_ID }}">{{ z.CLAN }}</a></td>
 			  </tr>
 			</tbody>
 		</table>
-
-		<!--
-		<table class="table table-condensed table-striped ">
-			<thead>
-				<tr>
-					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
-					<th><a href="" ng-click="ordercolumn='PLAYER_CLAN'; ordertype=!ordertype">PLAYER_CLAN</a></th>
-					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
-					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
-					<th><a href="" ng-click="ordercolumn='SCORE_SUM'; ordertype=!ordertype">SCORE_SUM</a></th>
-					<th><a href="" ng-click="ordercolumn='SCORE_AVG'; ordertype=!ordertype">SCORE_AVG</a></th>
-					<th><a href="" ng-click="ordercolumn='RATIO'; ordertype=!ordertype">RATIO</a></th>
-					<th><a href="" ng-click="ordercolumn='ACC_AVG'; ordertype=!ordertype">ACC_AVG</a></th>
-					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
-					<td>
-						<img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" />
-						<a href="#/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a>
-					</td>
-					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN }}</a></td>
-					<td>{{ z.MATCHES_PLAYED | number }}</td>
-					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
-					<td>{{ z.SCORE_SUM | number }}</td>
-					<td>{{ z.SCORE_AVG | number:2 }}</td>
-					<td>{{ z.RATIO | number:2 }}</td>
-					<td>{{ z.ACC_AVG | number:2 }}</td>
-					<td>{{ z.KILLS | number }}</td>
-				</tr>
-			</tbody>
-		</table>
-
-		<div class="center">
-			<div class="pagination">
-				<ul>
-					<li ng-class="{disabled: page == 0}">
-						<a href="#/players/{{ page-1 }}">Prev</a>
-					</li>
-					<li ng-repeat="n in range" ng-class="{active: n == page}">
-						<a href="#/players/{{ n }}">{{ n }}</a>
-					</li>
-					<li ng-class="{disabled: page == pagedProjects.length - 1}">
-						<a href="#/players/{{ page+1 }}">Next</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-		-->
 
 </div>
 

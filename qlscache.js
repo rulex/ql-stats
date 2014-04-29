@@ -26,8 +26,10 @@ exports.readCacheFile = function() {
 		_logger.debug( 'Parsed Cache file' );
 	}
 	catch( err ) {
-		_logger.error( 'failed to parse cache file' );
-		_logger.error( err );
+		_logger.warn( 'failed to parse cache file' );
+		_logger.warn( err );
+		exports.cacheControl = {};
+		exports.writeCacheFile();
 	}
 }
 exports.writeCacheFile = function() {
@@ -91,14 +93,14 @@ function delay(ms) {
 	setTimeout( deferred.resolve, ms );
 	return deferred.promise;
 }
-exports.query = function( sql ) {
+exports.query = function( sql, params ) {
 	_logger.debug( 'query!' );
 	var def = Q.defer();
 	Q.ninvoke( exports.dbpool, "getConnection" )
 		.then( function( conn ) {
 			var deferred = Q.defer();
 			_logger.debug( 'query conn!' );
-			conn.query( sql, function( err, rows ) {
+			conn.query( sql, params, function( err, rows ) {
 				if( err ) { _logger.error( err ); }
 				conn.release();
 				_logger.debug( 'query done! returned ' + rows.length + ' rows' );

@@ -94,7 +94,7 @@ app.get( '/api', function ( req, res ) {
 	res.end();
 } );
 app.get( '/api/search/players/:search_str', function ( req, res ) {
-	var sql = 'select p.NAME as PLAYER_NICK, p.COUNTRY as PLAYER_COUNTRY, c.NAME as PLAYER_CLAN from Player p left join Clan c on c.ID=p.CLAN_ID WHERE p.NAME like ? ORDER BY NULL LIMIT 200';
+	var sql = 'select p.NAME as PLAYER_NICK, p.COUNTRY as PLAYER_COUNTRY, c.NAME as CLAN, c.ID as CLAN_ID from Player p left join Clan c on c.ID=p.CLAN_ID WHERE p.NAME like ? ORDER BY NULL LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) throw err;
 		conn.query( sql, [ req.params.search_str + "%" ], function( err, rows ) {
@@ -106,7 +106,7 @@ app.get( '/api/search/players/:search_str', function ( req, res ) {
 	} );
 } );
 app.get( '/api/search/players_with_details/:search_str', function ( req, res ) {
-	var sql = 'SELECT p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN, p.COUNTRY as PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, '
+	var sql = 'SELECT p.NAME as PLAYER_NICK, c.NAME as CLAN, c.ID as CLAN_ID, p.COUNTRY as PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, '
     + 'sum(case when gp.TEAM = g.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, '
     + 'sum(case when gp.TEAM = g.WINNING_TEAM then 1 else 0 end)/count(1)*100 as WIN_PERCENT, '
     + 'sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, '
@@ -410,7 +410,7 @@ app.get( '/api/games', function ( req, res ) {
   + 'left outer join Player ld on ld.ID=g.LEAST_DEATHS_ID '
   + 'left outer join Player md on md.ID=g.MOST_DEATHS_ID '
   + 'left outer join Player ma on ma.ID=g.MOST_ACCURATE_ID '
-  + 'order by g.GAME_TIMESTAMP desc LIMIT 5000';
+  + 'order by g.GAME_TIMESTAMP desc LIMIT 2000';
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
@@ -470,19 +470,6 @@ app.get('/api/games/:game', function (req, res) {
   });
 });
 /*
-app.get('/api/games/:game/player/:player', function (req, res) {
-	var game = mysql_real_escape_string( req.params.game );
-	var nick = mysql_real_escape_string( req.params.player );
-	var sql = 'SELECT PLAYER_NICK, PLAYER_CLAN, PLAYER_COUNTRY, count(*) as MATCHES_PLAYED, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players WHERE Players.PUBLIC_ID=\'' + game + '\' and Players.PLAYER_NICK=\''+ nick +'\' ';
-	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows ) {
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { player: rows[0] } } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
 app.get( '/api/games/:game/tags', function( req, res ) {
 	// move this to /game/* ?
 	var game = mysql_real_escape_string( req.params.game );
@@ -491,6 +478,18 @@ app.get( '/api/games/:game/tags', function( req, res ) {
 		conn.query( sql, function( err, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { tags: rows } } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
+	var game = mysql_real_escape_string( req.params.game );
+	var tag = mysql_real_escape_string( req.params.tag );
+	var sql = 'insert into game_tags( tag_id, PUBLIC_ID ) values( '+ tag +', \''+ game +'\' )';
+	dbpool.getConnection( function( err, conn ) {
+		conn.query( sql, function( err, rows, fields ) {
+			res.jsonp( { data: { rows: rows, err: err, fields: fields } } );
 			res.end();
 			conn.release();
 		} );
@@ -520,18 +519,6 @@ app.get('/api/games/:game/get', function (req, res) {
       res.end();
     })
     .finally(function() { conn.Release(); });
-} );
-app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
-	var game = mysql_real_escape_string( req.params.game );
-	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'insert into game_tags( tag_id, PUBLIC_ID ) values( '+ tag +', \''+ game +'\' )';
-	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows, fields ) {
-			res.jsonp( { data: { rows: rows, err: err, fields: fields } } );
-			res.end();
-			conn.release();
-		} );
-	} );
 } );
 app.get( '/api/owners', function ( req, res ) {
   var sql = 'SELECT o.NAME as OWNER, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC '
@@ -678,22 +665,24 @@ app.get( '/api/owners/:owner/games', function ( req, res ) {
 } );
 app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
-	sql = 'select p.PLAYER_NICK,' +
-		'count(g.PUBLIC_ID) as MATCHES_PLAYED,' +
-		'sum(p.KILLS) as KILLS,' +
-		'round(KILLS/DEATHS,2) as RATIO,' +
-		'sum(IMPRESSIVE) as IMPRESSIVE,' +
-		'sum(EXCELLENT) as EXCELLENT,' +
-		'sum(HUMILIATION) as HUMILIATION' +
-		' from Games g' +
-		' left join Players p on p.PUBLIC_ID=g.PUBLIC_ID' +
-		' where OWNER="'+ owner +'"' +
-		' and GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) )' +
-		' group by PLAYER_NICK' +
-		' order by KILLS desc' +
-		' limit 50;';
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'gp.PLAYER_ID, ' +
+		'sum(gp.KILLS) as KILLS, ' +
+		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
+		'sum(gp.EXCELLENT) as EXCELLENT, ' +
+		'sum(gp.HUMILIATION) as HUMILIATION, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join Player o on o.ID=g.OWNER_ID ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'where o.NAME="'+ owner +'" and g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
+		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
+		'';
 	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
 		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
 			res.end();
@@ -724,29 +713,6 @@ app.get( '/api/owners/:owner', function ( req, res ) {
 	} );
 } );
 /*
-app.get( '/api/clans', function ( req, res ) {
-	var sql = 'select Players.PLAYER_CLAN as PLAYER_CLAN, count(*) as MATCHES_PLAYED, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG from Players GROUP BY Players.PLAYER_CLAN ORDER BY NULL';
-	//var sql = 'select Players.PLAYER_CLAN as PLAYER_CLAN, count(*) as MATCHES_PLAYED, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID GROUP BY Players.PLAYER_CLAN ORDER BY NULL';
-	//var sql = 'select Players.PLAYER_CLAN as PLAYER_CLAN, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO,sum(Players.HITS) as HITS, avg(Players.HITS) as HITS_AVG,sum(Players.SHOTS) as SHOTS,avg(Players.SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, sum(Players.PLAY_TIME) as PLAY_TIME,sum(Players.EXCELLENT) as EXCELLENT_SUM, avg(Players.EXCELLENT) as EXCELLENT_AVG, sum(Players.IMPRESSIVE) as IMPRESSIVE_SUM, avg(Players.IMPRESSIVE) as IMPRESSIVE_AVG,sum(Players.HUMILIATION) as HUMILIATION_SUM, avg(Players.HUMILIATION) as HUMILIATION_AVG,sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT,avg(Players.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN, avg(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID GROUP BY Players.PLAYER_CLAN ORDER BY NULL';
-	db.query( sql, function( err, rows ) {
-		res.jsonp( { data: { clans: rows } } );
-		res.end();
-	} );
-} );
-app.get( '/api/clan/*', function ( req, res ) {
-	var str1 = '';
-	var str2 = '';
-	var clan = req.url.split( '/' );
-	clan.shift(); clan.shift(); clan.shift();
-	clan = decodeURI( clan.join( '' ) );
-	var sql = [];
-	sql[0] = 'SELECT PLAYER_CLAN, count(*) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID WHERE '+str1+str2+' PLAYER_CLAN=\''+ clan +'\' GROUP BY PLAYER_CLAN order by null';
-	sql[1] = 'SELECT PLAYER_NICK, PLAYER_COUNTRY, count(PLAYER_NICK) as MATCHES_PLAYED, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, sum(case when Players.TEAM = Games.WINNING_TEAM then 1 else 0 end)/count(*)*100 as WIN_PERCENT, sum(QUIT) as QUIT_SUM, avg(QUIT) as QUIT_AVG, avg(RANK) as RANK_AVG, sum(SCORE) as SCORE_SUM, avg(SCORE) as SCORE_AVG, sum(DAMAGE_DEALT) as DAMAGE_DEALT_SUM, avg(DAMAGE_DEALT) as DAMAGE_DEALT_AVG, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, avg(DAMAGE_DEALT-DAMAGE_TAKEN) as DAMAGE_NET_AVG, sum(KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, sum(DEATHS) as DEATHS_SUM, avg(DEATHS) as DEATHS_AVG, sum(Players.KILLS)/sum(Players.DEATHS) as RATIO, sum(HITS) as HITS_SUM, avg(HITS) as HITS_AVG, sum(SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(HITS)/sum(SHOTS)*100 as ACC_AVG, avg(RANK) as RANK_AVG, avg(TEAM_RANK) as TEAM_RANK_AVG, sum(HUMILIATION) as HUMILIATION_SUM, avg(HUMILIATION) as HUMILIATION_AVG, sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(G_K) as G_K_SUM, avg(G_K) as G_K_AVG, sum(GL_H) as GL_H_SUM, avg(GL_H) as GL_H_AVG, sum(GL_K) as GL_K_SUM, avg(GL_K) as GL_K_AVG, sum(GL_S) as GL_S_SUM, avg(GL_S) as GL_S_AVG, sum(LG_H) as LG_H_SUM, avg(LG_H) as LG_H_AVG, sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, sum(LG_S) as LG_S_SUM, avg(LG_S) as LG_S_AVG, sum(MG_H) as MG_H_SUM, avg(MG_H) as MG_H_AVG, sum(MG_K) as MG_K_SUM, avg(MG_K) as MG_K_AVG, sum(MG_S) as MG_S_SUM, avg(MG_S) as MG_S_AVG, sum(PG_H) as PG_H_SUM, avg(PG_H) as PG_H_AVG, sum(PG_K) as PG_K_SUM, avg(PG_K) as PG_K_AVG, sum(PG_S) as PG_S_SUM, avg(PG_S) as PG_S_AVG, sum(RG_H) as RG_H_SUM, avg(RG_H) as RG_H_AVG, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, sum(RG_S) as RG_S_SUM, avg(RG_S) as RG_S_AVG, sum(RL_H) as RL_H_SUM, avg(RL_H) as RL_H_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, sum(RL_S) as RL_S_SUM, avg(RL_S) as RL_S_AVG, sum(SG_H) as SG_H_SUM, avg(SG_H) as SG_H_AVG, sum(SG_K) as SG_K_SUM, avg(SG_K) as SG_K_AVG, sum(SG_S) as SG_S_SUM, avg(SG_S) as SG_S_AVG FROM Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID WHERE '+str1+str2+' PLAYER_CLAN=\''+ clan +'\' GROUP BY PLAYER_NICK, PLAYER_CLAN order by null';
-	db.query( sql.join( ';' ), function( err, resulty ) {
-		res.jsonp( { data: { clan: resulty[0][0], players: resulty[1] } } );
-		res.end();
-	} );
-} );
 app.get( '/api/all/daily', function ( req, res ) {
 	// maps
 	sql = 'select count(*) as count, DATE(from_unixtime(GAME_TIMESTAMP)) as date, year(from_unixtime(GAME_TIMESTAMP)) as year, month(from_unixtime(GAME_TIMESTAMP)) as month, day(from_unixtime(GAME_TIMESTAMP)) as day from Games group by year,month,day order by NULL';
@@ -778,24 +744,6 @@ app.get( '/api/all', function ( req, res ) {
 	sql[4] = 'select GAME_TYPE, count(*) as MATCHES_PLAYED from Games group by GAME_TYPE order by MATCHES_PLAYED desc';
 	db.query( sql.join( ';' ), function( err, resulty ) {
 		res.jsonp( { games: resulty[0], UNIQUE_PLAYERS: resulty[2], min_max: resulty[3], gametypes: resulty[4], players: resulty[1] } );
-		res.end();
-	} );
-} );
-app.get( '/api/maps', function ( req, res ) {
-	var sql = 'SELECT MAP, count(*) as MATCHES_PLAYED, sum(TOTAL_KILLS) as TOTAL_KILLS, sum(GAME_LENGTH) as GAME_LENGTH FROM Games group by MAP order by NULL';
-	db.query( sql, function( err, rows, fields ) {
-		res.jsonp( { data: { maps: rows } } );
-		res.end();
-	} );
-} );
-app.get( '/api/map/*', function ( req, res ) {
-	var map = mysql_real_escape_string( req.url.split( '/' )[3] );
-	var sql = [];
-	sql[0] = 'SELECT MAP, count(*) as MATCHES_PLAYED FROM Games WHERE MAP=\'' + map + '\' group by MAP';
-	//sql[1] = 'SELECT * FROM Players WHERE MAP=\'' + map + '\'';
-	//sql[2] = 'select Players.TEAM, count(Players.PLAYER_NICK) as PLAYERS, sum(Players.SCORE) as SCORE, avg(Players.SCORE) as SCORE_AVG, sum(Players.KILLS) as KILLS, sum(Players.DEATHS) as DEATHS, sum(Players.SHOTS) as SHOTS, sum(Players.HITS) as HITS, sum(Players.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(Players.DAMAGE_DEALT)/sum(Games.GAME_LENGTH) as DAMAGE_DEALT_PER_SEC_AVG, sum(Players.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Players.PUBLIC_ID="'+ game +'" group by TEAM';
-	db.query( sql.join( ';' ), function( err, resulty ) {
-		res.jsonp( { data: { map: resulty[0], teams: resulty[2], players: resulty[1] } } );
 		res.end();
 	} );
 } );
@@ -842,11 +790,11 @@ app.get( '/api/gametypes', function ( req, res ) {
 	}
 } );
 app.get( '/api/gametypes/:gametype', function ( req, res ) {
-	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, avg(GAME_LENGTH) as GAME_LENGTH, avg(NUM_PLAYERS) as NUM_PLAYERS from Game where GAME_TYPE=? group by GAME_TYPE';
+	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, avg(NUM_PLAYERS) as NUM_PLAYERS_AVG from Game where GAME_TYPE=? group by GAME_TYPE';
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, [req.params.gametype], function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { gametypes: rows } } );
+			res.jsonp( { data: rows[0] } );
 			res.end();
 			conn.release();
 		} );
@@ -963,6 +911,103 @@ app.get( '/api/tags/:tag/players', function ( req, res ) {
 	} );
 } );
 */
+app.get( '/api/maps/:map', function ( req, res ) {
+  var map = mysql_real_escape_string( req.params.map );
+	var sql = 'select GAME_TYPE, count(*) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where m.NAME="'+ map +'" group by GAME_TYPE';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+app.get( '/api/maps', function ( req, res ) {
+	var sql = 'select m.NAME as MAP, g.MAP_ID, count(g.ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID group by MAP_ID';
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is old, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+app.get( '/api/clans', function ( req, res ) {
+	var sql = 'select c.ID as CLAN_ID, c.NAME as CLAN from Clan c';
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is old, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+app.get( '/api/clans/:clan', function ( req, res ) {
+  var clan = mysql_real_escape_string( req.params.clan );
+	//var sql = 'select p.NAME as PLAYER_NICK, p.CLAN_ID, p.COUNTRY from Player p where CLAN_ID=?';
+	var sql = 'select p.NAME as PLAYER_NICK, p.COUNTRY, count(*) as MATCHES_PLAYED, sum(KILLS) as KILLS, sum(DEATHS) as DEATHS, sum(PLAY_TIME) as PLAY_TIME, avg(HITS/SHOTS)*100 as AVG_ACC from GamePlayer gp left join Player p on p.ID=gp.PLAYER_ID where gp.CLAN_ID=? group by gp.PLAYER_ID';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [clan], function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
 app.get( '/api/status/cache', function ( req, res ) {
 	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 	var _cache = [];
