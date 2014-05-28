@@ -91,7 +91,7 @@ angular.module( 'liz', ['lizzy'] )
 	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
 	when( '/gametypes/:gametype', { controller: GametypeCtrl, templateUrl: 'gametype.html' } ).
 	when( '/tags/:tag', { controller: TagCtrl, templateUrl: 'tag.html' } ).
-	when( '/tags/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games.html' } ).
+	when( '/tags/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games2.html' } ).
 	when( '/tags/:tag/players', { controller: TagPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/tags/:tag/players/:player', { controller: TagPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags', { controller: TagsCtrl, templateUrl: 'tags.html' } ).
@@ -514,6 +514,7 @@ function TagsCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.date = new Date().getTime();
 }
 function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
+	/*
 	$( '#current_url' ).html( printLocations() );
 	var t = $routeParams.tag;
 	var lol = theLiz.taggames( t );
@@ -521,6 +522,30 @@ function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
 	$scope.ordercolumn = 'GAME_TIMESTAMP';
 	$scope.ordertype = true;
 	$scope.date = new Date().getTime();
+	*/
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/games',
+		success: function( data ) {
+			//console.log( data );
+			$( '#table_games_' ).hide();
+			$( '#table_games' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+			//console.log( data );
+		},
+	} );
 }
 function TagPlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );

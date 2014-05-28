@@ -12,7 +12,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in tags.data.tags | orderBy:ordercolumn:ordertype">
+				<tr ng-repeat="z in tags.data | orderBy:ordercolumn:ordertype">
 					<td>{{ z.ID | number }}</td>
 					<td><a href="#/tags/{{ z.ID }}">{{ z.NAME }}</a></td>
 					<td>{{ z.tagged_games | number }}</td>

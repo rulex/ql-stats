@@ -2,24 +2,24 @@
 <div class="row-fluid">
 
 	<div class="col-md-6 ">
-		<h3> {{ tag.data.tag.name }}</h3>
+		<h3> {{ tag.data.name }}</h3>
 		<table class="table table-condensed table-bordered">
 			<tr>
 				<td>ID</td>
-				<td>{{ tag.data.tag.ID }}</td>
+				<td>{{ tag.data.ID }}</td>
 			</tr>
 				<td>Name</td>
-				<td>{{ tag.data.tag.NAME }}</td>
+				<td>{{ tag.data.NAME }}</td>
 			<tr>
 				<td>Description</td>
-				<td>{{ tag.data.tag.DESCR }}</td>
+				<td>{{ tag.data.DESCR }}</td>
 			</tr>
 		</table>
 	</div>
 
 	<div class="col-md-6 ">
-		<a class="btn btn-primary" href="#/tags/{{ tag.data.tag.ID }}/games">Games</a>
-		<a class="btn btn-primary" href="#/tags/{{ tag.data.tag.ID }}/players">Players</a>
+		<a class="btn btn-primary" href="#/tags/{{ tag.data.ID }}/games">Games</a>
+		<a class="btn btn-primary" href="#/tags/{{ tag.data.ID }}/players">Players</a>
 	</div>
 
 </div>
