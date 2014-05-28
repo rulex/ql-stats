@@ -6,12 +6,12 @@
 			<table class="table table-condensed table-bordered">
 				<tr>
 					<td>
-						<a class="pull-left " href="#/map/{{ game.data.game.MAP }}">
+						<a class="pull-left " href="#/maps/{{ game.data.game.MAP }}">
 							<img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ game.data.game.MAP }}_v2011071903.0.jpg" alt="{{ game.data.game.MAP }}" title="{{ game.data.game.MAP }}" style="height:42px;width:56px;border-width:0px;" />
 						</a>
 					</td>
 					<td>
-						<img class="pull-left" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ game.data.game.GAME_TYPE }}_v2013071601.0.png" alt="{{ game.data.game.GAME_TYPE }}" title="{{ game.data.game.GAME_TYPE }}" />
+						<img class="pull-left" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ game.data.game.GAME_TYPE | gametype }}_v2013071601.0.png" alt="{{ game.data.game.GAME_TYPE }}" title="{{ game.data.game.GAME_TYPE }}" />
 						<div class="pull-left {{ game.data.game.PREMIUM | premium }}"> </div>
 						<div class="pull-left {{ game.data.game.RANKED | ranked }}"></div>
 						<div> {{ game.data.game.RULESET | ruleset }}</div>
@@ -25,6 +25,8 @@
 		<div class="span5">
 			<table class="table table-condensed table-bordered">
 				<tr> <td>GAME:</td> <td><a href="#/games/{{ game.data.game.PUBLIC_ID }}">{{ game.data.game.PUBLIC_ID }}</a></td> </tr>
+        <tr> <td>GAME TYPE:</td> <td>{{ game.data.game.GAME_TYPE | gametype }}</td> </tr>
+				<tr> <td>MAP:</td> <td><a href="#/maps/{{ game.data.game.MAP }}">{{ game.data.game.MAP }}</a></td> </tr>
 				<tr> <td>OWNER:</td> <td><a href="#/owners/{{ game.data.game.OWNER }}">{{ game.data.game.OWNER }}</a></td> </tr>
 				<tr> <td>TIMESTAMP:</td> <td>{{ game.data.game.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td> </tr>
 				<tr> <td>DURATION:</td> <td>{{ date-game.data.game.GAME_LENGTH*1000 | timeago }}</td> </tr>
@@ -85,7 +87,7 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in game.data.teams | orderBy: ordercolumn:ordertype" class="{{ z.TEAM | team }}">
-					<td>{{ z.TEAM }}</td>
+					<td>{{ z.TEAM | teamname }}</td>
 					<td title="{{ z.SCORE_AVG }} avg">{{ z.SCORE_SUM }}</td>
 					<td title="{{ z.KILLS_AVG }} avg">{{ z.KILLS_SUM }}</td>
 					<td title="{{ z.DEATHS_AVG }} avg">{{ z.DEATHS_SUM }}</td>
@@ -157,10 +159,10 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in game.data.players | orderBy: ordercolumn:ordertype" class="{{ z.TEAM | team }}">
-					<td><a href="#/clans/{{z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
-					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
+					<td><a href="#/clans/{{z.CLAN_ID}}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
+					<td><img ng-show="z.PLAYER_COUNTRY" src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
 					<td>{{ z.RANK }}</td>
-					<td>{{ z.TEAM }}</td>
+					<td>{{ z.TEAM | teamname }}</td>
 					<td>{{ z.SCORE }}</td>
 					<td>{{ z.KILLS }}</td>
 					<td>{{ z.DEATHS }}</td>

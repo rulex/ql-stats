@@ -25,7 +25,7 @@
           <td>{{ z.RANK | number }}</td>
           <td>{{ z.SCORE | number }}</td>
           <td>{{ z.GAME_TIMESTAMP | date:'yyyy-MM-dd HH:mm' }}</td>
-          <td>{{ z.LEADER_NICK }}</td>
+					<td><a href="#/race/players/{{ z.LEADER_NICK }}">{{ z.LEADER_NICK }}</a></td>
           <td>{{ z.LEADER_SCORE | number }}</td>
         </tr>
       </tbody>

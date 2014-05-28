@@ -4,18 +4,45 @@ var apiurl = '/';
 //var apiurl = 'http://ql.l.leeto.fi/';
 
 var dynatable_writers = {
+	COUNTRY: function( obj ) {
+		return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" />';
+	},
+	CLAN: function( obj ) {
+		return '<a href="#/clans/'+ obj.CLAN_ID +'">' + obj.CLAN + '</a>';
+	},
+	MAP: function( obj ) {
+		return '<a href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
+	},
+	TAG: function( obj ) {
+		return '<a href="#/tags/'+ obj.ID +'">' + obj.TAG + '</a>';
+	},
 	OWNER: function( obj ) {
 		return '<a href="#/owners/'+ obj.OWNER +'">' + obj.OWNER + '</a>';
 	},
 	PUBLIC_ID: function( obj ) {
 		return '<a href="#/games/'+ obj.PUBLIC_ID +'">' + shortenPID( obj.PUBLIC_ID ) + '</a>';
 	},
+	PLAYER_NICK: function( obj ) {
+		return '<a href="#/players/'+ obj.PLAYER_NICK +'">' + obj.PLAYER_NICK + '</a>';
+	},
 	GAME_TIMESTAMP: function( obj ) {
-		return timediff( ( obj.GAME_TIMESTAMP *1000 )+60*60*6*1000, new Date().getTime() ) + ' ago';
+		return obj.GAME_TIMESTAMP + ' ' + timediff( ( obj.GAME_TIMESTAMP *1000 )+60*60*6*1000, new Date().getTime() ) + ' ago';
 		//return convertTimestamp( obj.GAME_TIMESTAMP );
 	},
 	GAME_LENGTH: function( obj ) {
 		return timediff( obj.GAME_LENGTH * 1000 );
+	},
+	GAME_TYPE: function( obj ) {
+		/*
+		var gt = '';
+		if( obj.GAME_TYPE == 'harv' ) {
+			gt = 'harvester';
+		}
+		else {
+			gt = obj.GAME_TYPE;
+		}
+		*/
+		return '<a href="#/gametypes/' + obj.GAME_TYPE + '">' + obj.GAME_TYPE + '</a>';
 	},
 	GAME_LENGTH_SUM: function( obj ) {
 		return timediff( obj.GAME_LENGTH_SUM * 1000 );
@@ -53,19 +80,21 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/owners/:owner/players', { controller: OwnerPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/owners/:owner/games', { controller: OwnerGamesCtrl, templateUrl: 'games2.html' } ).
 	when( '/owners/:owner/players/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
-	//when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
-	when( '/clans', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
-	//when( '/clan/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
-	when( '/clan/:clan', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
-	//when( '/maps', { controller: MapsCtrl, templateUrl: 'maps.html' } ).
-	when( '/maps', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
-	//when( '/map/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
-	when( '/map/:map', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
-	//when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
-	when( '/countries', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	when( '/owners/:owner/top/last30days', { controller: OwnerTopCtrl, templateUrl: 'top.html' } ).
+	when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
+	//when( '/clans', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	when( '/clans/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
+	//when( '/clan/:clan', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	when( '/maps', { controller: MapsCtrl, templateUrl: 'maps.html' } ).
+	//when( '/maps', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	when( '/maps/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
+	//when( '/map/:map', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
+	when( '/countries/:country', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
+	when( '/gametypes/:gametype', { controller: GametypeCtrl, templateUrl: 'gametype.html' } ).
 	when( '/tags/:tag', { controller: TagCtrl, templateUrl: 'tag.html' } ).
-	when( '/tags/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games.html' } ).
+	when( '/tags/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games2.html' } ).
 	when( '/tags/:tag/players', { controller: TagPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/tags/:tag/players/:player', { controller: TagPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags', { controller: TagsCtrl, templateUrl: 'tags.html' } ).
@@ -73,7 +102,7 @@ angular.module( 'liz', ['lizzy'] )
 	when('/race/maps/:map', { controller: RaceMapCtrl, templateUrl: 'racemap.html' }).
 	when('/race/players/:player', { controller: RacePlayerCtrl, templateUrl: 'raceplayer.html' }).
 	otherwise({ redirectTo: '/' });
-} ] );
+}]);
 
 function EmptyCtrl( $scope, $timeout, $routeParams ) {
 }
@@ -153,7 +182,7 @@ function GamesCtrl( $scope, theLiz, $timeout ) {
 				dataset: {
 					perPageDefault: 50,
 					perPageOptions: [10,20,50,100,200],
-					records: data.data.games.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
+					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
 				}
 			} );
 		},
@@ -242,7 +271,40 @@ function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				dataset: {
 					perPageDefault: 50,
 					perPageOptions: [10,20,50,100,200],
-					records: data.data.owners
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+			//console.log( data );
+		},
+	} );
+}
+function OwnerTopCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	$( '#current_url' ).html( printLocations() );
+	var o = $routeParams.owner;
+	$.ajax( {
+		url: apiurl + 'api/owners/' + o + '/top/last30days/kills',
+		success: function( data ) {
+			//console.log( data );
+			$( '#table_top_kills_' ).hide();
+			$( '#table_top_kills' ).dynatable( {
+				features: {
+					sort: true,
+					perPageSelect: false,
+					paginate: true,
+					search: false,
+					recordCount: false,
+					pushState: false,
+				},
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 10,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
 				}
 			} );
 		},
@@ -308,7 +370,7 @@ function OwnerGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				dataset: {
 					perPageDefault: 20,
 					perPageOptions: [10,20,50,100,200],
-					records: data.data.games
+					records: data.data
 				}
 			} );
 		},
@@ -332,16 +394,29 @@ function OwnerGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	*/
 }
 function ClansCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
-	var lol = theLiz.clans();
-	$scope.clans = lol;
-	$scope.date = new Date().getTime();
-	$scope.ordercolumn = 'MATCHES_PLAYED';
-	$scope.ordertype = true;
-	//$scope.currentPage = 0;
-	//$scope.pageSize = 20;
-	//$scope.numberOfPages = function() {
-	//	return Math.ceil( $scope.clans.length/$scope.pageSize );
-	//};
+	console.log( parseUrl() );
+	console.log( parseHash() );
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/clans',
+		success: function( data ) {
+			$( '#table_clans_' ).hide();
+			$( '#table_clans' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 200,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+		},
+	} );
 }
 function ClanCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var c = $routeParams.clan;
@@ -356,24 +431,68 @@ function ClanCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	}
 }
 function MapsCtrl( $scope, theLiz, $timeout ) {
-	var lol = theLiz.maps();
-	$scope.maps = lol;
-	$scope.ordercolumn = 'MATCHES_PLAYED';
-	$scope.ordertype = true;
-	$scope.date = new Date().getTime();
+	console.log( parseUrl() );
+	console.log( parseHash() );
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/maps',
+		success: function( data ) {
+			$( '#table_maps_' ).hide();
+			$( '#table_maps' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 200,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+		},
+	} );
 }
 function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	console.log( parseUrl() );
+	console.log( parseHash() );
 	var m = $routeParams.map;
-	var lol = theLiz.map( m );
-	$scope.map = lol;
-	$scope.ordercolumn = 'RANK';
-	$scope.ordertype = false;
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/maps/' + m,
+		success: function( data ) {
+			$( '#table_map_' ).hide();
+			$( '#table_map' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+		},
+	} );
+}
+function GametypeCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	$( '#current_url' ).html( printLocations() );
+	var gt = $routeParams.gametype;
+	var lol = theLiz.gametype( gt );
+	$scope.gametype = lol;
 	$scope.date = new Date().getTime();
 }
 function CountriesCtrl( $scope, theLiz, $timeout ) {
+	$( '#current_url' ).html( printLocations() );
 	var lol = theLiz.countries();
 	$scope.countries = lol;
-	$scope.ordercolumn = 'MATCHES_PLAYED';
+	$scope.ordercolumn = 'NUM_PLAYERS';
 	$scope.ordertype = true;
 	$scope.date = new Date().getTime();
 }
@@ -392,12 +511,38 @@ function TagCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.date = new Date().getTime();
 }
 function TagsCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	/*
 	$( '#current_url' ).html( printLocations() );
 	var lol = theLiz.tags();
 	$scope.tags = lol;
 	$scope.date = new Date().getTime();
+	*/
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/tags',
+		success: function( data ) {
+			//console.log( data );
+			$( '#table_tags_' ).hide();
+			$( '#table_tags' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+			//console.log( data );
+		},
+	} );
 }
 function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
+	/*
 	$( '#current_url' ).html( printLocations() );
 	var t = $routeParams.tag;
 	var lol = theLiz.taggames( t );
@@ -405,6 +550,31 @@ function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
 	$scope.ordercolumn = 'GAME_TIMESTAMP';
 	$scope.ordertype = true;
 	$scope.date = new Date().getTime();
+	*/
+	var t = $routeParams.tag;
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/tags/' + t + '/games',
+		success: function( data ) {
+			//console.log( data );
+			$( '#table_games_' ).hide();
+			$( '#table_games' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+			//console.log( data );
+		},
+	} );
 }
 function TagPlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
@@ -582,7 +752,7 @@ factory( 'theLiz', function( $http ) {
 		} );
 	}
 	theLiz.clan = function( c ) {
-		return $http( { url: apiurl + 'api/clan/' + c + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+		return $http( { url: apiurl + 'api/clans/' + c + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			if( 'dbug' in parseUrl() ) { console.log( response.data ); }
 			return new theLiz( response.data );
 		} );
@@ -593,8 +763,8 @@ factory( 'theLiz', function( $http ) {
 			return new theLiz( response.data );
 		} );
 	}
-	theLiz.map = function( m ) {
-		return $http( { url: apiurl + 'api/map/' + m + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+	theLiz.gametype = function( gt ) {
+		return $http( { url: apiurl + 'api/gametypes/' + gt + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			if( 'dbug' in parseUrl() ) { console.log( response.data ); }
 			return new theLiz( response.data );
 		} );
@@ -642,7 +812,7 @@ factory( 'theLiz', function( $http ) {
 		} );
 	}
 	theLiz.players_search = function( p ) {
-		return $http( { url: apiurl + 'api/search/players_with_details/' + p + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
+		return $http( { url: apiurl + 'api/search/players/' + p + '/?callback=JSON_CALLBACK', method: 'JSONP' } ).then( function( response ) {
 			if( 'dbug' in parseUrl() ) { console.log( response.data ); }
 			return new theLiz( response.data );
 		} );
@@ -759,8 +929,8 @@ factory( 'theLiz', function( $http ) {
 } )
 .filter( 'team', function() {
 	return function( t ) {
-		if( t == 'Blue' ) { return "success" }
-		else if( t == 'Red' ) { return "danger" }
+		if( t == '2' ) { return "success" }
+		else if( t == '1' ) { return "danger" }
 		else return "";
 	}
 } )
@@ -774,7 +944,13 @@ factory( 'theLiz', function( $http ) {
 		if( c == 'None' ) { return '' }
 		else { return c; }
 	}
-} );
+} )
+.filter('gametype', function () {
+  return function (input) { return input == "harv" ? "harvester" : input.toLowerCase(); }
+})
+.filter('teamname', function () {
+  return function (input) { input = parseInt(input); return input == 1 ? "Red" : input == 2 ? "Blue" : ""; }
+});
 
 function convertTimestamp(timestamp) {
 	var d = new Date(timestamp * 1000), // Convert to milliseconds

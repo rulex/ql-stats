@@ -1,22 +1,37 @@
 
 <div class="row-fluid">
 
-</div>
-
-<div class="row-fluid">
-
-</div>
-
-<div class="row-fluid">
-
-	{{map}}
-	<div class="span6 well" ng-repeat="z in map">
+	<div class="span2">
+		<a class="btn btn-primary" href="#/race/maps/">Race stats</a>
+	</div>
+	<div class="span10 well">
+		<table id="table_map" class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th data-dynatable-column="GAME_TYPE">GAME_TYPE</th>
+					<th data-dynatable-column="MATCHES_PLAYED" title="MATCHES_PLAYED">MATCHES_PLAYED</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+		<div class="row" id="table_map_">
+			<div class="col-lg-1 col-center">
+				<div class="loading"></div>
+			</div>
+		</div>
 	</div>
 
 </div>
 
 <div class="row-fluid">
 
+</div>
+
+<div class="row-fluid">
+</div>
+
+<div class="row-fluid">
 </div>
 
 
