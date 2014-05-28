@@ -869,7 +869,7 @@ app.get( '/api/tags', function ( req, res ) {
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { tags: rows } } );
+			res.jsonp( { data: rows } );
 			res.end();
 			conn.release();
 		} );
@@ -881,7 +881,7 @@ app.get( '/api/tags/:tag', function ( req, res ) {
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { tag: rows[0] } } );
+			res.jsonp( { data: rows[0] } );
 			res.end();
 			conn.release();
 		} );
@@ -893,7 +893,7 @@ app.get( '/api/tags/:tag/games', function ( req, res ) {
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { games: rows } } );
+			res.jsonp( { data: rows } );
 			res.end();
 			conn.release();
 		} );
