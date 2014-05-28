@@ -87,7 +87,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/maps/:map', { controller: MapCtrl, templateUrl: 'map.html' } ).
 	//when( '/map/:map', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
-	//when( '/countries', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
+	when( '/countries/:country', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
 	when( '/gametypes/:gametype', { controller: GametypeCtrl, templateUrl: 'gametype.html' } ).
 	when( '/tags/:tag', { controller: TagCtrl, templateUrl: 'tag.html' } ).
@@ -486,6 +486,7 @@ function GametypeCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.date = new Date().getTime();
 }
 function CountriesCtrl( $scope, theLiz, $timeout ) {
+	$( '#current_url' ).html( printLocations() );
 	var lol = theLiz.countries();
 	$scope.countries = lol;
 	$scope.ordercolumn = 'NUM_PLAYERS';

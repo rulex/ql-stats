@@ -13,8 +13,8 @@
 			</thead>
 			<tbody>
 				<tr ng-repeat="z in tags.data.tags | orderBy:ordercolumn:ordertype">
-					<td>{{ z.id | number }}</td>
-					<td><a href="#/tags/{{ z.id }}">{{ z.name }}</a></td>
+					<td>{{ z.ID | number }}</td>
+					<td><a href="#/tags/{{ z.ID }}">{{ z.NAME }}</a></td>
 					<td>{{ z.tagged_games | number }}</td>
 				</tr>
 			</tbody>

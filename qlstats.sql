@@ -130,6 +130,20 @@ CREATE TABLE GamePlayer(
   KEY IX_PLAYER_ID( PLAYER_ID )
 ) CHARACTER SET ascii ENGINE=MyISAM;
 
+DROP TABLE IF EXISTS Tag;
+CREATE TABLE `Tag` (
+	`ID` int(11) NOT NULL AUTO_INCREMENT,
+	`NAME` varchar(30) DEFAULT NULL,
+	`DESCR` text,
+	PRIMARY KEY (`ID`)
+) CHARACTER SET ascii ENGINE=MyISAM;
+
+DROP TABLE IF EXISTS GameTag;
+CREATE TABLE `GameTag` (
+	`TAG_ID` int(11) NOT NULL DEFAULT '0',
+	`PUBLIC_ID` varchar(36) NOT NULL DEFAULT '',
+	PRIMARY KEY (`TAG_ID`,`PUBLIC_ID`)
+) CHARACTER SET ascii ENGINE=MyISAM;
 
 DROP TABLE IF EXISTS Race;
 CREATE TABLE Race (MODE int not null, MAP_ID integer not null, SCORE integer not null, PLAYER_ID integer not null, RANK integer not null, GAME_TIMESTAMP integer not null, GAME_ID integer) CHARACTER SET ascii engine=MyISAM;

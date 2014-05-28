@@ -322,7 +322,7 @@ app.get('/api/players/:player', function (req, res) {
   });
 });
 app.get('/api/players/:player/games', function (req, res) {
-	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, RULESET, RANKED, PREMIUM, DAMAGE_DEALT/PLAY_TIME as DAMAGE_DEALT_PER_SEC_AVG, p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN'
+	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, RULESET, RANKED, PREMIUM, DAMAGE_DEALT/PLAY_TIME as DAMAGE_DEALT_PER_SEC_AVG, p.NAME as PLAYER_NICK, c.NAME as CLAN, c.ID as CLAN_ID '
   + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Clan c on c.ID=gp.CLAN_ID left join Player o on o.ID=g.OWNER_ID '
   + ' where p.NAME=? order by GAME_TIMESTAMP desc';
 	dbpool.getConnection( function( err, conn ) {
@@ -355,7 +355,7 @@ app.get( '/api/players/:player/rank', function (req, res) {
 } );
 */
 app.get( '/api/players/:player/clans', function ( req, res ) {
-	var sql = 'select p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN, count(*) as MATCHES_PLAYED from Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID inner join Clan c on c.ID=gp.CLAN_ID '
+	var sql = 'select p.NAME as PLAYER_NICK, c.ID as CLAN_ID, c.NAME as CLAN, count(*) as MATCHES_PLAYED from Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID inner join Clan c on c.ID=gp.CLAN_ID '
 	  + ' where p.NAME=? group by p.NAME, c.NAME';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { _logger.error( err ); }
@@ -471,8 +471,8 @@ app.get( '/api/games', function ( req, res ) {
 app.get('/api/games/:game', function (req, res) {
   var game = mysql_real_escape_string(req.params.game);
   var sql = [];
-  sql[0] = 'SELECT g.*, m.NAME as MAP FROM Game g inner join Map m on m.ID=g.MAP_ID WHERE g.PUBLIC_ID=\'' + game + '\'';
-  sql[1] = 'SELECT p.NAME as PLAYER_NICK, c.NAME as PLAYER_CLAN, gp.* FROM Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID left outer join Clan c on c.ID=p.CLAN_ID WHERE gp.GAME_ID=(select ID from Game where PUBLIC_ID=\'' + game + '\') order by TEAM';
+  sql[0] = 'SELECT g.*, m.NAME as MAP, p.NAME as OWNER FROM Game g inner join Map m on m.ID=g.MAP_ID left join Player p on p.ID=g.OWNER_ID WHERE g.PUBLIC_ID=\'' + game + '\'';
+  sql[1] = 'SELECT p.NAME as PLAYER_NICK, c.ID as CLAN_ID, c.NAME as PLAYER_CLAN, gp.* FROM Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID left outer join Clan c on c.ID=p.CLAN_ID WHERE gp.GAME_ID=(select ID from Game where PUBLIC_ID=\'' + game + '\') order by TEAM';
   sql[2] = 'select gp.TEAM, count(1) as PLAYERS, sum(gp.SCORE) as SCORE_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, '
   + ' avg(gp.SCORE) as SCORE_AVG, sum(gp.KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, avg(gp.DEATHS) as DEATHS_AVG, sum(gp.DEATHS) as DEATHS_SUM, '
   + 'sum(gp.SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(gp.HITS) as HITS_SUM, avg(HITS) as HITS_AVG, avg(gp.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, '
@@ -864,9 +864,8 @@ app.get( '/api/overview', function ( req, res ) {
 		res.end();
 	}
 });
-/*
 app.get( '/api/tags', function ( req, res ) {
-	var sql = 'SELECT id, name, count(*) as tagged_games FROM tags left join game_tags on tags.id=game_tags.tag_id group by id';
+	var sql = 'SELECT ID, NAME, count(*) as tagged_games FROM Tag t left join GameTag gt on t.ID=gt.TAG_ID group by ID';
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -876,10 +875,21 @@ app.get( '/api/tags', function ( req, res ) {
 		} );
 	} );
 } );
+app.get( '/api/tags/:tag', function ( req, res ) {
+	var tag = mysql_real_escape_string( req.params.tag );
+	var sql = 'SELECT * FROM Tag WHERE ID=' + tag + '';
+	dbpool.getConnection( function( err, conn ) {
+		conn.query( sql, function( err, rows, fields ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: { tag: rows[0] } } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
 app.get( '/api/tags/:tag/games', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = [];
-	sql = 'SELECT * FROM Games left join game_tags on Games.PUBLIC_ID=game_tags.PUBLIC_ID where game_tags.tag_id=' + tag + ' ';
+	var sql = 'SELECT g.*, p.NAME as OWNER, gt.*, m.NAME as MAP FROM Game g left join GameTag gt on g.PUBLIC_ID=gt.PUBLIC_ID left join Map m on m.ID=g.MAP_ID left join Player p on p.ID=g.OWNER_ID where gt.TAG_ID=' + tag + ' ';
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -889,6 +899,7 @@ app.get( '/api/tags/:tag/games', function ( req, res ) {
 		} );
 	} );
 } );
+/*
 app.get( '/api/tags/:tag/owners', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var sql = 'SELECT OWNER, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC FROM Games left join game_tags on Games.PUBLIC_ID=game_tags.PUBLIC_ID where game_tags.tag_id='+ tag +' group by OWNER order by NULL';
@@ -910,18 +921,6 @@ app.get( '/api/tags/:tag/players/:player', function ( req, res ) {
 		conn.query( sql, function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { player: rows[0] } } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-app.get( '/api/tags/:tag', function ( req, res ) {
-	var tag = mysql_real_escape_string( req.params.tag );
-	sql = 'SELECT * FROM tags WHERE id=' + tag + '';
-	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows, fields ) {
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { tag: rows[0] } } );
 			res.end();
 			conn.release();
 		} );
