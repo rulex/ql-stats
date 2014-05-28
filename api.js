@@ -865,7 +865,7 @@ app.get( '/api/overview', function ( req, res ) {
 	}
 });
 app.get( '/api/tags', function ( req, res ) {
-	var sql = 'SELECT ID, NAME, count(*) as tagged_games FROM Tag t left join GameTag gt on t.ID=gt.TAG_ID group by ID';
+	var sql = 'SELECT ID, NAME as TAG, count(*) as tagged_games FROM Tag t left join GameTag gt on t.ID=gt.TAG_ID group by ID';
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );

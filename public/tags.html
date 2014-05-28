@@ -3,22 +3,22 @@
 
 	<div class="col-md-12 ">
 
-		<table class="table table-condensed table-striped ">
+		<table id="table_tags" class="table table-condensed table-striped ">
 			<thead>
 				<tr>
-					<th><a href="" ng-click="ordercolumn='id'; ordertype=!ordertype">id</a></th>
-					<th><a href="" ng-click="ordercolumn='name'; ordertype=!ordertype">name</a></th>
-					<th><a href="" ng-click="ordercolumn='tagged_games'; ordertype=!ordertype">tagged_games</a></th>
+					<th data-dynatable-column="ID">ID</th>
+					<th data-dynatable-column="TAG">TAG</th>
+					<th data-dynatable-column="tagged_games">tagged_games</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in tags.data | orderBy:ordercolumn:ordertype">
-					<td>{{ z.ID | number }}</td>
-					<td><a href="#/tags/{{ z.ID }}">{{ z.NAME }}</a></td>
-					<td>{{ z.tagged_games | number }}</td>
-				</tr>
 			</tbody>
 		</table>
+		<div class="row" id="table_tags_">
+			<div class="col-lg-1 col-center">
+				<div class="loading"></div>
+			</div>
+		</div>
 
 	</div>
 

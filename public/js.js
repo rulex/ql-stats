@@ -13,6 +13,9 @@ var dynatable_writers = {
 	MAP: function( obj ) {
 		return '<a href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
 	},
+	TAG: function( obj ) {
+		return '<a href="#/tags/'+ obj.ID +'">' + obj.TAG + '</a>';
+	},
 	OWNER: function( obj ) {
 		return '<a href="#/owners/'+ obj.OWNER +'">' + obj.OWNER + '</a>';
 	},
@@ -508,10 +511,35 @@ function TagCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$scope.date = new Date().getTime();
 }
 function TagsCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	/*
 	$( '#current_url' ).html( printLocations() );
 	var lol = theLiz.tags();
 	$scope.tags = lol;
 	$scope.date = new Date().getTime();
+	*/
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/tags',
+		success: function( data ) {
+			//console.log( data );
+			$( '#table_tags_' ).hide();
+			$( '#table_tags' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+			//console.log( data );
+		},
+	} );
 }
 function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
 	/*
