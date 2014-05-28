@@ -551,9 +551,10 @@ function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
 	$scope.ordertype = true;
 	$scope.date = new Date().getTime();
 	*/
+	var t = $routeParams.tag;
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
-		url: apiurl + 'api/games',
+		url: apiurl + 'api/tags/' + t + '/games',
 		success: function( data ) {
 			//console.log( data );
 			$( '#table_games_' ).hide();
