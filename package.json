@@ -1,12 +1,10 @@
-
 {
   "name": "ql-stats",
   "preferGlobal": false,
   "version": "0.0.1",
   "author": "rulex <rulex@anvianet.fi>",
   "description": "Collects game stats from quakelive.com",
-  "contributors": [
-  ],
+  "contributors": [],
   "scripts": {
     "start": "node ./api.js",
     "test": ""
@@ -22,16 +20,20 @@
     "http",
     "server"
   ],
-  "dependencies" : {
-    "express" :  "3.4.x",
-    "mysql"   :  "2.x.x",
-    "zlib"   :  "1.0.x",
-    "request"   :  "2.30.x",
-    "cheerio"   :  "0.12.x"
+  "dependencies": {
+    "express": "3.4.x",
+    "mysql": "2.x.x",
+    "zlib": "1.0.x",
+    "request": "~2.30.0",
+    "cheerio": "0.12.x",
+    "graceful-fs": "~2.0.3",
+    "mysql2": "~0.12.1",
+    "async": "~0.9.0",
+    "log4js": "~0.6.14",
+    "q": "~1.0.1"
   },
   "license": "GPL",
   "engines": {
     "node": ">=0.10"
   }
 }
-
