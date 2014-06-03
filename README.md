@@ -12,6 +12,6 @@ Collects game stats from quakelive.com
 * Setup the database by importing ```qlstats.sql``` to the database
 * Rename cfg.json.sample to cfg.json and change the settings to suit your needs
 * Run ```npm start```
-* Go to http://localhost:8585/ (default port 8585)
-* Get started by updating your latest matches by going to http://localhost:8585/api/players/<YOUR-QL-NICKNAME>/update
+* Go to `http://localhost:8585/ (default port 8585)`
+* Get started by updating your latest matches by going to `http://localhost:8585/api/players/<YOUR-QL-NICKNAME>/update`
 
