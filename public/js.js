@@ -38,7 +38,7 @@ var dynatable_writers = {
 		return '<a href="#/players/'+ obj.PLAYER_NICK +'">' + obj.PLAYER_NICK + '</a>';
 	},
 	GAME_TIMESTAMP: function( obj ) {
-		return timediff( ( obj.GAME_TIMESTAMP *1000 )+60*60*6*1000, new Date().getTime() ) + ' ago';
+		return obj.GAME_TIMESTAMP + ' ' + timediff( ( obj.GAME_TIMESTAMP *1000 )+60*60*6*1000, new Date().getTime() ) + ' ago';
 		//return convertTimestamp( obj.GAME_TIMESTAMP );
 	},
 	GAME_LENGTH: function( obj ) {

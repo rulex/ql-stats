@@ -16,6 +16,11 @@ var allow_update = false;
 _logger = log4js.getLogger( "api" );
 _logger.setLevel( log4js.levels.DEBUG );
 
+ 
+var compress    = require('compression');
+var logger      = require ('morgan');
+
+
 // read cfg.json
 var data = fs.readFileSync( __dirname + '/cfg.json' );
 var cfg;
@@ -44,29 +49,33 @@ var qlscache = require( './qlscache.js' );
 qlscache.init( cfg );
 
 var maxAge_public, maxAge_api, http_cache_time;
-app.configure( 'development', function() {
-	maxAge_public = 0;
-	maxAge_api = 60*1000;
-	maxAge_api_long = 60*60*100;
-	http_cache_time = 60*60;
-} );
+var env = process.env.NODE_ENV || 'development';
+if ('development' == env) {
+// dev env should not use 
+    maxAge_public   = 0;
+    maxAge_api      = 0;
+    maxAge_api_long = 0;
+    http_cache_time = 0;
+}
 
-app.configure( 'production', function() {
-	//db = require( 'mongoskin').db( 'localhost:37751/bands' );
-	allow_update = true;
-	maxAge_public = 24*60*60*1000;
-	maxAge_api = 60*1000;
-	maxAge_api_long = 60*60*1000;
-	http_cache_time = 60*60;
-} );
+
+var env = process.env.NODE_ENV || 'production';
+if ('production' == env) {
+    allow_update    = true;
+    maxAge_public   = 24*60*60*1000;
+    maxAge_api      = 60*1000;
+    maxAge_api_long = 60*60*1000;
+    http_cache_time = 60*60;
+
+}
 
 // gzip/compress
-app.use( express.compress() );
+app.use( compress() );
 // http console logger
-app.use( express.logger( 'short' ) );
+app.use( logger( 'short' ) );
 // http log to file
 var logFile = fs.createWriteStream( cfg.api.httplogfile, { flags: 'w' } );
-app.use( express.logger( { stream: logFile } ) );
+app.use( logger( { stream: logFile } ) );
 // count requests made
 app.use( function( req, res, next ) {
 	++requests_counter;
@@ -90,9 +99,10 @@ var lastgames = [];
 
 // api
 app.get( '/api', function ( req, res ) {
-	res.jsonp( { data: { routes: app.routes } } );
+	res.jsonp( { data: { routes: app._router.stack } } );
 	res.end();
 } );
+
 app.get( '/api/search/players/:search_str', function ( req, res ) {
 	var sql = 'select p.NAME as PLAYER_NICK, p.COUNTRY as PLAYER_COUNTRY, c.NAME as CLAN, c.ID as CLAN_ID from Player p left join Clan c on c.ID=p.CLAN_ID WHERE p.NAME like ? ORDER BY NULL LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
