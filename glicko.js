@@ -28,8 +28,8 @@ var dbpool = mysql.createPool( cfg.mysql_db );
 
 var glickoSettings = {
 	tau: 0.5,
-	rating: 2000,
-	rd: 200,
+	rating: 1500,
+	rd: 35,
 	vol: 0.06,
 }
 
@@ -59,7 +59,8 @@ dbpool.getConnection( function( err, conn ) {
 } );
 
 function _GamePlayer() {
-	sql = 'select g.PUBLIC_ID, gp.PLAYER_ID, gp.RANK from GamePlayer gp left join Game g on g.ID=gp.GAME_ID where g.GAME_TYPE="duel" ';
+	//sql = 'select g.PUBLIC_ID, gp.PLAYER_ID, gp.RANK from GamePlayer gp left join Game g on g.ID=gp.GAME_ID where g.GAME_TYPE="duel" and GAME_TIMESTAMP>UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ';
+	sql = 'select g.PUBLIC_ID, gp.PLAYER_ID, gp.RANK from GamePlayer gp left join Game g on g.ID=gp.GAME_ID where g.GAME_TYPE="duel" and GAME_TIMESTAMP<UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) and GAME_TIMESTAMP>UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 60 day ) ) ';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { _logger.error( err ); }
 		conn.query( sql, function( err, rows ) {
@@ -100,7 +101,44 @@ function _GamePlayer() {
 			_logger.info( players[6380].NAME + ': ' + players[6380].rank.getRating() + ', ' + players[6380].rank.getRd() + ', ' + players[6380].rank.getVol() ); // evil
 			_logger.info( players[14061].NAME + ': ' + players[14061].rank.getRating() + ', ' + players[14061].rank.getRd() + ', ' + players[14061].rank.getVol() ); // rapha
 			_logger.info( players[17976].NAME + ': ' + players[17976].rank.getRating() + ', ' + players[17976].rank.getRd() + ', ' + players[17976].rank.getVol() ); // k1llsen
-			process.exit();
+			//var playerRankings = ranking.getPlayers();
+			/*
+			fs.writeFile( '/tmp/players.json', JSON.stringify( players ), function( err ) {
+				if( err ) { _logger.error( err ); }
+				fs.writeFile( '/tmp/playerRankings.json', JSON.stringify( playerRankings ), function( err ) {
+					if( err ) { _logger.error( err ); }
+					_logger.debug( 'wrote file playerRankings.' );
+					process.exit();
+				} );
+				_logger.debug( 'wrote file players.' );
+			} );
+			*/
+			var plRanksArr = [];
+			var plRanksObj = {};
+			for( var i in players ) {
+				p = players[i];
+				plRanksArr.push( { id: i, name: p.NAME, score: p.rank.getRating(), rd: p.rank.getRd(), vol: p.rank.getVol() } );
+			}
+			plRanksArr.sort( function( a, b ) {
+				return b.score - a.score;
+			} );
+			var prettyPrint = "";
+			for( var i in plRanksArr ) {
+				plRanksArr[i].rank = i;
+				prettyPrint += plRanksArr[i].rank + '. ' + plRanksArr[i].name + ' ( ' + plRanksArr[i].score + " )";
+				prettyPrint += "\n";
+			}
+			fs.writeFile( '/tmp/prettyrank.json', prettyPrint, function( err ) {
+				if( err ) { _logger.error( err ); }
+				_logger.info( 'wrote prettyranks' );
+				process.exit();
+			} );
+			/*
+			fs.writeFile( '/tmp/ranks.json', JSON.stringify( plRanksArr, null, 2 ), function( err ) {
+				if( err ) { _logger.error( err ); }
+				_logger.info( 'wrote ranks.json' );
+			} );
+			*/
 			conn.release();
 		} );
 	} );
