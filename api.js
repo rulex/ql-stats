@@ -435,7 +435,7 @@ app.get( '/api/games', function ( req, res ) {
   + 'left outer join Player ld on ld.ID=g.LEAST_DEATHS_ID '
   + 'left outer join Player md on md.ID=g.MOST_DEATHS_ID '
   + 'left outer join Player ma on ma.ID=g.MOST_ACCURATE_ID '
-  + 'order by g.GAME_TIMESTAMP desc LIMIT 2000';
+  + 'order by g.GAME_TIMESTAMP desc LIMIT 1000';
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
@@ -830,6 +830,59 @@ app.get( '/api/gametypes/:gametype', function ( req, res ) {
 		} );
 	} );
 } );
+app.get( '/api/gametypes/:gametype/top/all/kills', function ( req, res ) {
+	var gametype = mysql_real_escape_string( req.params.gametype );
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'gp.PLAYER_ID, ' +
+		'sum(gp.KILLS) as KILLS, ' +
+		'sum(gp.DEATHS) as DEATHS, ' +
+		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
+		'sum(gp.EXCELLENT) as EXCELLENT, ' +
+		'sum(gp.HUMILIATION) as HUMILIATION, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'where g.GAME_TYPE="'+ gametype +'" ' +
+		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+app.get( '/api/gametypes/:gametype/top/all/ranks', function ( req, res ) {
+	var gametype = mysql_real_escape_string( req.params.gametype );
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'gp.PLAYER_ID, ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'avg(gp.RANK) as RANK, ' +
+		'avg(gp.TEAM_RANK) as TEAM_RANK, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'where g.GAME_TYPE="'+ gametype +'" ' +
+		' and RANK > 0 and TEAM_RANK > 0 ' +
+		'group by gp.PLAYER_ID having MATCHES_PLAYED > 5 ' + 
+		'order by RANK asc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
 app.get( '/api/overview', function ( req, res ) {
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game group by GAME_TYPE order by 1';
 	qlscache.readCacheFile();
@@ -892,6 +945,116 @@ app.get( '/api/tags/:tag/games', function ( req, res ) {
 	var sql = 'SELECT g.*, p.NAME as OWNER, gt.*, m.NAME as MAP FROM Game g left join GameTag gt on g.PUBLIC_ID=gt.PUBLIC_ID left join Map m on m.ID=g.MAP_ID left join Player p on p.ID=g.OWNER_ID where gt.TAG_ID=' + tag + ' ';
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+app.get( '/api/tags/:tag/top/last30days/kills', function ( req, res ) {
+	var tag = mysql_real_escape_string( req.params.tag );
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'gp.PLAYER_ID, ' +
+		'sum(gp.KILLS) as KILLS, ' +
+		'sum(gp.DEATHS) as DEATHS, ' +
+		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
+		'sum(gp.EXCELLENT) as EXCELLENT, ' +
+		'sum(gp.HUMILIATION) as HUMILIATION, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
+		'where gt.TAG_ID="'+ tag +'" and g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
+		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+app.get( '/api/tags/:tag/top/last30days/ranks', function ( req, res ) {
+	var tag = mysql_real_escape_string( req.params.tag );
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'gp.PLAYER_ID, ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'avg(gp.RANK) as RANK, ' +
+		'avg(gp.TEAM_RANK) as TEAM_RANK, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
+		'where gt.TAG_ID="'+ tag +'" and g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
+		' and RANK > 0 and TEAM_RANK > 0 ' +
+		'group by gp.PLAYER_ID having MATCHES_PLAYED > 5 ' + 
+		'order by RANK asc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+app.get( '/api/tags/:tag/top/all/kills', function ( req, res ) {
+	var tag = mysql_real_escape_string( req.params.tag );
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'gp.PLAYER_ID, ' +
+		'sum(gp.KILLS) as KILLS, ' +
+		'sum(gp.DEATHS) as DEATHS, ' +
+		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
+		'sum(gp.EXCELLENT) as EXCELLENT, ' +
+		'sum(gp.HUMILIATION) as HUMILIATION, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
+		'where gt.TAG_ID="'+ tag +'" ' +
+		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+app.get( '/api/tags/:tag/top/all/ranks', function ( req, res ) {
+	var tag = mysql_real_escape_string( req.params.tag );
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'gp.PLAYER_ID, ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'avg(gp.RANK) as RANK, ' +
+		'avg(gp.TEAM_RANK) as TEAM_RANK, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
+		'where gt.TAG_ID="'+ tag +'" ' +
+		' and RANK > 0 and TEAM_RANK > 0 ' +
+		'group by gp.PLAYER_ID having MATCHES_PLAYED > 5 ' + 
+		'order by RANK asc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
 			res.end();
@@ -1036,6 +1199,99 @@ app.get( '/api/clans/:clan', function ( req, res ) {
 			conn.release();
 		} );
 	} );
+} );
+app.get( '/api/top/last30days/kills', function ( req, res ) {
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'gp.PLAYER_ID, ' +
+		'sum(gp.KILLS) as KILLS, ' +
+		'sum(gp.DEATHS) as DEATHS, ' +
+		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
+		'sum(gp.EXCELLENT) as EXCELLENT, ' +
+		'sum(gp.HUMILIATION) as HUMILIATION, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'where g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
+		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID ' +
+		'';
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows, sql: sql } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+app.get( '/api/top/all/kills', function ( req, res ) {
+	var sql = 'select x.*, p.NAME as PLAYER_NICK from (select ' +
+		'count(*) as MATCHES_PLAYED, ' +
+		'gp.PLAYER_ID, ' +
+		'sum(gp.KILLS) as KILLS, ' +
+		'sum(gp.DEATHS) as DEATHS, ' +
+		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
+		'sum(gp.EXCELLENT) as EXCELLENT, ' +
+		'sum(gp.HUMILIATION) as HUMILIATION, ' +
+		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		'from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID ' +
+		'';
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.debug( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows, sql: sql } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
 } );
 app.get( '/api/status/cache', function ( req, res ) {
 	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
