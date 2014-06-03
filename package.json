@@ -21,16 +21,19 @@
     "server"
   ],
   "dependencies": {
-    "express": "3.4.x",
+    "express": "4.4.x",
     "mysql": "2.x.x",
     "zlib": "1.0.x",
-    "request": "~2.30.0",
-    "cheerio": "0.12.x",
-    "graceful-fs": "~2.0.3",
+    "request": "2.36.x",
+    "cheerio": "0.16.x",
+    "graceful-fs": "3.0.x",
     "mysql2": "~0.12.1",
     "async": "~0.9.0",
     "log4js": "~0.6.14",
-    "q": "~1.0.1"
+    "q": "~1.0.1",
+    "compression": "1.x.x",
+    "morgan": "1.x.x",
+    "glicko2": "0.7.x"
   },
   "license": "GPL",
   "engines": {
