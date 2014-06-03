@@ -1,9 +1,9 @@
 {
 	"mysql_db": {
-		"host":			"192.168.0.1",
-		"database": "qlstats",
-		"user":			"rulex",
-		"password": "mysecretpassword,lol"
+		"host":		"127.0.0.1",
+		"database":	"qlstats",
+		"user":		"<changeusername>",
+		"password":	"<changepassword>"
 	},
 	"api": {
 		"port": 8585,
@@ -17,8 +17,8 @@
   "loader": {
     "saveDownloadedJson": true,
     "importDownloadedJson": true,
-    "ql_email": "your-QL-datafeed-login-email",
-    "ql_pass": "your-QL-datafeed-login-pass",
+    "ql_email": "<change to-your-QL-datafeed-login-email>",
+    "ql_pass": "<change to-your-QL-datafeed-login-pass>",
     "jsondir": "./jsons/"
   },
 	"counter": {
@@ -26,6 +26,3 @@
 		"path": "/tmp/ql-stats-dev.counter"
 	}
 }
-
-
-
