@@ -9,8 +9,8 @@ _logger = log4js.getLogger( "qlscache" );
 _logger.setLevel( log4js.levels.DEBUG );
 
 exports.init = function( ConfigFile ) {
-	exports.file = ConfigFile.api.cachefile || './qlscache.json';
-	exports.dir = ConfigFile.api.cachedir || './cachedir/';
+	exports.file = ConfigFile.api.cache.file || './qlscache.json';
+	exports.dir = ConfigFile.api.cache.dir || './cachedir/';
 	exports.time = ConfigFile.api.cachetime || 60*60*1000;
 	ConfigFile.mysql_db.multipleStatements = true;
 	ConfigFile.mysql_db.waitForConnections = false;
@@ -93,24 +93,35 @@ function delay(ms) {
 	setTimeout( deferred.resolve, ms );
 	return deferred.promise;
 }
-exports.query = function( sql, params ) {
-	_logger.debug( 'query!' );
-	var def = Q.defer();
-	Q.ninvoke( exports.dbpool, "getConnection" )
-		.then( function( conn ) {
-			var deferred = Q.defer();
-			_logger.debug( 'query conn!' );
-			conn.query( sql, params, function( err, rows ) {
-				if( err ) { _logger.error( err ); }
-				conn.release();
-				_logger.debug( 'query done! returned ' + rows.length + ' rows' );
-				deferred.resolve( rows );
-			} );
-			return deferred.promise.then( function( rows ) {
-				def.resolve( rows );
+exports.query = function( sql, params, apiRoute ) {
+	var _filename = apiRoute.replace( /\//g, '' );
+	if( _filename in exports.cacheControl && exports.cacheControl[_filename].fetching === true ) {
+		_logger.debug( 'fetching in progress' );
+		return 1;
+	}
+	else {
+		exports.updateRoute( apiRoute );
+		exports.writeCacheFile();
+		_logger.debug( 'query!' );
+		var def = Q.defer();
+		Q.ninvoke( exports.dbpool, "getConnection" )
+			.then( function( conn ) {
+				var deferred = Q.defer();
+				_logger.debug( 'query conn!' );
+				conn.query( sql, params, function( err, rows ) {
+					if( err ) { _logger.error( err ); }
+					conn.release();
+					_logger.debug( 'query done! returned ' + rows.length + ' rows' );
+					exports.cacheControl[_filename].fetching = false;
+					exports.writeCacheFile();
+					deferred.resolve( rows );
+				} );
+				return deferred.promise.then( function( rows ) {
+					def.resolve( rows );
+				} )
 			} )
-		} )
-	return def.promise;
+		return def.promise;
+	}
 }
 
 

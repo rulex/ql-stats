@@ -5,7 +5,7 @@
 
 var
   fs = require('graceful-fs'),
-  mysql = require('mysql2'),
+  mysql = require('mysql'),
   async = require('async'),
   request = require('request'),
   log4js = require('log4js'),

@@ -7,12 +7,29 @@
 		-->
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-responsive.min.css">
+		<link rel="stylesheet" href="http://cdn.oesmith.co.uk/morris-0.4.3.min.css">
 		<!--
 		<script src="http://www.polychartjs.com/static/jsSite/polychart2.min.js"></script>
 		-->
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link href="css.css" rel="stylesheet">
 		<link href="jquery.dynatable.css" rel="stylesheet">
+		<!--
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+		-->
+		<script src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
+		<script src="http://codeorigin.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular-resource.min.js"></script>
+		<script src="jquery.dynatable.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+		<script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
+		<!--
+		<script src="http://code.highcharts.com/highcharts.js"></script>
+		<script src="http://code.highcharts.com/maps/modules/map.js"></script>
+		<script src="http://code.highcharts.com/mapdata/1.0.0/custom/world.js"></script>
+		-->
 	</head>
 	<body class="container">
 	<a href="https://github.com/rulex/ql-stats"><img style="position: absolute; top: 50px; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
@@ -44,16 +61,19 @@
 		<div style="margin-top: 60px; margin-bottom: 10px;" id="current_url"> </div>
 		<hr />
 		<div class="row">
-			<div ng-view class="col-md-12 small"></div>
+			<div ng-view class="col-xs-12 small"></div>
 		</div>
 		<!--
 		-->
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular-resource.min.js"></script>
-		<script src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
-		<script src="http://codeorigin.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-		<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
-		<script src="jquery.dynatable.js"></script>
+		<!--
+		<script src="http://code.highcharts.com/highcharts.js"></script>
+		<script src="http://code.highcharts.com/maps/modules/map.js"></script>
+
+		<script src="http://code.highcharts.com/mapdata/1.0.0/custom/world.js"></script>
+		<script src="http://code.highcharts.com/maps/highmaps.js"></script>
+		<script src="http://code.highcharts.com/maps/modules/data.js"></script>
+		<script src="http://code.highcharts.com/maps/modules/exporting.js"></script>
+		-->
 		<script src="js.js"></script>
 	</body>
 </html>

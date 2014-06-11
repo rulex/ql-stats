@@ -5,13 +5,46 @@ var apiurl = '/';
 
 var dynatable_writers = {
 	COUNTRY: function( obj ) {
-		return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" />';
+		return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> ' + obj.COUNTRY;
+	},
+	PLAYER: function( obj ) {
+		var c = '';
+		var cl = '';
+		if( obj.CLAN_ID !== null ) { c = obj.CLAN; cl = '<small class="pull-right"><a href="#/clans/'+ obj.CLAN_ID +'">'+ obj.CLAN +'</a></small>'; }
+		return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" title="'+ obj.COUNTRY +'" /> ' + '<a href="#/players/'+ obj.PLAYER +'">' + obj.PLAYER + '</a> ' + cl;
 	},
 	CLAN: function( obj ) {
-		return '<a href="#/clans/'+ obj.CLAN_ID +'">' + obj.CLAN + '</a>';
+		if( obj.CLAN_ID !== null )
+			return '<a href="#/clans/'+ obj.CLAN_ID +'">' + obj.CLAN + '</a>';
+		else
+			return '';
 	},
 	MAP: function( obj ) {
 		return '<a href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
+	},
+	TEAM: function( obj ) {
+		if( obj.TEAM == 1 ) {
+			return 'Red';
+		}
+		else {
+			return 'Blue';
+		}
+	},
+	RANK: function( obj ) {
+		if( obj.RANK == -1 ) {
+			return '<span data-toggle="tooltip" class="btn btn-xs btn-danger" data-placement="left" title="Quit">'+ obj.RANK +'</span>';
+		}
+		else {
+			return obj.RANK;
+		}
+	},
+	TEAM_RANK: function( obj ) {
+		if( obj.TEAM_RANK == -1 ) {
+			return '<span data-toggle="tooltip" class="btn btn-xs btn-danger" data-placement="left" title="Quit">'+ obj.TEAM_RANK +'</span>';
+		}
+		else {
+			return obj.TEAM_RANK;
+		}
 	},
 	TAG: function( obj ) {
 		return '<a href="#/tags/'+ obj.ID +'">' + obj.TAG + '</a>';
@@ -28,6 +61,9 @@ var dynatable_writers = {
 	HUMILIATION: function( obj ) {
 		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.HUMILIATION/obj.MATCHES_PLAYED).toFixed(2) +' hum/game on average">'+ obj.HUMILIATION +'</span>';
 	},
+	DAMAGE_DEALT: function( obj ) {
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.DAMAGE_DEALT/obj.PLAY_TIME).toFixed(2) +' dmg/sec">'+ obj.DAMAGE_DEALT +'</span>';
+	},
 	OWNER: function( obj ) {
 		return '<a href="#/owners/'+ obj.OWNER +'">' + obj.OWNER + '</a>';
 	},
@@ -38,11 +74,13 @@ var dynatable_writers = {
 		return '<a href="#/players/'+ obj.PLAYER_NICK +'">' + obj.PLAYER_NICK + '</a>';
 	},
 	GAME_TIMESTAMP: function( obj ) {
-		return obj.GAME_TIMESTAMP + ' ' + timediff( ( obj.GAME_TIMESTAMP *1000 )+60*60*6*1000, new Date().getTime() ) + ' ago';
-		//return convertTimestamp( obj.GAME_TIMESTAMP );
+		return timediff( ( obj.GAME_TIMESTAMP *1000 )+60*60*6*1000, new Date().getTime() ) + ' ago';
 	},
 	GAME_LENGTH: function( obj ) {
 		return timediff( obj.GAME_LENGTH * 1000 );
+	},
+	PLAY_TIME: function( obj ) {
+		return timediff( obj.PLAY_TIME * 1000 );
 	},
 	GAME_TYPE: function( obj ) {
 		/*
@@ -62,6 +100,27 @@ var dynatable_writers = {
 	GAME_LENGTH_AVG: function( obj ) {
 		return timediff( obj.GAME_LENGTH_AVG * 1000 );
 	},
+	ACC: function( obj ) {
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ obj.HITS + ' hits of ' + obj.SHOTS + ' shots.">' + ( obj.HITS / obj.SHOTS * 100 ).toFixed(1) + '%</span>';
+	},
+	RL: function( obj ) {
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ obj.RL_H + ' hits of ' + obj.RL_S + ' shots.">' + ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) + '%</span>';
+	},
+	RG: function( obj ) {
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ obj.RG_H + ' hits of ' + obj.RG_S + ' shots.">' + ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) + '%</span>';
+	},
+	LG: function( obj ) {
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ obj.LG_H + ' hits of ' + obj.LG_S + ' shots.">' + ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%</span>';
+	},
+	RL_A: function( obj ) {
+		return ( obj.RL_H / obj.RL_S * 100 ).toFixed(2) + '%';
+	},
+	RG_A: function( obj ) {
+		return ( obj.RG_H / obj.RG_S * 100 ).toFixed(2) + '%';
+	},
+	LG_A: function( obj ) {
+		return ( obj.LG_H / obj.LG_S * 100 ).toFixed(2) + '%';
+	},
 };
 var dynatable_features = {
 	sort: true,
@@ -71,6 +130,7 @@ var dynatable_features = {
 	recordCount: true,
 	pushState: false,
 };
+
 
 $( function() {
 	//console.log( getUrl() );
@@ -92,7 +152,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/owners/:owner/players', { controller: OwnerPlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/owners/:owner/games', { controller: OwnerGamesCtrl, templateUrl: 'games2.html' } ).
 	when( '/owners/:owner/players/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
-	when( '/owners/:owner/top/last30days', { controller: OwnerTopCtrl, templateUrl: 'top.html' } ).
+	when( '/owners/:owner/top/last30days', { controller: OwnerTop30Ctrl, templateUrl: 'top.html' } ).
 	when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
 	//when( '/clans', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	when( '/clans/:clan', { controller: ClanCtrl, templateUrl: 'clan.html' } ).
@@ -124,6 +184,57 @@ function EmptyCtrl( $scope, $timeout, $routeParams ) {
 }
 function OverviewCtrl( $scope, theLiz, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/overview',
+		success: function( data ) {
+			// morris
+			var _kills = [];
+			var _gametypesP = [];
+			var _gametypes = [];
+			var total = 0;
+			for( var i in data.data ) {
+				d = data.data[i];
+				total = total + d.MATCHES_PLAYED;
+			}
+			var _k = 0;
+			for( var i in data.data ) {
+				d = data.data[i];
+				_kills.push( { label: d.GAME_TYPE, value: d.TOTAL_KILLS } );
+				_gametypes.push( { label: d.GAME_TYPE, value: d.MATCHES_PLAYED } );
+				_gametypesP.push( { label: d.GAME_TYPE, value: ( (d.MATCHES_PLAYED/total*100) ).toFixed(1) } );
+			}
+			// gametypes matches
+			Morris.Donut( {
+				element: 'chart',
+				data: _kills,
+			} );
+			Morris.Donut( {
+				element: 'chart2',
+				data: _gametypes,
+				//formatter: function( y ) { return y + '%'; },
+			} );
+			// dynatable
+			$( '#table_overview_' ).hide();
+			$( '#table_overview' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
+			} );
+			$( '#table_overview' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+		},
+	} );
+	/*
 	var lol = theLiz.overview();
 	$scope.overview = lol;
 	$scope.ordercolumn = 'TOTAL_KILLS';
@@ -136,6 +247,7 @@ function OverviewCtrl( $scope, theLiz, $timeout ) {
 		} );
 		return total;
 	}
+	*/
 }
 function AllCtrl( $scope, theLiz, $timeout, $routeParams ) {
 	var lol = theLiz.all();
@@ -184,8 +296,6 @@ function AllCtrl( $scope, theLiz, $timeout, $routeParams ) {
 	} );
 }
 function GamesCtrl( $scope, theLiz, $timeout ) {
-	console.log( parseUrl() );
-	console.log( parseHash() );
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/games',
@@ -212,22 +322,169 @@ function GamesCtrl( $scope, theLiz, $timeout ) {
 			//console.log( data );
 		},
 	} );
-	/*
-	var lol = theLiz.games();
-	$scope.games = lol;
-	$scope.ordercolumn = 'GAME_TIMESTAMP';
-	$scope.ordertype = true;
-	$scope.date = new Date().getTime();
-	*/
 }
 function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	var g = $routeParams.game;
+	$.ajax( {
+		url: apiurl + 'api/games/' + g,
+		success: function( data ) {
+			// info
+			var g = data.data.game;
+			var p = data.data.players;
+			$( '#info' ).append( 'Gametype: ' + g.GAME_TYPE + '<br><br>' );
+			$( '#info' ).append( 'Map:<br><a href="#/maps/'+ g.MAP +'"><img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/'+ g.MAP +'_v2011071903.0.jpg" alt="'+ g.MAP +'" style="height:42px;width:56px;border-width:0px;" /></a><br><a href="#/maps/'+ g.MAP +'">' + g.MAP + '</a><br><br>' );
+			if( g.OWNER_ID !== null ) {
+				$( '#info' ).append( 'Owner: <a href="#/owners/'+ g.OWNER +'">' + g.OWNER + '</a><br>' );
+			}
+			// teams
+			if( g.GAME_TYPE.toLowerCase() != 'duel' ) {
+				$( '#info3' ).prepend( '<h6 class="text-center">Red damage distribution</h6>' );
+				$( '#info4' ).prepend( '<h6 class="text-center">Blue damage distribution</h6>' );
+				var red = [];
+				var blue = [];
+				for( var i in p ) {
+					if( p[i].TEAM == 1 )
+						red.push( { PLAYER: p[i].PLAYER, dmg: p[i].DAMAGE_DEALT } );
+					if( p[i].TEAM == 2 )
+						blue.push( { PLAYER: p[i].PLAYER, dmg: p[i].DAMAGE_DEALT } );
+				}
+				Morris.Bar( {
+					element: 'red',
+					data: red,
+					xkey: 'PLAYER',
+					ykeys: [ 'dmg' ],
+					labels: [ 'Damage dealt' ],
+					barRatio: 0.4,
+					hideHover: 'auto',
+					//ymax: 'auto ' + 50000,
+					barColors: [ '#CC6868' ],
+				} );
+				Morris.Bar( {
+					element: 'blue',
+					data: blue,
+					xkey: 'PLAYER',
+					ykeys: [ 'dmg' ],
+					labels: [ 'Damage dealt' ],
+					barRatio: 0.4,
+					hideHover: 'auto',
+					//ymax: 'auto ' + 50000,
+				} );
+			}
+			// score
+			var score = [];
+			for( var i in p ) {
+				score.push( { label: p[i].PLAYER, value: p[i].SCORE } );
+			}
+			Morris.Donut( {
+				element: 'score',
+				data: score,
+				formatter: function( y ) { return y + ''; },
+			} );
+			// accuracy
+			var acc = [];
+			for( var i in p ) {
+				acc.push( { label: p[i].PLAYER, value: ( p[i].HITS / p[i].SHOTS * 100 ).toFixed(2) } );
+			}
+			Morris.Donut( {
+				element: 'acc',
+				data: acc,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			// kills
+			var kills = [];
+			for( var i in p ) {
+				kills.push( { label: p[i].PLAYER, value: p[i].KILLS } );
+			}
+			Morris.Donut( {
+				element: 'kills',
+				data: kills,
+				formatter: function( y ) { return y + ''; },
+			} );
+			// weapons
+			var RL_A = [];
+			var RG_A = [];
+			var LG_A = [];
+			var RL_K = [];
+			var RG_K = [];
+			var LG_K = [];
+			for( var i in p ) {
+				if( p[i].QUIT !== 1 ) {
+					if( p[i].RL_H !== null && p[i].RL_S !== null )
+						RL_A.push( { label: p[i].PLAYER, value: ( p[i].RL_H / p[i].RL_S * 100 ).toFixed(2) } );
+					if( p[i].RG_H !== null && p[i].RG_S !== null )
+						RG_A.push( { label: p[i].PLAYER, value: ( p[i].RG_H / p[i].RG_S * 100 ).toFixed(2) } );
+					if( p[i].LG_H !== null && p[i].LG_S !== null )
+						LG_A.push( { label: p[i].PLAYER, value: ( p[i].LG_H / p[i].LG_S * 100 ).toFixed(2) } );
+					if( p[i].RL_K !== null )
+						RL_K.push( { label: p[i].PLAYER, value: p[i].RL_K } );
+					if( p[i].RG_K !== null )
+						RG_K.push( { label: p[i].PLAYER, value: p[i].RG_K } );
+					if( p[i].LG_K !== null )
+						LG_K.push( { label: p[i].PLAYER, value: p[i].LG_K } );
+				}
+			}
+			Morris.Donut( {
+				element: 'weap1',
+				data: RL_A,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			Morris.Donut( {
+				element: 'weap2',
+				data: RG_A,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			Morris.Donut( {
+				element: 'weap3',
+				data: LG_A,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			Morris.Donut( {
+				element: 'weapk1',
+				data: RL_K,
+			} );
+			Morris.Donut( {
+				element: 'weapk2',
+				data: RG_K,
+			} );
+			Morris.Donut( {
+				element: 'weapk3',
+				data: LG_K,
+			} );
+			// dynatable
+			$( '#players' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'RANK', 1 );
+			} );
+			//$( '#table_player_games_' ).hide();
+			$( '#players' ).dynatable( {
+				features: {
+					sort: true,
+					perPageSelect: false,
+					paginate: false,
+					search: false,
+					recordCount: false,
+					pushState: false,
+				},
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 100,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data.players
+				}
+			} );
+		},
+		error: function( data ) {
+		},
+		complete: function( data ) {
+		},
+	} );
+	/*
 	var lol = theLiz.game( g );
 	$scope.game = lol;
 	$scope.ordercolumn = 'RANK';
 	$scope.ordertype = false;
 	$scope.date = new Date().getTime();
+	*/
 }
 function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
@@ -238,6 +495,63 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$.ajax( {
 		url: apiurl + 'api/players/' + p + '/games',
 		success: function( data ) {
+			// morris
+			var gametypes = [];
+			var _gametypes = {};
+			var _maps = {};
+			var maps = [];
+			var yearmonth = [];
+			var _yearmonth = {};
+			var total = data.data.games.length;
+			for( var i in data.data.games ) {
+				d = data.data.games[i];
+				gt = d.GAME_TYPE.toLowerCase();
+				if( gt in _gametypes ) { _gametypes[gt]++; }
+				else { _gametypes[gt] = 1; }
+				if( d.MAP in _maps ) { _maps[d.MAP]++; }
+				else { _maps[d.MAP] = 1; }
+				//
+				var date = new Date( d.GAME_TIMESTAMP * 1000 )
+				ym = date.getFullYear() + '-' + ( date.getMonth()+1 );
+				if( ym in _yearmonth ) { _yearmonth[ym]++; }
+				else { _yearmonth[ym] = 1; }
+			}
+			for( var i in _gametypes ) {
+				d = _gametypes[i];
+				gametypes.push( { label: i, value: ( (_gametypes[i]/total*100) ).toFixed(2) } );
+			}
+			for( var i in _maps ) {
+				d = _maps[i];
+				if( (_maps[i]/total*100) > 0.5 ) {
+					maps.push( { label: i, value: ( (_maps[i]/total*100) ).toFixed(2) } );
+				}
+			}
+			for( var i in _yearmonth ) {
+				d = _yearmonth[i];
+				yearmonth.push( { date: i, matches: _yearmonth[i] } );
+			}
+			// matches
+			new Morris.Line( {
+				element: 'matches',
+				data: yearmonth,
+				xkey: 'date',
+				ykeys: [ 'matches' ],
+				labels: [ 'matches played' ],
+				hideHover: 'auto',
+			} );
+			// maps
+			Morris.Donut( {
+				element: 'maps',
+				data: maps,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			// gametypes
+			Morris.Donut( {
+				element: 'gametypes',
+				data: gametypes,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			// dynatable
 			$( '#table_player_games' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'GAME_TIMESTAMP', -1 );
 			} );
@@ -253,18 +567,9 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			} );
 		},
 		error: function( data ) {
-			console.log( data );
 		},
 		complete: function( data ) {
-			//console.log( data );
 		},
-	} );
-	$scope.$on( 'Update', function( e ) {
-		console.log( e );
-		console.log( p );
-		//$( '#player_update_btn' ).attr( 'disabled', 'disabled' );
-	  //console.log( $scope.player.$$v.data.player.PLAYER_NICK ); // NICE!
-		$scope.player_updated = theLiz.player_update( p );
 	} );
 }
 function PlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
@@ -306,14 +611,14 @@ function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		},
 	} );
 }
-function OwnerTopCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+function OwnerTop30Ctrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	var o = $routeParams.owner;
 	$.ajax( {
 		url: apiurl + 'api/owners/' + o + '/top/last30days/kills',
 		success: function( data ) {
 			$( '#table_top_kills' ).bind( 'dynatable:init', function( e, dynatable ) {
-				dynatable.sorts.add( 'GAME_TIMESTAMP', -1 );
+				dynatable.sorts.add( 'KILLS', -1 );
 			} );
 			$( '#table_top_kills_' ).hide();
 			$( '#table_top_kills' ).dynatable( {
@@ -338,6 +643,36 @@ function OwnerTopCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		},
 		complete: function( data ) {
 			//console.log( data );
+		},
+	} );
+	$.ajax( {
+		url: apiurl + 'api/owners/' + o + '/top/last30days/ranks',
+		success: function( data ) {
+			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
+			} );
+			$( '#table_top_ranks_' ).hide();
+			$( '#table_top_ranks' ).dynatable( {
+				features: {
+					sort: true,
+					perPageSelect: false,
+					paginate: true,
+					search: false,
+					recordCount: false,
+					pushState: false,
+				},
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 10,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
 		},
 	} );
 }
@@ -388,6 +723,9 @@ function OwnerGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		url: apiurl + 'api/owners/' + o + '/games',
 		success: function( data ) {
 			//console.log( data );
+			$( '#table_games' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'GAME_TIMESTAMP', -1 );
+			} );
 			$( '#table_games_' ).hide();
 			$( '#table_games' ).dynatable( {
 				features: dynatable_features,
@@ -484,9 +822,32 @@ function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	var m = $routeParams.map;
 	$.ajax( {
-		url: apiurl + 'api/maps/' + m,
+		url: apiurl + 'api/maps/' + m + '/graphs/permonth',
 		success: function( data ) {
+			// morris
+			var _data = [];
+			for( var i in data.data ) {
+				var d = data.data[i];
+				_data.push( { date: d.year + '-' + d.month, matches: d.MATCHES_PLAYED } );
+			}
+			//console.log( _data );
+			new Morris.Line( {
+				// ID of the element in which to draw the chart.
+				element: 'chart',
+				// Chart data records -- each entry in this array corresponds to a point on
+				// the chart.
+				data: _data,
+				// The name of the data record attribute that contains x-values.
+				xkey: 'date',
+				// A list of names of data record attributes that contain y-values.
+				ykeys: ['matches'],
+				// Labels for the ykeys -- will be displayed when you hover over the
+				// chart.
+				labels: ['matches played']
+			} );
+			// dynatable
 			$( '#table_map_' ).hide();
+			/*
 			$( '#table_map' ).dynatable( {
 				features: dynatable_features,
 				writers: dynatable_writers,
@@ -496,6 +857,47 @@ function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 					records: data.data
 				}
 			} );
+			*/
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+		},
+	} );
+	$.ajax( {
+		url: apiurl + 'api/maps/' + m,
+		success: function( data ) {
+			// morris
+			var _data = [];
+			var total = 0;
+			for( var i in data.data ) {
+				d = data.data[i];
+				total = total + d.MATCHES_PLAYED;
+			}
+			for( var i in data.data ) {
+				d = data.data[i];
+				_data.push( { label: d.GAME_TYPE, value: ( (d.MATCHES_PLAYED/total*100) ).toFixed(2) } );
+			}
+			// gametypes
+			Morris.Donut( {
+				element: 'chart2',
+				data: _data,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			// dynatable
+			$( '#table_map_' ).hide();
+			/*
+			$( '#table_map' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+			*/
 		},
 		error: function( data ) {
 			console.log( data );
@@ -548,7 +950,7 @@ function GametypeTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout )
 		url: apiurl + 'api/gametypes/' + gt + '/top/all/ranks',
 		success: function( data ) {
 			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
-				dynatable.sorts.add( 'RANK', 1 );
+				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
 			} );
 			$( '#table_top_ranks_' ).hide();
 			$( '#table_top_ranks' ).dynatable( {
@@ -577,11 +979,72 @@ function GametypeTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout )
 }
 function CountriesCtrl( $scope, theLiz, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
-	var lol = theLiz.countries();
-	$scope.countries = lol;
-	$scope.ordercolumn = 'NUM_PLAYERS';
-	$scope.ordertype = true;
-	$scope.date = new Date().getTime();
+	$.ajax( {
+		url: apiurl + 'api/countries',
+		success: function( data ) {
+			$( '#table_countries' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'NUM_PLAYERS', -1 );
+			} );
+			$( '#table_countries_' ).hide();
+			$( '#table_countries' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 10,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+			// Initiate the chart
+			var ar = [];
+			var ob = {};
+			for( var i in data.data ) {
+				if( data.data[i].NUM_PLAYERS > 0 ) {
+					ob = { name: data.data[i].COUNTRY, code: data.data[i].COUNTRY, value: data.data[i].NUM_PLAYERS };
+					ar.push( ob );
+				}
+			}
+			console.log( 'done' );
+			// Initiate the chart
+			/*
+			$( '#map' ).highcharts( 'Map', {
+				title : {
+					text : 'Players by country'
+				},
+				mapNavigation: {
+					enabled: true,
+					buttonOptions: {
+						verticalAlign: 'bottom'
+					}
+				},
+				colorAxis: {
+					min: 1,
+					max: 1000,
+					type: 'logarithmic'
+				},
+				series: [ {
+					data: ar,
+					mapData: Highcharts.maps['custom/world'],
+					joinBy: ['iso-a2', 'code'],
+					name: 'Number of players',
+					states: {
+						hover: {
+							color: '#BADA55'
+						}
+					},
+					tooltip: {
+						valueSuffix: ' '
+					}
+				} ]
+			} );
+			*/
+		},
+		error: function( data ) {
+			console.log( data );
+		},
+		complete: function( data ) {
+		},
+	} );
 }
 function EloDuelCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var lol = theLiz.eloduel();
@@ -665,7 +1128,7 @@ function TagTop30daysCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		url: apiurl + 'api/tags/' + t + '/top/last30days/ranks',
 		success: function( data ) {
 			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
-				dynatable.sorts.add( 'RANK', 1 );
+				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
 			} );
 			$( '#table_top_ranks_' ).hide();
 			$( '#table_top_ranks' ).dynatable( {
@@ -729,7 +1192,7 @@ function TagTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		url: apiurl + 'api/tags/' + t + '/top/all/ranks',
 		success: function( data ) {
 			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
-				dynatable.sorts.add( 'RANK', 1 );
+				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
 			} );
 			$( '#table_top_ranks_' ).hide();
 			$( '#table_top_ranks' ).dynatable( {
