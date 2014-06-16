@@ -1560,3 +1560,133 @@ function roughSizeOfObject( object ) {
 	return bytes;
 }
 
+
+// added new route and fucntions
+app.get('/api/:players/currentgame', function (req, res) {
+    player = (req.params.player);
+    var u = 'http://www.quakelive.com/browser/list?filter=';
+    var s1 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":0,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
+    var s2 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":1,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
+    var b1 = Buffer(s1).toString('base64');
+    var b2 = Buffer(s2).toString('base64');
+    var searchpublicreq;
+    searchpublicreq = (u) + (b1);
+    searchprivatereq = (u) + (b2);
+    searchpublic (searchpublicreq , res);
+});
+
+function searchpublic (searchpublicreq, res) {
+    request(searchpublicreq, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var x = (body);
+            var playergame = JSON.parse(x);
+            var a = JSON.parse(x);
+            var str = JSON.stringify(a);
+            //todo ALTER THIS with better method eg /public_id":(\d+)
+            var regexp = /public_id/ig;
+            var matches_array = str.match(regexp);
+            if (matches_array == null) {
+            searchprivate (searchprivatereq, res);
+            } else {
+                var getcurrentgame;
+                getcurrentgame = (a.servers[0].public_id);
+                getmatchdetails(getcurrentgame, res);
+            }
+        }
+    });
+};
+
+function searchprivate (searchprivatereq, res) {
+    request(searchprivatereq, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var x = (body);
+            var playergame = JSON.parse(x);
+            var a = JSON.parse(x);
+            var str = JSON.stringify(a);
+            //todo ALTER THIS with better method /public_id":(\d+)
+            var regexp = /public_id/ig;
+            var matches_array = str.match(regexp);
+            if (matches_array == null) {
+                res.send(player + ': is not currently on a server');
+            } else {
+                var getcurrentgame;
+                getcurrentgame = (a.servers[0].public_id);
+                getmatchdetails(getcurrentgame, res);
+            }
+        }
+    });
+};
+
+
+// use on sucess of search
+// TODO perhaps add error check to see if matchid exists
+//  to use outside outside search function requests
+function getmatchdetails ( getcurrentgame, res ) {
+    var pid = 'http://quakelive.com/browser/details?ids=' + ( getcurrentgame );
+    request(pid, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var x = (body);
+            var a = x.substring(1, x.length - 1);  // i don't like arrays :)
+            var b = JSON.parse(a);
+/*
+ TODO Add player(s) score(s): can use b.players.PLAYERNAME.score
+ TODO Change to loop to set all variables
+*/
+            // setup vars
+            var insta = (b.g_instagib);
+            var gtype = (b.game_type_title);
+            var ruleset = (b.ruleset);
+            var map = (b.map_title);
+            var location = (b.location_id);
+            var red = (b.g_redscore);
+            var blue = (b.g_bluescore);
+            var pubid = (b.public_id);
+            var host = (b.host_name);
+            var ip = (b.host_address);
+            var owner = (b.owner);
+            var gamestate = (b.g_gamestate);
+            var numplayers = (b.num_players);
+            var fraglimit = (b.fraglimit);
+            var caplimit = (b.capturelimit);
+            var timelimit = (b.timelimit);
+            var premium = (b.premium);
+            var pass = (b.g_needpass);
+            var teamsize = (b.teamsize);
+            var scorelimit = (b.scorelimit);
+            var needpass = '';
+            var needprem ='';
+            var rulesettype ='';
+            var maxclients = (b.max_clients);
+            var num_clients = (b.num_clients);
+            var slotsfree = (maxclients) - (num_clients);
+            if (gamestate != 'IN_PROGRESS') {var gamestate = 'Not Started'}
+            if (ruleset = '0') {var rulesettype = 'VQL';}
+            if (ruleset != '0' ) { var rulesettype = ' PQL';}
+            if (insta != '0' ) { var gtype = 'Insta ' + gtype;}
+            if (pass != '0' ) {var needpass = ' Need Pass';}
+            if (premium != '0' ) { var needprem = ' Need Prem' ;}
+            var starttime = (b.g_levelstarttime);
+//use?  var currenttime = Math.round(+new Date()/1000); //unixtime
+            var expectedendtime = (b.g_levelstarttime) + (timelimit * 60 )  ;
+// todo change to better method
+            var newstarttime = new Date(starttime * 1000 );
+            var newhours = newstarttime.getHours();
+            var newmins  = newstarttime.getMinutes();
+            var newsec   = newstarttime.getSeconds();
+            var newstarttimeformat = newhours + ':' + newmins + ':' + newsec;
+            var newendtime = new Date(expectedendtime * 1000 );
+            var newendhours = newendtime.getHours();
+            var newendmins  = newendtime.getMinutes();
+            var newendsec   = newendtime.getSeconds();
+            var newendtimeformat = newendhours + ':' + newendmins + ':' + newendsec;
+            var startendtime = ' Start: ' + newstarttimeformat + ' End: ' + newendtimeformat;
+// todo change below at some point for better output display
+            foundgamedata = (player + ' at: ' + ip + ' GameType: ' + gtype + ' RED: ' + red + ' BLUE: ' +blue + startendtime + ' Free Slots: ' + slotsfree + needpass + needprem + ' join them at: http://www.quakelive.com/#!join/' + pubid) ;
+            res.send(foundgamedata);
+        }
+    });
+}
+
+
+
+
