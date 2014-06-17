@@ -1563,7 +1563,7 @@ function roughSizeOfObject( object ) {
 
 // added new route and fucntions
 app.get('/api/:players/currentgame', function (req, res) {
-    player = (req.params.player);
+    player = (req.params.players);
     var u = 'http://www.quakelive.com/browser/list?filter=';
     var s1 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":0,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
     var s2 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":1,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
@@ -1680,8 +1680,8 @@ function getmatchdetails ( getcurrentgame, res ) {
             var newendsec   = newendtime.getSeconds();
             var newendtimeformat = newendhours + ':' + newendmins + ':' + newendsec;
             var startendtime = ' Start: ' + newstarttimeformat + ' End: ' + newendtimeformat;
-// todo change below at some point for better output display
-            foundgamedata = (player + ' at: ' + ip + ' GameType: ' + gtype + ' RED: ' + red + ' BLUE: ' +blue + startendtime + ' Free Slots: ' + slotsfree + needpass + needprem + ' join them at: http://www.quakelive.com/#!join/' + pubid) ;
+// todo fix output
+            foundgamedata = (player + ' at: /connect ' + ip + ' GameType: ' + gtype + ' ' + startendtime + ' Free Slots: ' + slotsfree + needpass + needprem + ' join them at: http://www.quakelive.com/#!join/' + pubid) ;
             res.send(foundgamedata);
         }
     });
