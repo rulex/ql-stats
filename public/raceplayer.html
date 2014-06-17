@@ -1,36 +1,45 @@
 
 
 <div class="row-fluid">
-  <a href="#/race/players/{{ player }}?ruleset=pql&weapons=on">PQL weapons</a> |
-  <a href="#/race/players/{{ player }}?ruleset=pql&weapons=off">PQL strafe</a> |
-  <a href="#/race/players/{{ player }}?ruleset=vql&weapons=on">VQL weapons</a> |
-  <a href="#/race/players/{{ player }}?ruleset=vql&weapons=off">VQL strafe</a>
-  <p></p>
-  <p><b><a href="#/race/players/{{ player }}">{{ player }}</a> - {{ scores.data.ruleset | uppercase }} weapons {{ scores.data.weapons | uppercase }}</b></p>
-  <div class="span12 well">
-    <table class="table table-condensed table-striped table-hover">
-      <thead>
-        <tr>
-          <th><a href="" ng-click="ordercolumn='MAP'; ordertype=!ordertype">MAP</a></th>
-          <th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">RANK</a></th>
-          <th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">SCORE</a></th>
-          <th><a href="" ng-click="ordercolumn='GAME_TIMESTAMP'; ordertype=!ordertype">DATE</a></th>
-          <th><a href="" ng-click="ordercolumn='LEADER_NICK'; ordertype=!ordertype">LEADER_NICK</a></th>
-          <th><a href="" ng-click="ordercolumn='LEADER_SCORE'; ordertype=!ordertype">LEADER_SCORE</a></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr ng-repeat="z in scores.data.scores | orderBy:ordercolumn:ordertype">
-          <td><a href="#/race/maps/{{ z.MAP }}">{{ z.MAP }}</a></td>
-          <td>{{ z.RANK | number }}</td>
-          <td>{{ z.SCORE | number }}</td>
-          <td>{{ z.GAME_TIMESTAMP | date:'yyyy-MM-dd HH:mm' }}</td>
-					<td><a href="#/race/players/{{ z.LEADER_NICK }}">{{ z.LEADER_NICK }}</a></td>
-          <td>{{ z.LEADER_SCORE | number }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+	<a href="#/race/players/{{ player }}?ruleset=pql&weapons=on">PQL weapons</a> |
+	<a href="#/race/players/{{ player }}?ruleset=pql&weapons=off">PQL strafe</a> |
+	<a href="#/race/players/{{ player }}?ruleset=vql&weapons=on">VQL weapons</a> |
+	<a href="#/race/players/{{ player }}?ruleset=vql&weapons=off">VQL strafe</a>
+	<p></p>
+	<p><b><a href="#/race/players/{{ player }}">{{ player }}</a> - weapons <span id="weapons"></span>, ruleset <span id="ruleset"></span></b></p>
+</div>
+
+<div class="row-fluid well">
+
+	<div class="col-xs-2 ">
+		<div id="maps" style="height: 150px;"></div>
+	</div>
+
+	<div class="col-xs-2 ">
+		<div id="avgRank" style="height: 150px;"></div>
+	</div>
+
+</div>
+
+<div class="row-fluid well">
+
+	<div class="col-xs-12 ">
+		<table id="table_maps" class="table table-condensed table-striped table-hover">
+			<thead>
+				<tr>
+					<th data-dynatable-column="MAP">MAP</th>
+					<th data-dynatable-column="RANK">RANK</th>
+					<th data-dynatable-column="SCORE">SCORE</th>
+					<th data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
+					<th data-dynatable-column="LEADER_NICK">LEADER_NICK</th>
+					<th data-dynatable-column="LEADER_SCORE">LEADER_SCORE</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+
 </div>
 
 

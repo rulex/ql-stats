@@ -16,17 +16,22 @@
 <div class="row-fluid well">
 
 	<div class="col-xs-2 ">
-		<h6 class="text-center">Most played gametypes</h6>
+		<h6 class="text-center">Gametype distribution</h6>
 		<div id="gametypes" style="height: 150px;"></div>
 	</div>
 
 	<div class="col-xs-2 ">
-		<h6 class="text-center">Most played maps</h6>
+		<h6 class="text-center">Wins</h6>
+		<div id="winp" style="height: 150px;"></div>
+	</div>
+
+	<div class="col-xs-2 ">
+		<h6 class="text-center">Map distribution</h6>
 		<div id="maps" style="height: 150px;"></div>
 	</div>
 
 	<div class="col-xs-4 ">
-		<h6 class="text-center">Matches</h6>
+		<h6 class="text-center">Match History</h6>
 		<div id="matches" style="height: 150px;"></div>
 	</div>
 
@@ -51,46 +56,6 @@
 			</tbody>
 		</table>
 
-
-		<!--
-	<div class="col-xs-6 ">
-
-		<div class="row-fluid"><h3>Weapons</h3> </div>
-		<table id="table_player_weapons" class="table table-condensed">
-			<thead>
-				<tr>
-					<th data-dynatable-column="PUBLIC_ID">PUBLIC_ID</th>
-					<th data-dynatable-column="GAME_TYPE" title="GAME_TYPE">GT</th>
-					<th data-dynatable-column="CLAN" title="CLAN">C</th>
-					<th data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
-					<th data-dynatable-column="MAP">MAP</th>
-					<th data-dynatable-column="OWNER">OWNER</th>
-				</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
-		<div class="row" id="table_player_weapons_">
-			<div class="col-lg-1 col-center">
-				<div class="loading"></div>
-			</div>
-		</div>
-
-	</div>
-	-->
-
-	<!--
-		<h3>All</h3>
-		<table class="table table-condensed ">
-			<tbody>
-				<tr ng-repeat="(key,val) in player.data.player">
-					<td>{{ key }}</td>
-					<td>{{ val }}</td>
-				</tr>
-			</tbody>
-		</table>
-	-->
-
 	</div>
 
 
@@ -103,7 +68,7 @@
 				<tr>
 					<th data-dynatable-column="PUBLIC_ID">PUBLIC_ID</th>
 					<th data-dynatable-column="GAME_TYPE" title="GAME_TYPE">GT</th>
-					<th data-dynatable-column="CLAN" title="CLAN">C</th>
+					<th data-dynatable-column="WIN" title="WIN">W</th>
 					<th data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
 					<th data-dynatable-column="MAP">MAP</th>
 					<th data-dynatable-column="OWNER">OWNER</th>

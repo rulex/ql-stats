@@ -5,7 +5,7 @@
 
 var
   fs = require('graceful-fs'),
-  mysql = require('mysql2'),
+  mysql = require('mysql'),
   async = require('async'),
   request = require('request'),
   log4js = require('log4js'),
@@ -28,6 +28,7 @@ function main() {
   _logger.setLevel(log4js.levels.INFO);
   var data = fs.readFileSync(__dirname + '/cfg.json');
   _config = JSON.parse(data);
+	_config.loader.jsondir = '/home/siaw/ql-stats/games/2014-05/';
   _dbpool = mysql.createPool(_config.mysql_db);
   Q.longStackSupport = false;
   Q

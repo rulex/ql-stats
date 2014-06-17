@@ -332,10 +332,10 @@ app.get('/api/players/:player', function (req, res) {
     });
   });
 });
-app.get('/api/players/:player/games', function (req, res) {
-	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, RULESET, RANKED, PREMIUM, DAMAGE_DEALT/PLAY_TIME as DAMAGE_DEALT_PER_SEC_AVG, p.NAME as PLAYER_NICK, c.NAME as CLAN, c.ID as CLAN_ID '
+app.get( '/api/players/:player/games', function (req, res) {
+	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, ( case when ( GAME_TYPE in ("ca","ctf","tdm","ad","harv","fctf","rr","ft","dom") and g.WINNING_TEAM = gp.TEAM and gp.RANK > 0 ) or ( ( RANK = 1 and GAME_TYPE = "ffa" ) or ( RANK = 1 and GAME_TYPE = "race" ) or ( RANK = 1 and GAME_TYPE = "duel" ) ) then 1 else 0 end ) as WIN, RANK, RULESET, RANKED, PREMIUM, p.NAME as PLAYER_NICK, c.NAME as CLAN, c.ID as CLAN_ID '
   + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Clan c on c.ID=gp.CLAN_ID left join Player o on o.ID=g.OWNER_ID '
-  + ' where p.NAME=? order by GAME_TIMESTAMP desc';
+  + ' where p.NAME=? order by NULL';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { _logger.error( err ); }
 		conn.query( sql, [req.params.player], function( err, rows ) {
@@ -347,7 +347,6 @@ app.get('/api/players/:player/games', function (req, res) {
 		} );
 	} );
 } );
-// derp
 /*
 app.get( '/api/players/:player/rank', function (req, res) {
 	//var ranking = new glicko2.Glicko2( settings );
@@ -1367,7 +1366,7 @@ app.get( '/status', function ( req, res ) {
 	}
 });
 app.get('/api/race', function (req, res) {
-  sql = "select m.NAME MAP,MODE,p.NAME PLAYER_NICK,SCORE from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID where RANK=1 order by 1"; 
+  sql = "select m.NAME MAP,MODE,p.NAME PLAYER_NICK,p.COUNTRY, SCORE from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID where RANK=1 order by 1"; 
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, function (err2, rows) {
       var mapDict = {};
@@ -1381,7 +1380,7 @@ app.get('/api/race', function (req, res) {
           mapDict[row.MAP] = map;
           maps.push(map);
         }
-        map.LEADERS[row.MODE] = { MODE: row.MODE, PLAYER_NICK: row.PLAYER_NICK, SCORE: row.SCORE };
+        map.LEADERS[row.MODE] = { MODE: row.MODE, PLAYER_NICK: row.PLAYER_NICK, COUNTRY: row.COUNTRY, SCORE: row.SCORE };
       }
       res.jsonp({ data: { maps: maps, more: 'less' } });
       res.end();
