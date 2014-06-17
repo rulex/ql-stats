@@ -1561,8 +1561,8 @@ function roughSizeOfObject( object ) {
 
 
 // added new route and fucntions
-app.get('/api/:players/currentgame', function (req, res) {
-    player = (req.params.players);
+app.get('/api/players/:player/currentgame', function (req, res) {
+    player = (req.params.player);
     var u = 'http://www.quakelive.com/browser/list?filter=';
     var s1 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":0,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
     var s2 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":1,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
@@ -1606,7 +1606,7 @@ function searchprivate (searchprivatereq, res) {
             var regexp = /public_id/ig;
             var matches_array = str.match(regexp);
             if (matches_array == null) {
-                res.send(player + ': is not currently on a server');
+								res.jsonp( { data: { } } );
             } else {
                 var getcurrentgame;
                 getcurrentgame = (a.servers[0].public_id);
@@ -1681,7 +1681,7 @@ function getmatchdetails ( getcurrentgame, res ) {
             var startendtime = ' Start: ' + newstarttimeformat + ' End: ' + newendtimeformat;
 // todo fix output
             foundgamedata = (player + ' at: /connect ' + ip + ' GameType: ' + gtype + ' ' + startendtime + ' Free Slots: ' + slotsfree + needpass + needprem + ' join them at: http://www.quakelive.com/#!join/' + pubid) ;
-            res.send(foundgamedata);
+						res.jsonp( b );
         }
     });
 }
