@@ -141,10 +141,10 @@ app.get( '/api/search/players_with_details/:search_str', function ( req, res ) {
     + 'FROM Player p left join Clan c on c.ID=p.CLAN_ID left join GamePlayer gp on gp.PLAYER_ID=p.ID left join Game g on g.ID=gp.GAME_ID '
     + 'WHERE p.NAME like ? GROUP BY PLAYER_ID order by 1 LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
-		if( err ) { console.log( err ); }
+		if( err ) { _logger.error( err ); }
 		conn.query( sql, [ req.params.search_str + "%" ], function( err, rows ) {
 			conn.release();
-			if( err ) { console.log( err ); }
+			if( err ) { _logger.error( err ); }
 			res.jsonp( { data: { players: rows } } );
 			res.end();
 		} );
@@ -309,7 +309,7 @@ app.get('/api/players/:player', function (req, res) {
   dbpool.getConnection(function (err, conn) {
 		if( err ) { _logger.error( err ); }
     conn.query(sql, [nick], function (err, rows) {
-			if( err ) { console.log( err ); }
+			if( err ) { _logger.error( err ); }
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
       res.jsonp( { data: { player: rows[0] } } );
       res.end();
@@ -472,9 +472,9 @@ app.get('/api/games/:game', function (req, res) {
   + 'from GamePlayer gp inner join Game g on g.ID=gp.GAME_ID '
   + 'where g.PUBLIC_ID="' + game + '" and team in (1,2) group by TEAM with rollup';
   dbpool.getConnection(function (err, conn) {
-    if (err) { console.log(err); }
+    if (err) { _logger.error(err); }
     conn.query(sql.join(';'), function (err, resulty) {
-      if (err) { console.log(err); }
+      if (err) { _logger.error(err); }
       conn.release();
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
       res.jsonp({ data: { game: resulty[0][0], teams: resulty[2], players: resulty[1] } });
@@ -948,7 +948,7 @@ app.get('/api/gametypes/:gametype/players/:player', function (req, res) {
   dbpool.getConnection(function (err, conn) {
 		if( err ) { _logger.error( err ); }
     conn.query(sql, [nick,gametype], function (err, rows) {
-			if( err ) { console.log( err ); }
+			if( err ) { _logger.error( err ); }
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
       res.jsonp( { data: { player: rows[0] } } );
       res.end();
