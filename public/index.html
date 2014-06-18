@@ -38,20 +38,20 @@
 		<div class="row">
 			<div class="navbar-nav navbar-inverse navbar-fixed-top">
 				<ul class="nav navbar-nav">
-					<li><a class="" href="#">overview</a></li>
-					<li><a class="" href="#/games">games</a></li>
-					<li><a class="" href="#/players">players</a></li>
-					<li><a class="" href="#/clans">clans</a></li>
-					<li><a class="" href="#/owners">owners</a></li>
-					<li><a class="" href="#/race">race</a></li>
+					<li><a id="overview" class="isnav" href="#">Overview</a></li>
+					<li><a id="games" class="isnav" href="#/games">Games</a></li>
+					<li><a id="players" class="isnav" href="#/players">Players</a></li>
+					<li><a id="clans" class="isnav" href="#/clans">Clans</a></li>
+					<li><a id="owners" class="isnav" href="#/owners">Owners</a></li>
+					<li><a id="race" class="isnav" href="#/race">Race</a></li>
 					<!--
 					-->
-					<li><a class="" href="#/maps">maps</a></li>
-					<li><a class="" href="#/countries">countries</a></li>
+					<li><a id="maps" class="isnav" href="#/maps">Maps</a></li>
+					<li><a id="countries" class="isnav" href="#/countries">Countries</a></li>
 					<!--
-					<li><a class="" href="#/gametypes"><b>gametypes</b></a></li>
+					<li><a id="gametypes" class="isnav" href="#/gametypes"><b>Gametypes</b></a></li>
 					-->
-					<li><a class="" href="#/tags">tags</a></li>
+					<li><a id="tags" class="isnav" href="#/tags">Tags</a></li>
 				</ul>
 				<!--
 				<input id="player_search" type="text" class="pull-right" placeholder="Search player" value="" />
@@ -61,7 +61,11 @@
 		<div style="margin-top: 60px; margin-bottom: 10px;" id="current_url"> </div>
 		<hr />
 		<div class="row">
-			<div ng-view class="col-xs-12 small"></div>
+			<div id="loading" class="col-sm-1 loading"></div>
+			<div id="error" class="col-sm-11 "></div>
+		</div>
+		<div class="row">
+			<div ng-view class="col-sm-12 small"></div>
 		</div>
 		<!--
 		-->
