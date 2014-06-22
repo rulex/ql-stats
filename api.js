@@ -423,7 +423,8 @@ app.get( '/api/games', function ( req, res ) {
   + 'FROM Game g '
 	+ 'inner join Map m on m.ID=g.MAP_ID '
   + 'left outer join Player o on o.ID=g.OWNER_ID '
-  + 'order by NULL desc LIMIT 1000';
+  + 'where g.GAME_TIMESTAMP > ' + ( ( new Date().getTime() - ( 24*60*60*1000 ) ) / 1000 )
+  + 'order by g.GAME_TIMESTAMP desc LIMIT 1000';
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {

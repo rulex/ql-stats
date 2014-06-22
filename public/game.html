@@ -1,31 +1,31 @@
 
-<div class="row-fluid well">
+<div class="row-fluid ">
 
-	<div class="col-xs-2 ">
+	<div class="col-sm-2 ">
 		<div id="info"></div>
 	</div>
 
-	<div class="col-xs-2 ">
+	<div class="col-sm-2 ">
 		<h6 class="text-center">Score</h6>
 		<div id="score" style="height: 150px;"></div>
 	</div>
 
-	<div class="col-xs-2 ">
+	<div class="col-sm-2 ">
 		<h6 class="text-center">Kills</h6>
 		<div id="kills" style="height: 150px;"></div>
 	</div>
 
-	<div class="col-xs-2 ">
+	<div class="col-sm-2 ">
 		<h6 class="text-center">Accuracy</h6>
 		<div id="acc" style="height: 150px;"></div>
 	</div>
 
-	<div class="col-xs-2 ">
+	<div class="col-sm-2 ">
 		<div id="info3"></div>
 		<div id="red" style="height: 150px;"></div>
 	</div>
 
-	<div class="col-xs-2 ">
+	<div class="col-sm-2 ">
 		<div id="info4"></div>
 		<div id="blue" style="height: 150px;"></div>
 	</div>
@@ -64,37 +64,37 @@
 
 <div class="row-fluid ">
 
-	<div class="col-xs-4 well">
+	<div class="col-sm-4 ">
 		<h4 class="text-center">ROCKET</h4>
-		<div class="col-xs-6 ">
+		<div class="col-sm-6 ">
 			<div class="text-center">Accuracy</div>
 			<div id="weap1" style="height: 150px;"></div>
 		</div>
-		<div class="col-xs-6 ">
+		<div class="col-sm-6 ">
 			<div class="text-center">Kills</div>
 			<div id="weapk1" style="height: 150px;"></div>
 		</div>
 	</div>
 
-	<div class="col-xs-4 well">
+	<div class="col-sm-4 ">
 		<h4 class="text-center">RAIL</h4>
-		<div class="col-xs-6 ">
+		<div class="col-sm-6 ">
 			<div class="text-center">Accuracy</div>
 			<div id="weap2" style="height: 150px;"></div>
 		</div>
-		<div class="col-xs-6 ">
+		<div class="col-sm-6 ">
 			<div class="text-center">Kills</div>
 			<div id="weapk2" style="height: 150px;"></div>
 		</div>
 	</div>
 
-	<div class="col-xs-4 well">
+	<div class="col-sm-4 ">
 		<h4 class="text-center">LIGHTNING</h4>
-		<div class="col-xs-6 ">
+		<div class="col-sm-6 ">
 			<div class="text-center">Accuracy</div>
 			<div id="weap3" style="height: 150px;"></div>
 		</div>
-		<div class="col-xs-6 ">
+		<div class="col-sm-6 ">
 			<div class="text-center">Kills</div>
 			<div id="weapk3" style="height: 150px;"></div>
 		</div>
@@ -105,7 +105,7 @@
 <!--
 <div class="row-fluid">
 
-	<div class="col-xs-2">
+	<div class="col-sm-2">
 		<table class="table table-condensed table-bordered">
 			<tr>
 				<td>
@@ -125,7 +125,7 @@
 			</tr>
 		</table>
 	</div>
-	<div class="col-xs-5">
+	<div class="col-sm-5">
 		<table class="table table-condensed table-bordered">
 			<tr> <td>GAME:</td> <td><a href="#/games/{{ game.data.game.PUBLIC_ID }}">{{ game.data.game.PUBLIC_ID }}</a></td> </tr>
 			<tr> <td>GAME TYPE:</td> <td>{{ game.data.game.GAME_TYPE | gametype }}</td> </tr>
@@ -136,7 +136,7 @@
 			<tr> <td>MOST ACCURATE</td> <td>{{ game.data.game.MOST_ACCURATE_NUM | number }}%<a class="pull-right" href="#/players/{{ game.data.game.MOST_ACCURATE_NICK }}">{{ game.data.game.MOST_ACCURATE_NICK }}</a> </td></tr>
 		</table>
 	</div>
-	<div class="col-xs-5">
+	<div class="col-sm-5">
 		<table class="table table-condensed table-bordered">
 			<tr><td>MOST DAMAGE DELIVERED</td><td>{{ game.data.game.DMG_DELIVERED_NUM | number }}<a class="pull-right" href="#/players/{{ game.data.game.DMG_DELIVERED_NICK }}">{{ game.data.game.DMG_DELIVERED_NICK }}</a> </td></tr>
 			<tr><td>MOST DAMAGE TAKEN</td><td>{{ game.data.game.DMG_TAKEN_NUM | number }}<a class="pull-right" href="#/players/{{ game.data.game.DMG_TAKEN_NICK }}">{{ game.data.game.DMG_TAKEN_NICK }}</a> </td></tr>
@@ -221,7 +221,7 @@
 
 <div class="row-fluid">
 
-	<div class="col-xs-6 well">
+	<div class="col-sm-6 well">
 		<h4>Game PUBLIC_ID: <a href="#/game/{{ game.game.PUBLIC_ID }}">{{ game.game.PUBLIC_ID }}</a></h4>
 		<table class="table table-condensed table-striped table-hover">
 			<tbody>
@@ -238,7 +238,7 @@
 		</table>
 	</div>
 
-	<div class="col-xs-6 well">
+	<div class="col-sm-6 well">
 		<table class="table table-condensed table-striped table-hover">
 			<tbody>
 				<tr><td>most MOST_ACCURATE</td><td><a href="#/player/{{ game.game.MOST_ACCURATE_NICK }}">{{ game.game.MOST_ACCURATE_NICK }}</a></td><td> {{ game.game.MOST_ACCURATE_NUM | number }}</td></tr>

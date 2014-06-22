@@ -27,10 +27,11 @@ var dynatable_writers = {
 			return '';
 	},
 	MAP: function( obj ) {
+		// http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/overkill_v2014051402.0.jpg
 		if( parseHash().indexOf( 'race' ) > -1 ) {
-			return '<a href="#/race/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
+			return '<a class="map-popup" href="#/race/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
 		}
-		return '<a href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
+		return '<a class="map-popup" href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
 	},
 	WIN: function( obj ) {
 		if( obj.WIN == 1 ) {
@@ -549,6 +550,7 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 }
 function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	setNavbarActive();
+	$( '#loading' ).addClass( 'loading' );
 	$( '#current_url' ).html( printLocations() );
 	var gt = $routeParams.gametype;
 	var p = $routeParams.player;
@@ -676,7 +678,14 @@ function PlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	setNavbarActive();
 	onComplete();
 	$( '#current_url' ).html( printLocations() );
-	//$scope.page = parseInt( $routeParams.page );
+	$( document ).on( {
+		mouseenter: function() {
+			$(this).find( 'span' ).fadeIn( 'fast' );
+		},
+		mouseleave: function() {
+			$(this).find( 'span' ).hide();
+		}
+	}, 'a.btn-default' );
 	$scope.theurl = '';
 	$scope.date = new Date().getTime();
 	$scope.ordercolumn = 'KILLS';
@@ -1015,6 +1024,7 @@ function ClanCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 }
 function MapsCtrl( $scope, theLiz, $timeout ) {
 	setNavbarActive();
+	mkMapsHover();
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/maps',
@@ -1518,6 +1528,7 @@ function TagPlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 }
 function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 	setNavbarActive();
+	mkMapsHover();
   $('#current_url').html(printLocations());
 	$.ajax( {
 		url: apiurl + 'api/race',
@@ -1638,7 +1649,7 @@ function RacePlayerCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 				data: [ { label: 'avg Rank', value: avgRank } ],
 			} );
 			Morris.Donut( {
-				element: 'maps',
+				element: 'mapsgraph',
 				data: [ { label: 'Maps', value: data.data.scores.length } ],
 			} );
 			// dynatable
@@ -2110,6 +2121,19 @@ function setNavbarActive() {
 	else {
 		$( '#' + parseHash()[0] ).parent().addClass( 'active' );
 	}
+}
+function mkMapsHover() {
+	$( document ).on( {
+		mouseenter: function() {
+			var title = $( this ).html();
+			var img = '<img src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + $(this).html() + '_v2014051402.0.jpg" />';
+			$(this).popover( { placement: 'right', title: title, content: img, html: true } );
+			$(this).popover( 'show' );
+		},
+		mouseleave: function() {
+			$(this).popover( 'hide' );
+		}
+	}, 'a.map-popup' );
 }
 
 
