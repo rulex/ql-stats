@@ -9,8 +9,8 @@ _logger = log4js.getLogger( "qlscache" );
 _logger.setLevel( log4js.levels.DEBUG );
 
 exports.init = function( ConfigFile ) {
-	exports.file = ConfigFile.api.cache.file || './qlscache.json';
-	exports.dir = ConfigFile.api.cache.dir || './cachedir/';
+	exports.file = ConfigFile.api.cachefile || './qlscache.json';
+	exports.dir = ConfigFile.api.cachedir || './cachedir/';
 	exports.time = ConfigFile.api.cachetime || 60*60*1000;
 	ConfigFile.mysql_db.multipleStatements = true;
 	ConfigFile.mysql_db.waitForConnections = false;
@@ -19,6 +19,7 @@ exports.init = function( ConfigFile ) {
 	_logger.debug( 'Cache init, file:' + exports.file + ' dir:' + exports.dir + ' time:' + exports.time );
 	exports.readCacheFile();
 }
+
 exports.readCacheFile = function() {
 	try {
 		var _data = fs.readFileSync( exports.file );
@@ -32,6 +33,7 @@ exports.readCacheFile = function() {
 		exports.writeCacheFile();
 	}
 }
+
 exports.writeCacheFile = function() {
 	fs.writeFile( exports.file, JSON.stringify( exports.cacheControl ), function( err ) {
 		if( err ) {
@@ -41,6 +43,7 @@ exports.writeCacheFile = function() {
 		_logger.debug( 'wrote cache file ' + exports.file );
 	} );
 }
+
 exports.checkRoute = function( apiRoute ) {
 	var _filename = apiRoute.replace( /\//g, '' );
 	_logger.debug( 'check cache ' + _filename );
@@ -57,11 +60,13 @@ exports.checkRoute = function( apiRoute ) {
 	}
 	return 'MISSING';
 }
+
 exports.updateRoute = function( apiRoute ) {
 	var _filename = apiRoute.replace( /\//g, '' );
 	_logger.debug( 'updating cache for ' + _filename );
 	exports.cacheControl[_filename] = { ts: new Date().getTime() + exports.time };
 }
+
 exports.writeCache = function( apiRoute, content ) {
 	var _filename = apiRoute.replace( /\//g, '' );
 	_logger.debug( 'wrote: ' + _filename );
@@ -75,6 +80,7 @@ exports.writeCache = function( apiRoute, content ) {
 		exports.writeCacheFile();
 	} );
 }
+
 exports.readCache = function( apiRoute ) {
 	var _filename = apiRoute.replace( /\//g, '' );
 	_logger.debug( 'read cache ' + _filename );
@@ -88,11 +94,13 @@ exports.readCache = function( apiRoute ) {
 		_logger.error( err );
 	}
 }
+
 function delay(ms) {
 	var deferred = Q.defer();
 	setTimeout( deferred.resolve, ms );
 	return deferred.promise;
 }
+
 exports.query = function( sql, params, apiRoute ) {
 	var _filename = apiRoute.replace( /\//g, '' );
 	if( _filename in exports.cacheControl && exports.cacheControl[_filename].fetching === true ) {

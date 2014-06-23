@@ -28,7 +28,8 @@ function main() {
   _logger.setLevel(log4js.levels.INFO);
   var data = fs.readFileSync(__dirname + '/cfg.json');
   _config = JSON.parse(data);
-	_config.loader.jsondir = '/home/siaw/ql-stats/games/2014-05/';
+//	_config.loader.jsondir = '/home/siaw/ql-stats/games/2014-05/';
+  _config.loader.jsondir = './games/'; // use relative path
   _dbpool = mysql.createPool(_config.mysql_db);
   Q.longStackSupport = false;
   Q
@@ -126,8 +127,10 @@ function processFile(file) {
         .then(function(data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
         .then(function(json) {
           var game = JSON.parse(json);
-          if (!game.PUBLIC_ID) {
-            _logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
+          // changed from PUBLIC_ID to GAME_EXPIRES_FULL as it is the last object in the json
+	  if (!game.GAME_EXPIRES_FULL) {
+            //_logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
+	    _logger.warn(file + ": Incomplete json data. File was ignored.");
             return undefined;
           }
           return ld.processGame(game)

@@ -97,8 +97,8 @@ function createSafeCallback(file, cb) {
 
 function processJson(obj, cb) {
   dbug.r++;
-
-  if (!("PUBLIC_ID" in obj)) {
+// changed PUBLIC_ID to GAME_EXPIRES_FULL it is the last object in the json and fixes the crash
+  if (!("GAME_EXPIRES_FULL" in obj)) {
     cb("Match data missing");
     return;
   }

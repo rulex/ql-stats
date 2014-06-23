@@ -16,10 +16,8 @@ var allow_update = false;
 _logger = log4js.getLogger( "api" );
 _logger.setLevel( log4js.levels.DEBUG );
 
- 
 var compress    = require('compression');
 var logger      = require ('morgan');
-
 
 // read cfg.json
 var data = fs.readFileSync( __dirname + '/cfg.json' );
@@ -57,8 +55,6 @@ if ('development' == env) {
     maxAge_api_long = 0;
     http_cache_time = 0;
 }
-
-
 var env = process.env.NODE_ENV || 'production';
 if ('production' == env) {
     allow_update    = true;
@@ -115,6 +111,7 @@ app.get( '/api/search/players/:search_str', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/search/players_with_details/:search_str', function ( req, res ) {
 	var sql = 'SELECT p.NAME as PLAYER, c.NAME as CLAN, c.ID as CLAN_ID, p.COUNTRY as COUNTRY, count(*) as MATCHES_PLAYED, '
     + 'sum(case when gp.TEAM = g.WINNING_TEAM then 1 else 0 end) as MATCHES_WON, '
@@ -150,6 +147,7 @@ app.get( '/api/search/players_with_details/:search_str', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/search/teams', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
 	var _nicks = _owners = _players = _gametypes = _maps = _ranked = _premium = _ruleset = _tags = null;
@@ -261,6 +259,7 @@ app.get( '/api/search/teams', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get('/api/players/:player', function (req, res) {
   var nick = mysql_real_escape_string(req.params.player);
   var sql = 'SELECT ' +
@@ -317,6 +316,7 @@ app.get('/api/players/:player', function (req, res) {
     });
   });
 });
+
 app.get( '/api/players/:player/games', function (req, res) {
 	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, ( case when ( GAME_TYPE in ("ca","ctf","tdm","ad","harv","fctf","rr","ft","dom") and g.WINNING_TEAM = gp.TEAM and gp.RANK > 0 ) or ( ( RANK = 1 and GAME_TYPE = "ffa" ) or ( RANK = 1 and GAME_TYPE = "race" ) or ( RANK = 1 and GAME_TYPE = "duel" ) ) then 1 else 0 end ) as WIN, RANK, RULESET, RANKED, PREMIUM, p.NAME as PLAYER, p.ID as PLAYER_ID, c.NAME as CLAN, c.ID as CLAN_ID '
   + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Clan c on c.ID=gp.CLAN_ID left join Player o on o.ID=g.OWNER_ID '
@@ -332,6 +332,7 @@ app.get( '/api/players/:player/games', function (req, res) {
 		} );
 	} );
 } );
+
 /*
 app.get( '/api/players/:player/rank', function (req, res) {
 	//var ranking = new glicko2.Glicko2( settings );
@@ -349,6 +350,7 @@ app.get( '/api/players/:player/rank', function (req, res) {
 	} );
 } );
 */
+
 app.get( '/api/players/:player/clans', function ( req, res ) {
 	var sql = 'select c.ID as CLAN_ID, c.NAME as CLAN, count(*) as MATCHES_PLAYED from Player p inner join GamePlayer gp on gp.PLAYER_ID=p.ID inner join Clan c on c.ID=gp.CLAN_ID '
 	  + ' where p.NAME=? group by p.NAME, c.NAME';
@@ -363,6 +365,7 @@ app.get( '/api/players/:player/clans', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/players/:player/update', function ( req, res ) {
   if (!allow_update) {
     res.jsonp({ data: {}, error: [{ not_allowed: "" }] });
@@ -418,6 +421,7 @@ app.get( '/api/players/:player/update', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/games', function ( req, res ) {
   var sql = 'SELECT g.PUBLIC_ID, g.GAME_TYPE, g.GAME_TIMESTAMP, g.TOTAL_KILLS, g.GAME_LENGTH, g.NUM_PLAYERS, m.NAME as MAP, o.NAME as OWNER '
   + 'FROM Game g '
@@ -457,6 +461,7 @@ app.get( '/api/games', function ( req, res ) {
 		res.end();
 	}
 } );
+
 app.get('/api/games/:game', function (req, res) {
   var game = mysql_real_escape_string(req.params.game);
   var sql = [];
@@ -483,6 +488,7 @@ app.get('/api/games/:game', function (req, res) {
     });
   });
 });
+
 /*
 app.get( '/api/games/:game/tags', function( req, res ) {
 	// move this to /game/* ?
@@ -497,6 +503,7 @@ app.get( '/api/games/:game/tags', function( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
 	var game = mysql_real_escape_string( req.params.game );
 	var tag = mysql_real_escape_string( req.params.tag );
@@ -510,6 +517,7 @@ app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
 	} );
 } );
 */
+
 app.get('/api/games/:game/get', function (req, res) {
   var publicId = req.params.game;
 	var sql = 'select PUBLIC_ID from Game where PUBLIC_ID=?';
@@ -534,6 +542,7 @@ app.get('/api/games/:game/get', function (req, res) {
     })
     .finally(function() { conn.Release(); });
 } );
+
 app.get( '/api/owners', function ( req, res ) {
   var sql = 'SELECT o.NAME as OWNER, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC '
   + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID group by o.NAME';
@@ -569,6 +578,7 @@ app.get( '/api/owners', function ( req, res ) {
 		res.end();
 	}
 });
+
 /*
 app.get( '/api/owners/:owner/players', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
@@ -584,6 +594,7 @@ app.get( '/api/owners/:owner/players', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/owners/:owner/clans', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	sql = 'select Players.PLAYER_CLAN, count(*) as MATCHES_PLAYED, avg(DAMAGE_DEALT)/avg(PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, avg( Players.HITS/Players.SHOTS*100 ) as ACC, sum( PLAY_TIME ) as PLAY_TIME, sum( KILLS ) as KILLS, sum( DEATHS ) as DEATHS, avg( KILLS/DEATHS ) as RATIO from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID where Games.OWNER="'+ owner +'" group by Players.PLAYER_CLAN order by NULL';
@@ -596,6 +607,7 @@ app.get( '/api/owners/:owner/clans', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/owners/:owner/tags', function( req, res ) {
 	// move this to /game/* ?
 	var owner = mysql_real_escape_string( req.params.owner );
@@ -609,6 +621,7 @@ app.get( '/api/owners/:owner/tags', function( req, res ) {
 		} );
 	} );
 } );
+
 //app.get( '/api/owner/*  ....  /clan/*'
 app.get( '/api/owners/:owner/player/:player/games', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
@@ -623,6 +636,7 @@ app.get( '/api/owners/:owner/player/:player/games', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/owners/:owner/player/:player', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	var nick = mysql_real_escape_string( req.params.player );
@@ -636,6 +650,7 @@ app.get( '/api/owners/:owner/player/:player', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/owners/:owner/countries', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	// players
@@ -650,6 +665,7 @@ app.get( '/api/owners/:owner/countries', function ( req, res ) {
 	} );
 } );
 */
+
 app.get( '/api/owners/:owner/games', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	//var sql = 'select g.* from Game g left join Player p on p.ID=g.OWNER_ID where p.NAME=?';
@@ -679,6 +695,7 @@ app.get( '/api/owners/:owner/games', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -707,6 +724,7 @@ app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/owners/:owner/top/last30days/ranks', function ( req, res ) {
 	var owner = mysql_real_escape_string( req.params.owner );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -735,6 +753,7 @@ app.get( '/api/owners/:owner/top/last30days/ranks', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/owners/:owner', function ( req, res ) {
 	var sql;
 	sql = 'SELECT o.NAME as OWNER, count(1) as MATCHES_PLAYED, sum(PREMIUM) as PREMIUM_COUNT, avg(GAME_LENGTH) as GAME_LENGTH_AVG,  sum(GAME_LENGTH) as GAME_LENGTH_SUM,'
@@ -752,6 +771,7 @@ app.get( '/api/owners/:owner', function ( req, res ) {
 		} );
 	} );
 } );
+
 /*
 app.get( '/api/all/daily', function ( req, res ) {
 	// maps
@@ -761,6 +781,7 @@ app.get( '/api/all/daily', function ( req, res ) {
 		res.end();
 	} );
 } );
+
 app.get( '/api/all/maps', function ( req, res ) {
 	// maps
 	sql = 'select count(*) as MATCHES_PLAYED, MAP from Games group by MAP order by MATCHES_PLAYED desc';
@@ -769,6 +790,7 @@ app.get( '/api/all/maps', function ( req, res ) {
 		res.end();
 	} );
 } );
+
 app.get( '/api/all', function ( req, res ) {
 	//var game = mysql_real_escape_string( req.url.split( '/' )[3] );
 	var sql = [];
@@ -788,6 +810,7 @@ app.get( '/api/all', function ( req, res ) {
 	} );
 } );
 */
+
 app.get( '/api/countries', function ( req, res ) {
 	sql = 'select COUNTRY, count(COUNTRY) as NUM_PLAYERS from Player group by COUNTRY';
 	dbpool.getConnection( function( err, conn ) {
@@ -801,6 +824,7 @@ app.get( '/api/countries', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/gametypes', function ( req, res ) {
 	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH FROM Game group by GAME_TYPE order by 1';
 	qlscache.readCacheFile();
@@ -835,6 +859,7 @@ app.get( '/api/gametypes', function ( req, res ) {
 		res.end();
 	}
 } );
+
 app.get( '/api/gametypes/:gametype', function ( req, res ) {
 	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, avg(NUM_PLAYERS) as NUM_PLAYERS_AVG from Game where GAME_TYPE=? group by GAME_TYPE';
 	dbpool.getConnection( function( err, conn ) {
@@ -848,6 +873,7 @@ app.get( '/api/gametypes/:gametype', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/gametypes/:gametype/top/all/kills', function ( req, res ) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -875,6 +901,7 @@ app.get( '/api/gametypes/:gametype/top/all/kills', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/gametypes/:gametype/top/all/ranks', function ( req, res ) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -901,6 +928,7 @@ app.get( '/api/gametypes/:gametype/top/all/ranks', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get('/api/gametypes/:gametype/players/:player', function (req, res) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
   var nick = mysql_real_escape_string( req.params.player );
@@ -957,6 +985,7 @@ app.get('/api/gametypes/:gametype/players/:player', function (req, res) {
     });
   });
 });
+
 app.get( '/api/gametypes/:gametype/players/:player/games', function (req, res) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
 	var player = mysql_real_escape_string( req.params.player );
@@ -974,6 +1003,7 @@ app.get( '/api/gametypes/:gametype/players/:player/games', function (req, res) {
 		} );
 	} );
 } );
+
 app.get( '/api/overview', function ( req, res ) {
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game group by GAME_TYPE order by 1';
 	qlscache.readCacheFile();
@@ -1008,6 +1038,7 @@ app.get( '/api/overview', function ( req, res ) {
 		res.end();
 	}
 } );
+
 app.get( '/api/tags', function ( req, res ) {
 	var sql = 'SELECT ID, NAME as TAG, count(*) as tagged_games FROM Tag t left join GameTag gt on t.ID=gt.TAG_ID group by ID';
 	dbpool.getConnection( function( err, conn ) {
@@ -1019,6 +1050,7 @@ app.get( '/api/tags', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var sql = 'SELECT * FROM Tag WHERE ID=' + tag + '';
@@ -1031,6 +1063,7 @@ app.get( '/api/tags/:tag', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag/games', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var sql = 'SELECT g.*, p.NAME as OWNER, gt.*, m.NAME as MAP FROM Game g left join GameTag gt on g.PUBLIC_ID=gt.PUBLIC_ID left join Map m on m.ID=g.MAP_ID left join Player p on p.ID=g.OWNER_ID where gt.TAG_ID=' + tag + ' ';
@@ -1043,6 +1076,7 @@ app.get( '/api/tags/:tag/games', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag/top/last30days/kills', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -1071,6 +1105,7 @@ app.get( '/api/tags/:tag/top/last30days/kills', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag/top/last30days/ranks', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -1099,6 +1134,7 @@ app.get( '/api/tags/:tag/top/last30days/ranks', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag/top/all/kills', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -1127,6 +1163,7 @@ app.get( '/api/tags/:tag/top/all/kills', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag/top/all/ranks', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
@@ -1154,6 +1191,7 @@ app.get( '/api/tags/:tag/top/all/ranks', function ( req, res ) {
 		} );
 	} );
 } );
+
 /*
 app.get( '/api/tags/:tag/owners', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
@@ -1167,6 +1205,7 @@ app.get( '/api/tags/:tag/owners', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag/players/:player', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	var nick = mysql_real_escape_string( req.params.player );
@@ -1181,6 +1220,7 @@ app.get( '/api/tags/:tag/players/:player', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/tags/:tag/players', function ( req, res ) {
 	var tag = mysql_real_escape_string( req.params.tag );
 	// players
@@ -1195,6 +1235,7 @@ app.get( '/api/tags/:tag/players', function ( req, res ) {
 	} );
 } );
 */
+
 app.get( '/api/maps/:map', function ( req, res ) {
   var map = mysql_real_escape_string( req.params.map );
 	var sql = 'select GAME_TYPE, count(*) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where m.NAME="'+ map +'" group by GAME_TYPE';
@@ -1209,6 +1250,7 @@ app.get( '/api/maps/:map', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/maps', function ( req, res ) {
 	var sql = 'select m.NAME as MAP, g.MAP_ID, count(g.ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID group by MAP_ID';
 	qlscache.readCacheFile();
@@ -1243,6 +1285,7 @@ app.get( '/api/maps', function ( req, res ) {
 		res.end();
 	}
 } );
+
 app.get( '/api/maps/:map/graphs/permonth', function ( req, res ) {
   var map = mysql_real_escape_string( req.params.map );
 	var sql = 'select year(from_unixtime(GAME_TIMESTAMP)) as year, month(from_unixtime(GAME_TIMESTAMP)) as month, count(MAP_ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where m.NAME="'+ map +'" group by year, month';
@@ -1257,6 +1300,7 @@ app.get( '/api/maps/:map/graphs/permonth', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/clans', function ( req, res ) {
 	var sql = 'select c.ID as CLAN_ID, c.NAME as CLAN from Clan c';
 	qlscache.readCacheFile();
@@ -1291,6 +1335,7 @@ app.get( '/api/clans', function ( req, res ) {
 		res.end();
 	}
 } );
+
 app.get( '/api/clans/:clan', function ( req, res ) {
   var clan = mysql_real_escape_string( req.params.clan );
 	var sql = 'select p.NAME as PLAYER, p.COUNTRY, count(*) as MATCHES_PLAYED, sum(KILLS) as KILLS, sum(DEATHS) as DEATHS, sum(PLAY_TIME) as PLAY_TIME, avg(HITS/SHOTS)*100 as AVG_ACC from GamePlayer gp left join Player p on p.ID=gp.PLAYER_ID where gp.CLAN_ID=? group by gp.PLAYER_ID';
@@ -1305,6 +1350,7 @@ app.get( '/api/clans/:clan', function ( req, res ) {
 		} );
 	} );
 } );
+
 app.get( '/api/top/last30days/kills', function ( req, res ) {
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
 		'count(*) as MATCHES_PLAYED, ' +
@@ -1352,6 +1398,7 @@ app.get( '/api/top/last30days/kills', function ( req, res ) {
 		res.end();
 	}
 } );
+
 app.get( '/api/top/all/kills', function ( req, res ) {
 	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
 		'count(*) as MATCHES_PLAYED, ' +
@@ -1398,6 +1445,7 @@ app.get( '/api/top/all/kills', function ( req, res ) {
 		res.end();
 	}
 } );
+
 app.get( '/api/status/cache', function ( req, res ) {
 	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 	var _cache = [];
@@ -1406,6 +1454,7 @@ app.get( '/api/status/cache', function ( req, res ) {
 	res.jsonp( { now: now, cached: qlscache.cacheControl } );
 	res.end();
 } );
+
 app.get( '/status', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
 	res.jsonp( { requests_counter_total: requests_counter_total, requests_counter: requests_counter, requests_counter_api: requests_counter_api, requests_counter_pub: requests_counter_pub, process_uptime: process.uptime() } );
@@ -1416,6 +1465,7 @@ app.get( '/status', function ( req, res ) {
 		requests_counter_pub = 0;
 	}
 });
+
 app.get('/api/race', function (req, res) {
   sql = "select m.NAME MAP,MODE,p.NAME PLAYER_NICK, p.NAME PLAYER,p.COUNTRY, SCORE from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID where RANK=1 order by 1";
   dbpool.getConnection(function (err, conn) {
@@ -1439,6 +1489,7 @@ app.get('/api/race', function (req, res) {
     });
   });
 });
+
 app.get('/api/race/maps/:map', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
   var _mapName = req.params.map;
@@ -1462,6 +1513,7 @@ app.get('/api/race/maps/:map', function (req, res) {
     });
   });
 });
+
 app.get('/api/race/players/:player', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
   var _playerNick = req.params.player;
@@ -1535,7 +1587,7 @@ function get_game(loader, game_public_id) {
 	} );
 }
 
-// added new route and fucntions
+// currentgame function and route
 app.get('/api/players/:player/currentgame', function (req, res) {
     player = (req.params.player);
     var u = 'http://www.quakelive.com/browser/list?filter=';
@@ -1593,8 +1645,7 @@ function searchprivate (searchprivatereq, res) {
 
 
 // use on sucess of search
-// TODO perhaps add error check to see if matchid exists
-//  to use outside outside search function requests
+// TODO add error check and for usuage outside currentgame route
 function getmatchdetails ( getcurrentgame, res ) {
     var pid = 'http://quakelive.com/browser/details?ids=' + ( getcurrentgame );
     request(pid, function (error, response, body) {
@@ -1603,8 +1654,7 @@ function getmatchdetails ( getcurrentgame, res ) {
             var a = x.substring(1, x.length - 1);  // i don't like arrays :)
             var b = JSON.parse(a);
 /*
- TODO Add player(s) score(s): can use b.players.PLAYERNAME.score
- TODO Change to loop to set all variables
+ TODO Add player(s) score(s): can use b.players.PLAYERNAME.score Change to set vars via loop
 */
             // setup vars
             var insta = (b.g_instagib);
