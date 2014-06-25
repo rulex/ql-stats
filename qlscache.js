@@ -9,9 +9,9 @@ _logger = log4js.getLogger( "qlscache" );
 _logger.setLevel( log4js.levels.DEBUG );
 
 exports.init = function( ConfigFile ) {
-	exports.file = ConfigFile.api.cachefile || './qlscache.json';
-	exports.dir = ConfigFile.api.cachedir || './cachedir/';
-	exports.time = ConfigFile.api.cachetime || 60*60*1000;
+	exports.file = ConfigFile.api.cache.file || './qlscache.json';
+	exports.dir = ConfigFile.api.cache.dir || './cachedir/';
+	exports.time = ConfigFile.api.cache.time || 60*60*1000;
 	ConfigFile.mysql_db.multipleStatements = true;
 	ConfigFile.mysql_db.waitForConnections = false;
 	ConfigFile.mysql_db.connectionLimit = 15;
