@@ -1467,7 +1467,7 @@ app.get( '/status', function ( req, res ) {
 });
 
 app.get('/api/race', function (req, res) {
-  sql = "select m.NAME MAP,MODE,p.NAME PLAYER_NICK, p.NAME PLAYER,p.COUNTRY, SCORE from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID where RANK=1 order by 1";
+  sql = "select m.NAME MAP,MODE,p.NAME PLAYER_NICK, p.NAME PLAYER,p.COUNTRY, SCORE, GAME_ID, GAME_TIMESTAMP from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID where RANK=1 order by 1";
   dbpool.getConnection(function (err, conn) {
     conn.query(sql, function (err2, rows) {
       var mapDict = {};
@@ -1481,7 +1481,7 @@ app.get('/api/race', function (req, res) {
           mapDict[row.MAP] = map;
           maps.push(map);
         }
-        map.LEADERS[row.MODE] = { MODE: row.MODE, PLAYER_NICK: row.PLAYER_NICK, PLAYER: row.PLAYER, COUNTRY: row.COUNTRY, SCORE: row.SCORE };
+        map.LEADERS[row.MODE] = { MODE: row.MODE, PLAYER_NICK: row.PLAYER_NICK, PLAYER: row.PLAYER, COUNTRY: row.COUNTRY, SCORE: row.SCORE, GAME_ID: row.GAME_ID, GAME_TIMESTAMP: row.GAME_TIMESTAMP };
       }
       res.jsonp({ data: { maps: maps, more: 'less' } });
       res.end();

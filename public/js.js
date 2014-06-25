@@ -17,7 +17,10 @@ var dynatable_writers = {
 		var country = '';
 		var countrylink = '';
 		if( obj.CLAN_ID !== null ) { clan = obj.CLAN; clanlink = '<small class="pull-right"><a href="#/clans/'+ obj.CLAN_ID +'">'+ obj.CLAN +'</a></small>'; }
-		if( obj.COUNTRY !== null ) { country = obj.COUNTRY.toLowerCase(); countrylink = '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ country +'_v2013071601.0.gif" class="playerflag" title="'+ country.toUpperCase() +'" /> '; }
+		if( obj.COUNTRY !== null ) {
+			country = obj.COUNTRY.toLowerCase();
+			countrylink = '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ country +'_v2013071601.0.gif" class="playerflag" title="'+ country.toUpperCase() +'" /> ';
+		}
 		return countrylink + '<a href="#/players/'+ obj.PLAYER +'">' + obj.PLAYER + '</a> ' + clanlink;
 	},
 	CLAN: function( obj ) {
@@ -27,7 +30,6 @@ var dynatable_writers = {
 			return '';
 	},
 	MAP: function( obj ) {
-		// http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/overkill_v2014051402.0.jpg
 		if( parseHash().indexOf( 'race' ) > -1 ) {
 			return '<a class="map-popup" href="#/race/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
 		}
@@ -113,26 +115,25 @@ var dynatable_writers = {
 		else { gt = obj.GAME_TYPE.toLowerCase(); }
 		return '<a class="btn btn-xs btn-default" title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /></a>';
 	},
-	//<th data-dynatable-column="PQL_weapons">PQL weapons</th>
-	//<th data-dynatable-column="PQL_strafe">PQL strafe</th>
 	PQL_weapons: function( obj ) {
+		// GAME_ID: ' + obj.LEADERS[0].GAME_ID + '
 		if( obj.LEADERS[0] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[0].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[0].PLAYER + '">' + obj.LEADERS[0].PLAYER + '</a> <span class="pull-right">' + obj.LEADERS[0].SCORE + '</span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[0].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[0].PLAYER + '">' + obj.LEADERS[0].PLAYER + '</a> <div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[0].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs race-popup pull-right"><span class="glyphicon glyphicon-question-sign "></span></div> <span class="pull-right">' + obj.LEADERS[0].SCORE + ' </span>';
 		else return '';
 	},
 	PQL_strafe: function( obj ) {
 		if( obj.LEADERS[1] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[1].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[1].PLAYER + '">' + obj.LEADERS[1].PLAYER + '</a> <span class="pull-right">' + obj.LEADERS[1].SCORE + '</span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[1].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[1].PLAYER + '">' + obj.LEADERS[1].PLAYER + '</a> <div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[1].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs race-popup pull-right"><span class="glyphicon glyphicon-question-sign "></span></div> <span class="pull-right">' + obj.LEADERS[1].SCORE + ' </span>';
 		else return '';
 	},
 	VQL_weapons: function( obj ) {
 		if( obj.LEADERS[2] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[2].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[2].PLAYER + '">' + obj.LEADERS[2].PLAYER + '</a> <span class="pull-right">' + obj.LEADERS[2].SCORE + '</span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[2].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[2].PLAYER + '">' + obj.LEADERS[2].PLAYER + '</a> <div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[2].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs race-popup pull-right"><span class="glyphicon glyphicon-question-sign "></span></div> <span class="pull-right">' + obj.LEADERS[2].SCORE + ' </span>';
 		else return '';
 	},
 	VQL_strafe: function( obj ) {
 		if( obj.LEADERS[3] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[3].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[3].PLAYER + '">' + obj.LEADERS[3].PLAYER + '</a> <span class="pull-right">' + obj.LEADERS[3].SCORE + '</span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[3].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[3].PLAYER + '">' + obj.LEADERS[3].PLAYER + '</a> <div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[3].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs race-popup pull-right"><span class="glyphicon glyphicon-question-sign "></span></div> <span class="pull-right">' + obj.LEADERS[3].SCORE + ' </span>';
 		else return '';
 	},
 	GAME_LENGTH_SUM: function( obj ) {
@@ -1529,6 +1530,7 @@ function TagPlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 	setNavbarActive();
 	mkMapsHover();
+	mkRaceHover();
   $('#current_url').html(printLocations());
 	$.ajax( {
 		url: apiurl + 'api/race',
@@ -2134,6 +2136,16 @@ function mkMapsHover() {
 			$(this).popover( 'hide' );
 		}
 	}, 'a.map-popup' );
+}
+function mkRaceHover() {
+	$( document ).on( {
+		mouseenter: function() {
+			$(this).popover( 'show' );
+		},
+		mouseleave: function() {
+			$(this).popover( 'hide' );
+		}
+	}, 'div.race-popup' );
 }
 
 
