@@ -884,7 +884,7 @@ function OwnerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			} );
 			// maps
 			Morris.Donut( {
-				element: 'maps',
+				element: 'mapsgraph',
 				data: maps,
 				formatter: function( y ) { return y + ' (' + ( y/total*100 ).toFixed(2) + '%)'; },
 			} );
