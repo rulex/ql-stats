@@ -5,6 +5,7 @@ var apiurl = '/';
 var ajaxDataType = ( apiurl == '/' ) ? 'json' : 'jsonp';
 
 $( function() {
+	// navbar player search
 	$( '#player_search' ).autocomplete( {
 		source: function( request, response ) {
 			$.ajax( {
@@ -23,6 +24,27 @@ $( function() {
 			window.location = document.URL.split( '#' )[0] + '#/players/' + ui.item.value;
 		}
 	} );
+	// mapnames popover
+	$( document ).on( {
+		mouseenter: function() {
+			var title = $( this ).html();
+			var img = '<img src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + $(this).html() + '_v2014051402.0.jpg" />';
+			$(this).popover( { placement: 'right', title: title, content: img, html: true } );
+			$(this).popover( 'show' );
+		},
+		mouseleave: function() {
+			$(this).popover( 'hide' );
+		}
+	}, 'a.map-popup' );
+	// race popover
+	$( document ).on( {
+		mouseenter: function() {
+			$(this).popover( 'show' );
+		},
+		mouseleave: function() {
+			$(this).popover( 'hide' );
+		}
+	}, 'div.race-popup' );
 } );
 
 var dynatable_writers = {
@@ -1066,7 +1088,6 @@ function ClanCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 }
 function MapsCtrl( $scope, theLiz, $timeout ) {
 	setNavbarActive();
-	mkMapsHover();
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/maps',
@@ -1565,8 +1586,6 @@ function TagPlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 }
 function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 	setNavbarActive();
-	mkMapsHover();
-	mkRaceHover();
   $('#current_url').html(printLocations());
 	$.ajax( {
 		url: apiurl + 'api/race',
@@ -2162,29 +2181,6 @@ function setNavbarActive() {
 	else {
 		$( '#' + parseHash()[0] ).parent().addClass( 'active' );
 	}
-}
-function mkMapsHover() {
-	$( document ).on( {
-		mouseenter: function() {
-			var title = $( this ).html();
-			var img = '<img src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + $(this).html() + '_v2014051402.0.jpg" />';
-			$(this).popover( { placement: 'right', title: title, content: img, html: true } );
-			$(this).popover( 'show' );
-		},
-		mouseleave: function() {
-			$(this).popover( 'hide' );
-		}
-	}, 'a.map-popup' );
-}
-function mkRaceHover() {
-	$( document ).on( {
-		mouseenter: function() {
-			$(this).popover( 'show' );
-		},
-		mouseleave: function() {
-			$(this).popover( 'hide' );
-		}
-	}, 'div.race-popup' );
 }
 
 

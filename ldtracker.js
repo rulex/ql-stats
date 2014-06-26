@@ -19,7 +19,7 @@ var _config; // config data from cfg.json file
 var _dbpool; // DB connection pool
 var _conn; // DB connection
 var _cookieJar; // www.quakelive.com login cookies
-var _adaptivePollDelaySec = 120; // will be reduced to 60 after first (=full) batch. Values are 15,30,60,120
+var _adaptivePollDelaySec = 15; // will be reduced to 60 after first (=full) batch. Values are 15,30,60,120
 var _lastGameTimestamp = ""; // last timestamp retrieved from live game tracker, used to get next incremental set of games
 
 main();
@@ -105,10 +105,16 @@ function processBatch(json) {
 
   // adapt polling rate
   var len = batch.length;
-  if (len < 40 && _adaptivePollDelaySec < 120) // max 2min
+  if( len < 40 && _adaptivePollDelaySec < 120 ) {
     _adaptivePollDelaySec *= 2;
-  else if (len > 80 && _adaptivePollDelaySec > 15) // min 15sec
+	}
+	else if( len == 100 ) {
+		_adaptivePollDelaySec = 1;
+		_logger.debug( "Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec" );
+	}
+  else if( len > 80 ) {
     _adaptivePollDelaySec /= 2;
+	}
   _logger.info("Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec");
 
   if (len == 0)
