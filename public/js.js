@@ -1242,8 +1242,7 @@ function CountriesCtrl( $scope, theLiz, $timeout ) {
 			}
 			console.log( 'done' );
 			// Initiate the chart
-			/*
-			$( '#map' ).highcharts( 'Map', {
+			$( '#mapgraph' ).highcharts( 'Map', {
 				title : {
 					text : 'Players by country'
 				},
@@ -1254,8 +1253,8 @@ function CountriesCtrl( $scope, theLiz, $timeout ) {
 					}
 				},
 				colorAxis: {
-					min: 1,
-					max: 1000,
+					min: 500,
+					max: 100000,
 					type: 'logarithmic'
 				},
 				series: [ {
@@ -1273,7 +1272,6 @@ function CountriesCtrl( $scope, theLiz, $timeout ) {
 					}
 				} ]
 			} );
-			*/
 		},
 		error: function( data ) {
 			onError( data );
