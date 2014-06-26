@@ -18,7 +18,7 @@
 				</tr>
 			</thead>
 			<tbody>
-			  <tr ng-repeat="z in players.data.players | orderBy:ordercolumn:ordertype">
+			  <tr ng-repeat="z in players.data | orderBy:ordercolumn:ordertype">
 					<td><a href="#/clans/{{ z.CLAN_ID }}">{{ z.CLAN }}</a></td>
 			    <td>
 			      <img ng-show="z.COUNTRY" src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.COUNTRY }}" />

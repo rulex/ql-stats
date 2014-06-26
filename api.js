@@ -106,7 +106,7 @@ app.get( '/api/search/players/:search_str', function ( req, res ) {
 		conn.query( sql, [ req.params.search_str + "%" ], function( err, rows ) {
 			conn.release();
 			if( err ) throw err;
-			res.jsonp( { data: { players: rows } } );
+			res.jsonp( { data: rows } );
 			res.end();
 		} );
 	} );
@@ -310,7 +310,7 @@ app.get('/api/players/:player', function (req, res) {
     conn.query(sql, [nick], function (err, rows) {
 			if( err ) { _logger.error( err ); }
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp( { data: { player: rows[0] } } );
+      res.jsonp( { data: rows[0] } );
       res.end();
       conn.release();
     });
@@ -326,7 +326,7 @@ app.get( '/api/players/:player/games', function (req, res) {
 		conn.query( sql, [req.params.player], function( err, rows ) {
 			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { games: rows } } );
+			res.jsonp( { data: rows } );
 			res.end();
 			conn.release();
 		} );
@@ -630,7 +630,7 @@ app.get( '/api/owners/:owner/player/:player/games', function ( req, res ) {
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + maxAge_api_long );
-			res.jsonp( { data: { games: rows } } );
+			res.jsonp( { data: rows } );
 			res.end();
 			conn.release();
 		} );
@@ -997,7 +997,7 @@ app.get( '/api/gametypes/:gametype/players/:player/games', function (req, res) {
 		conn.query( sql, [gametype,player], function( err, rows ) {
 			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: { games: rows } } );
+			res.jsonp( { data: rows } );
 			res.end();
 			conn.release();
 		} );
@@ -1338,7 +1338,7 @@ app.get( '/api/clans', function ( req, res ) {
 
 app.get( '/api/clans/:clan', function ( req, res ) {
   var clan = mysql_real_escape_string( req.params.clan );
-	var sql = 'select p.NAME as PLAYER, p.COUNTRY, count(*) as MATCHES_PLAYED, sum(KILLS) as KILLS, sum(DEATHS) as DEATHS, sum(PLAY_TIME) as PLAY_TIME, avg(HITS/SHOTS)*100 as AVG_ACC from GamePlayer gp left join Player p on p.ID=gp.PLAYER_ID where gp.CLAN_ID=? group by gp.PLAYER_ID';
+	var sql = 'select p.NAME as PLAYER, c.ID as CLAN_ID, c.NAME as CLAN, p.COUNTRY, count(*) as MATCHES_PLAYED, sum(KILLS) as KILLS, sum(DEATHS) as DEATHS, sum(PLAY_TIME) as PLAY_TIME, avg(HITS/SHOTS)*100 as AVG_ACC from GamePlayer gp left join Player p on p.ID=gp.PLAYER_ID left join Clan c on c.ID=gp.CLAN_ID where gp.CLAN_ID=? group by gp.PLAYER_ID';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { _logger.error( err ); }
 		conn.query( sql, [clan], function( err, rows ) {

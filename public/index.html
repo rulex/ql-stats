@@ -2,32 +2,13 @@
 
 <html ng-app="liz">
 	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>QL-Stats</title>
-		<!--
-		-->
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
 		<link rel="stylesheet" href="http://cdn.oesmith.co.uk/morris-0.4.3.min.css">
-		<!--
-		<script src="http://www.polychartjs.com/static/jsSite/polychart2.min.js"></script>
-		-->
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
 		<link href="css.css" rel="stylesheet">
 		<link href="jquery.dynatable.css" rel="stylesheet">
-		<!--
-		-->
-		<script src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
-		<script src="http://codeorigin.jquery.com/ui/1.10.3/jquery-ui.js"></script>
-		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular-resource.min.js"></script>
-		<script src="jquery.dynatable.js"></script>
-		<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
-		<script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
-		<script src="http://code.highcharts.com/highcharts.js"></script>
-		<script src="http://code.highcharts.com/maps/modules/map.js"></script>
-		<script src="http://code.highcharts.com/mapdata/1.0.0/custom/world.js"></script>
-		<!--
-		-->
 	</head>
 	<body role="document" style="padding-top: 60px;">
 
@@ -51,8 +32,6 @@
 						<li><a id="clans" class="isnav" href="#/clans">Clans</a></li>
 						<li><a id="owners" class="isnav" href="#/owners">Owners</a></li>
 						<li><a id="race" class="isnav" href="#/race">Race</a></li>
-						<!--
-						-->
 						<li><a id="maps" class="isnav" href="#/maps">Maps</a></li>
 						<li><a id="countries" class="isnav" href="#/countries">Countries</a></li>
 						<!--
@@ -60,10 +39,12 @@
 						-->
 						<li><a id="tags" class="isnav" href="#/tags">Tags</a></li>
 					</ul>
+					<div class="col-sm-2 pull-right navbar-form">
+						<div class="input-group">
+							<input id="player_search" class="form-control" type="text" placeholder="Search player" value="" />
+						</div>
+					</div>
 				</div>
-				<!--
-				<input id="player_search" type="text" class="pull-right" placeholder="Search player" value="" />
-				-->
 			</div>
 		</div>
 
@@ -80,16 +61,18 @@
 				<div ng-view class="col-sm-12 small"></div>
 			</div>
 		</div>
-		<!--
-		-->
-		<!--
+		<script src="http://codeorigin.jquery.com/jquery-1.10.2.js"></script>
+		<script src="http://codeorigin.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular-resource.min.js"></script>
+		<script src="jquery.dynatable.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+		<script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
 		<script src="http://code.highcharts.com/highcharts.js"></script>
 		<script src="http://code.highcharts.com/maps/modules/map.js"></script>
-
 		<script src="http://code.highcharts.com/mapdata/1.0.0/custom/world.js"></script>
-		<script src="http://code.highcharts.com/maps/highmaps.js"></script>
-		<script src="http://code.highcharts.com/maps/modules/data.js"></script>
-		<script src="http://code.highcharts.com/maps/modules/exporting.js"></script>
+		<!--
 		-->
 		<script src="js.js"></script>
 	</body>

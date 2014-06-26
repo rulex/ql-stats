@@ -5,6 +5,24 @@ var apiurl = '/';
 var ajaxDataType = ( apiurl == '/' ) ? 'json' : 'jsonp';
 
 $( function() {
+	$( '#player_search' ).autocomplete( {
+		source: function( request, response ) {
+			$.ajax( {
+				url: apiurl + 'api/search/players/' + request.term,
+				dataType: ajaxDataType,
+				success: function( data ) {
+					response( $.map( data.data, function( item ) {
+						return { label: item.PLAYER, value: item.PLAYER }
+					} ) );
+				}
+			} );
+		},
+		minLength: 2,
+		select: function( event, ui ) {
+			$(this).val( '' );
+			window.location = document.URL.split( '#' )[0] + '#/players/' + ui.item.value;
+		}
+	} );
 } );
 
 var dynatable_writers = {
@@ -589,12 +607,12 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			var maps = [];
 			var yearmonth = [];
 			var _yearmonth = {};
-			var total = data.data.games.length;
+			var total = data.data.length;
 			var wins = 0;
 			var losses = 0;
 			var quits = 0;
-			for( var i in data.data.games ) {
-				d = data.data.games[i];
+			for( var i in data.data ) {
+				d = data.data[i];
 				gt = d.GAME_TYPE.toLowerCase();
 				// wins / losses / quits
 				if( d.WIN == 1 ) { wins++; }
@@ -643,7 +661,7 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 					{ label: 'Losses', value: losses },
 					{ label: 'Quits', value: quits },
 				],
-				formatter: function( y ) { return y + ' (' + ( y/data.data.games.length*100 ).toFixed(2) + '%)'; },
+				formatter: function( y ) { return y + ' (' + ( y/data.data.length*100 ).toFixed(2) + '%)'; },
 			} );
 			// maps
 			Morris.Donut( {
@@ -667,7 +685,7 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				dataset: {
 					perPageDefault: 10,
 					perPageOptions: [10,20,50,100,200],
-					records: data.data.games.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
+					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
 				}
 			} );
 		},
