@@ -2,6 +2,10 @@
 var apiurl = '/';
 //var apiurl = 'http://ql.leeto.fi/';
 //var apiurl = 'http://ql.l.leeto.fi/';
+var ajaxDataType = ( apiurl == '/' ) ? 'json' : 'jsonp';
+
+$( function() {
+} );
 
 var dynatable_writers = {
 	COUNTRY: function( obj ) {
@@ -174,10 +178,6 @@ var dynatable_features = {
 };
 
 
-$( function() {
-	//console.log( getUrl() );
-} );
-
 angular.module( 'liz', ['lizzy'] )
 .config( [ '$routeProvider', function( $routeProvider ) {
 	$routeProvider.
@@ -231,6 +231,7 @@ function OverviewCtrl( $scope, theLiz, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/overview',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			// morris
 			var _kills = [];
@@ -309,8 +310,8 @@ function AllCtrl( $scope, theLiz, $timeout, $routeParams ) {
 	//$scope.maps = theLiz.overview_maps();
 	$.ajax( {
 		url: "api/all/daily",
+		dataType: ajaxDataType,
 		type: "get",
-		dataType: "json"
 	} ).success( function( data ) {
 		console.log( data );
 		var thedata = polyjs.data( data.thedays );
@@ -353,6 +354,7 @@ function GamesCtrl( $scope, theLiz, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/games',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			//console.log( data );
 			$( '#table_games' ).bind( 'dynatable:init', function( e, dynatable ) {
@@ -383,6 +385,7 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var g = $routeParams.game;
 	$.ajax( {
 		url: apiurl + 'api/games/' + g,
+		dataType: ajaxDataType,
 		success: function( data ) {
 			// info
 			var g = data.data.game;
@@ -577,6 +580,7 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var _url = apiurl + 'api' + add + '/players/' + p + '/games';
 	$.ajax( {
 		url: _url,
+		dataType: ajaxDataType,
 		success: function( data ) {
 			// morris
 			var gametypes = [];
@@ -701,6 +705,7 @@ function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/owners',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_owners' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
@@ -730,6 +735,7 @@ function OwnerTop30Ctrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var o = $routeParams.owner;
 	$.ajax( {
 		url: apiurl + 'api/owners/' + o + '/top/last30days/kills',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_kills' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'KILLS', -1 );
@@ -761,6 +767,7 @@ function OwnerTop30Ctrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	} );
 	$.ajax( {
 		url: apiurl + 'api/owners/' + o + '/top/last30days/ranks',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
@@ -796,6 +803,7 @@ function OwnerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var o = $routeParams.owner;
 	$.ajax( {
 		url: apiurl + 'api/owners/' + o + '/games',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			// morris
 			var gametypes = [];
@@ -950,6 +958,7 @@ function OwnerGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var o = $routeParams.owner;
 	$.ajax( {
 		url: apiurl + 'api/owners/' + o + '/games',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			//console.log( data );
 			$( '#table_games' ).bind( 'dynatable:init', function( e, dynatable ) {
@@ -990,12 +999,13 @@ function ClansCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/clans',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_clans' ).dynatable( {
 				features: dynatable_features,
 				writers: dynatable_writers,
 				dataset: {
-					perPageDefault: 200,
+					perPageDefault: 20,
 					perPageOptions: [10,20,50,100,200],
 					records: data.data
 				}
@@ -1011,17 +1021,30 @@ function ClansCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 }
 function ClanCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
+	onComplete();
 	var c = $routeParams.clan;
-	var lol = theLiz.clan( c );
-	$scope.clan = lol;
-	$scope.date = new Date().getTime();
-	$scope.ordercolumn = 'MATCHES_PLAYED';
-	$scope.ordertype = true;
-	$scope.urlc = function( url ) {
-		url = encodeURI( url );
-		return url;
-	}
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: apiurl + 'api/clans/' + c,
+		dataType: ajaxDataType,
+		success: function( data ) {
+			$( '#clan_table' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 20,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			onError( data );
+		},
+		complete: function( data ) {
+			onComplete();
+		},
+	} );
 }
 function MapsCtrl( $scope, theLiz, $timeout ) {
 	setNavbarActive();
@@ -1029,6 +1052,7 @@ function MapsCtrl( $scope, theLiz, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/maps',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_maps' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
@@ -1057,6 +1081,7 @@ function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var m = $routeParams.map;
 	$.ajax( {
 		url: apiurl + 'api/maps/' + m + '/graphs/permonth',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			// morris
 			var _data = [];
@@ -1101,6 +1126,7 @@ function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	} );
 	$.ajax( {
 		url: apiurl + 'api/maps/' + m,
+		dataType: ajaxDataType,
 		success: function( data ) {
 			// morris
 			var _data = [];
@@ -1154,6 +1180,7 @@ function GametypeTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout )
 	var gt = $routeParams.gametype;
 	$.ajax( {
 		url: apiurl + 'api/gametypes/' + gt + '/top/all/kills',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_kills' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'KILLS', -1 );
@@ -1184,6 +1211,7 @@ function GametypeTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout )
 	} );
 	$.ajax( {
 		url: apiurl + 'api/gametypes/' + gt + '/top/all/ranks',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
@@ -1218,6 +1246,7 @@ function CountriesCtrl( $scope, theLiz, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/countries',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_countries' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'NUM_PLAYERS', -1 );
@@ -1299,15 +1328,10 @@ function TagCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 }
 function TagsCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	setNavbarActive();
-	/*
-	$( '#current_url' ).html( printLocations() );
-	var lol = theLiz.tags();
-	$scope.tags = lol;
-	$scope.date = new Date().getTime();
-	*/
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/tags',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			//console.log( data );
 			$( '#table_tags' ).dynatable( {
@@ -1335,6 +1359,7 @@ function TagTop30daysCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var t = $routeParams.tag;
 	$.ajax( {
 		url: apiurl + 'api/tags/' + t + '/top/last30days/kills',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_kills' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'KILLS', -1 );
@@ -1365,6 +1390,7 @@ function TagTop30daysCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	} );
 	$.ajax( {
 		url: apiurl + 'api/tags/' + t + '/top/last30days/ranks',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
@@ -1400,6 +1426,7 @@ function TagTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var t = $routeParams.tag;
 	$.ajax( {
 		url: apiurl + 'api/tags/' + t + '/top/all/kills',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_kills' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'KILLS', -1 );
@@ -1430,6 +1457,7 @@ function TagTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	} );
 	$.ajax( {
 		url: apiurl + 'api/tags/' + t + '/top/all/ranks',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_ranks' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'RANK_TEAM_RANK', 1 );
@@ -1459,17 +1487,8 @@ function TagTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		},
 	} );
 }
-function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
+function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	setNavbarActive();
-	/*
-	$( '#current_url' ).html( printLocations() );
-	var t = $routeParams.tag;
-	var lol = theLiz.taggames( t );
-	$scope.games = lol;
-	$scope.ordercolumn = 'GAME_TIMESTAMP';
-	$scope.ordertype = true;
-	$scope.date = new Date().getTime();
-	*/
 	var t = $routeParams.tag;
 	$( '#current_url' ).html( printLocations() );
 	$( '#table_games' ).bind( 'dynatable:init', function( e, dynatable ) {
@@ -1477,6 +1496,7 @@ function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout  ) {
 	} );
 	$.ajax( {
 		url: apiurl + 'api/tags/' + t + '/games',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			//console.log( data );
 			$( '#table_games' ).dynatable( {
@@ -1532,6 +1552,7 @@ function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
   $('#current_url').html(printLocations());
 	$.ajax( {
 		url: apiurl + 'api/race',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			// morris
 			var pw = []; // pql weapons
@@ -1629,6 +1650,7 @@ function RacePlayerCtrl($scope, theLiz, $routeParams, $location, $timeout) {
   $scope.player = p;
 	$.ajax( {
 		url: apiurl + 'api/race/players/' + p,
+		dataType: ajaxDataType,
 		data: {
 			weapons: $location.search()["weapons"],
 			ruleset: $location.search()["ruleset"],
@@ -1682,6 +1704,7 @@ function TopCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: apiurl + 'api/top/last30days/kills',
+		dataType: ajaxDataType,
 		success: function( data ) {
 			$( '#table_top_kills' ).dynatable( {
 				features: {
