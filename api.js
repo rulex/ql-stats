@@ -423,7 +423,7 @@ app.get( '/api/players/:player/update', function ( req, res ) {
 } );
 
 app.get( '/api/games', function ( req, res ) {
-  var sql = 'SELECT g.PUBLIC_ID, g.GAME_TYPE, g.GAME_TIMESTAMP, g.TOTAL_KILLS, g.GAME_LENGTH, g.NUM_PLAYERS, m.NAME as MAP, o.NAME as OWNER '
+  var sql = 'SELECT g.PUBLIC_ID, g.GAME_TYPE, g.GAME_TIMESTAMP, g.TOTAL_KILLS, g.GAME_LENGTH, g.NUM_PLAYERS, m.NAME as MAP, o.NAME as OWNER, g.RANKED, g.RULESET '
   + 'FROM Game g '
 	+ 'inner join Map m on m.ID=g.MAP_ID '
   + 'left outer join Player o on o.ID=g.OWNER_ID '

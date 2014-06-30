@@ -45,6 +45,15 @@ $( function() {
 			$(this).popover( 'hide' );
 		}
 	}, 'div.race-popup' );
+	// gametype popover
+	$( document ).on( {
+		mouseenter: function() {
+			$(this).popover( 'show' );
+		},
+		mouseleave: function() {
+			$(this).popover( 'hide' );
+		}
+	}, 'div.gametype-popup' );
 } );
 
 var dynatable_writers = {
@@ -155,9 +164,13 @@ var dynatable_writers = {
 	},
 	GAME_TYPE: function( obj ) {
 		var gt = '';
+		var ranked = 'UNRANKED';
+		var ruleset = '';
 		if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
 		else { gt = obj.GAME_TYPE.toLowerCase(); }
-		return '<a class="btn btn-xs btn-default" title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /></a>';
+		if( obj.RANKED == 1 ) { ranked = 'RANKED'; }
+		if( obj.RULESET == 2 ) { ruleset = 'PQL'; }
+		return '<div rel="popover" data-html="true" data-placement="left" data-content="' + ranked + '<br>' + ruleset + '" data-original-title="' + gt + '" class="btn btn-xs gametype-popup "> <a class="btn btn-xs btn-default" title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /></a>';
 	},
 	PQL_weapons: function( obj ) {
 		// GAME_ID: ' + obj.LEADERS[0].GAME_ID + '
@@ -430,7 +443,14 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			// info
 			var g = data.data.game;
 			var p = data.data.players;
-			$( '#info' ).append( 'Gametype: ' + g.GAME_TYPE + '<br><br>' );
+			var ranked = 'UNRANKED';
+			var ruleset = '';
+			var gt = '';
+			if( g.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
+			else { gt = g.GAME_TYPE.toLowerCase(); }
+			if( g.RANKED == 1 ) { ranked = 'RANKED'; }
+			if( g.RULESET == 2 ) { ruleset = 'PQL'; }
+			$( '#info' ).append( 'Gametype: <div rel="popover" data-html="true" data-placement="left" data-content="' + ranked + '<br>' + ruleset + '" data-original-title="' + gt + '" class="btn btn-xs gametype-popup "> <a class="btn btn-xs btn-default" title="' + gt + '" href="#/gametypes/' + g.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + gt + '</a></div><br><br>' );
 			$( '#info' ).append( 'Date: ' + timediff( g.GAME_TIMESTAMP ) + '<br><br>' );
 			$( '#info' ).append( 'Map:<br><a href="#/maps/'+ g.MAP +'"><img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/'+ g.MAP +'_v2011071903.0.jpg" alt="'+ g.MAP +'" style="height:42px;width:56px;border-width:0px;" /></a><br><a href="#/maps/'+ g.MAP +'">' + g.MAP + '</a><br><br>' );
 			if( g.OWNER_ID !== null ) {
