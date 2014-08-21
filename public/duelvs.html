@@ -1,0 +1,131 @@
+
+<div class="row-fluid">
+	<div class="col-sm-5">
+		<h3 class="text-right PLAYER1">Player1: </h3>
+	</div>
+	<div class="col-sm-2">
+		<h3 class="text-center">vs</h3>
+	</div>
+	<div class="col-sm-5">
+		<h3 class="text-left PLAYER2">Player2: </h3>
+	</div>
+</div>
+
+<hr />
+
+<div class="row-fluid">
+
+	<div class="col-sm-5 p1" >
+		<div class="row-fluid text-right">
+			<div class="col-sm-12 MATCHES_PLAYED"></div>
+			<div class="col-sm-12 WINS"></div>
+			<div class="col-sm-12 STATS_TOTAL"></div>
+			<div class="col-sm-12 STATS_AVG"></div>
+			<div class="col-sm-12 MATCHES_VS"></div>
+			<div class="col-sm-12 MATCHES_VS_WINS"></div>
+			<div class="col-sm-12 QCON_MAPS"></div>
+		</div>
+	</div>
+
+	<div class="col-sm-2">
+		<div class="row-fluid text-center">
+			<div class="col-sm-12">Total Matches</div>
+			<div class="col-sm-12">Total Wins</div>
+			<div class="col-sm-12">Stats Total</div>
+			<div class="col-sm-12" id="STATS_AVG"></div>
+			<div class="col-sm-12">p1 vs p2 games</div>
+			<div class="col-sm-12">p1 vs p2 wins</div>
+			<div class="col-sm-12" id="QCON_MAPS"></div>
+		</div>
+	</div>
+
+	<div class="col-sm-5 p2" >
+		<div class="row-fluid text-left">
+			<div class="col-sm-12 MATCHES_PLAYED"></div>
+			<div class="col-sm-12 WINS"></div>
+			<div class="col-sm-12 STATS_TOTAL"></div>
+			<div class="col-sm-12 STATS_AVG"></div>
+			<div class="col-sm-12 MATCHES_VS"></div>
+			<div class="col-sm-12 MATCHES_VS_WINS"></div>
+			<div class="col-sm-12 QCON_MAPS"></div>
+		</div>
+	</div>
+
+</div>
+
+<hr />
+
+<div class="row-fluid">
+	<div class="col-sm-6 p1 well" >
+		<h3>Player1 duel activity</h3>
+		<div style="height: 250px; min-width: 150px;"class="col-sm-12 MATCHES">
+		</div>
+	</div>
+	<div class="col-sm-6 p2 well" >
+		<h3>Player2 duel activity</h3>
+		<div style="height: 250px; min-width: 150px;"class="col-sm-12 MATCHES">
+		</div>
+	</div>
+</div>
+
+<div class="row-fluid">
+
+	<div class="col-sm-6  well">
+		<div class="row-fluid"><h3>Player1 duel games</h3></div>
+		<table id="table_player1_games" class="table table-condensed table-bordered">
+			<thead>
+				<tr>
+					<th data-dynatable-column="PUBLIC_ID">PUBLIC_ID</th>
+					<th data-dynatable-column="GAME_TYPE" title="GAME_TYPE">GT</th>
+					<th data-dynatable-column="MAP">MAP</th>
+					<th data-dynatable-column="WIN" title="WIN">W</th>
+					<th class="hidden-xs" data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
+					<th data-dynatable-column="OWNER">OWNER</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+
+	<div class="col-sm-6  well">
+		<div class="row-fluid"><h3>Player2 duel games</h3></div>
+		<table id="table_player2_games" class="table table-condensed table-bordered">
+			<thead>
+				<tr>
+					<th data-dynatable-column="PUBLIC_ID">PUBLIC_ID</th>
+					<th data-dynatable-column="GAME_TYPE" title="GAME_TYPE">GT</th>
+					<th data-dynatable-column="MAP">MAP</th>
+					<th data-dynatable-column="WIN" title="WIN">W</th>
+					<th class="hidden-xs" data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
+					<th data-dynatable-column="OWNER">OWNER</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+
+</div>
+
+
+<div class="row-fluid">
+	<div class="col-sm-12  well">
+		<div class="row-fluid"><h3 class="text-center">Player1 vs Player2 games</h3></div>
+		<table id="table_player_games" class="table table-condensed table-bordered">
+			<thead>
+				<tr>
+					<th data-dynatable-column="PUBLIC_ID">PUBLIC_ID</th>
+					<th data-dynatable-column="GAME_TYPE" title="GAME_TYPE">GT</th>
+					<th data-dynatable-column="MAP">MAP</th>
+					<th data-dynatable-column="WIN" title="WIN">Player2</th>
+					<th class="hidden-xs" data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
+					<th data-dynatable-column="OWNER">OWNER</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+</div>
+

@@ -13,6 +13,7 @@ var Q = require( 'q' );
 var log4js = require( 'log4js' );
 var race = require('./racecache.js');
 var allow_update = false;
+var bodyParser = require( 'body-parser' );
 _logger = log4js.getLogger( "api" );
 _logger.setLevel( log4js.levels.DEBUG );
 
@@ -48,30 +49,29 @@ qlscache.init( cfg );
 
 var maxAge_public, maxAge_api, http_cache_time;
 var env = process.env.NODE_ENV || 'development';
-if ('development' == env) {
-// dev env should not use 
-    maxAge_public   = 0;
-    maxAge_api      = 0;
-    maxAge_api_long = 0;
-    http_cache_time = 0;
+if( 'development' == env ) {
+	// dev env should not use 
+	maxAge_public   = 0;
+	maxAge_api      = 0;
+	maxAge_api_long = 0;
+	http_cache_time = 0;
 }
-var env = process.env.NODE_ENV || 'production';
-if ('production' == env) {
-    allow_update    = true;
-    maxAge_public   = 24*60*60*1000;
-    maxAge_api      = 60*1000;
-    maxAge_api_long = 60*60*1000;
-    http_cache_time = 60*60;
-
+if( 'production' == env ) {
+	allow_update    = true;
+	maxAge_public   = 24*60*60*1000;
+	maxAge_api      = 60*1000;
+	maxAge_api_long = 60*60*1000;
+	http_cache_time = 60*60;
 }
 
 // gzip/compress
 app.use( compress() );
 // http console logger
-app.use( logger( 'short' ) );
+app.use( log4js.connectLogger( _logger, { level: log4js.levels.INFO, format: ':response-timems :method :url ' } ) );
 // http log to file
 var logFile = fs.createWriteStream( cfg.api.httplogfile, { flags: 'w' } );
 app.use( logger( { stream: logFile } ) );
+app.use( bodyParser.urlencoded( { extended: true } ) );
 // count requests made
 app.use( function( req, res, next ) {
 	++requests_counter;
@@ -82,7 +82,7 @@ app.use( function( req, res, next ) {
 // serve static html files
 app.use( express.static( __dirname + '/public', { maxAge: maxAge_public } ) );
 // serve saved games from /get/game/<PUBLIC_ID>.json.gz
-app.use( '/get/game', express.static( __dirname + '/games' ) );
+//app.use( '/get/game', express.static( __dirname + '/games' ) );
 app.use( function( req, res, next ) {
 	//--requests_counter;
 	--requests_counter_pub;
@@ -423,7 +423,7 @@ app.get( '/api/players/:player/update', function ( req, res ) {
 } );
 
 app.get( '/api/games', function ( req, res ) {
-  var sql = 'SELECT g.PUBLIC_ID, g.GAME_TYPE, g.GAME_TIMESTAMP, g.TOTAL_KILLS, g.GAME_LENGTH, g.NUM_PLAYERS, m.NAME as MAP, o.NAME as OWNER, g.RANKED, g.RULESET '
+  var sql = 'SELECT g.PUBLIC_ID, g.GAME_TYPE, g.GAME_TIMESTAMP, g.TOTAL_KILLS, g.GAME_LENGTH, g.NUM_PLAYERS, m.NAME as MAP, o.NAME as OWNER, g.PREMIUM, g.RANKED, g.RULESET '
   + 'FROM Game g '
 	+ 'inner join Map m on m.ID=g.MAP_ID '
   + 'left outer join Player o on o.ID=g.OWNER_ID '
@@ -432,7 +432,42 @@ app.get( '/api/games', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [], req.route.path )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [], req.route.path )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+
+app.get( '/api/games/graphs/permonth', function ( req, res ) {
+  var sql = 'select FROM_UNIXTIME(GAME_TIMESTAMP,"%Y-%m") as date, year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, day(FROM_UNIXTIME(GAME_TIMESTAMP)) as day,count(GAME_TIMESTAMP) as c from Game group by year, month ;';
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -477,17 +512,55 @@ app.get('/api/games/:game', function (req, res) {
   + 'avg(RG_H) as RG_H_AVG, sum(RG_H) as RG_H_SUM, avg(RG_S) as RG_S_AVG, sum(RG_S) as RG_S_SUM '
   + 'from GamePlayer gp inner join Game g on g.ID=gp.GAME_ID '
   + 'where g.PUBLIC_ID="' + game + '" and team in (1,2) group by TEAM with rollup';
+	sql[3] = 'select t.ID, t.NAME, t.DESCR from GameTag gt left join Tag t on gt.TAG_ID=t.ID where PUBLIC_ID="'+ game +'"';
   dbpool.getConnection(function (err, conn) {
     if (err) { _logger.error(err); }
     conn.query(sql.join(';'), function (err, resulty) {
       if (err) { _logger.error(err); }
       conn.release();
       res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { game: resulty[0][0], teams: resulty[2], players: resulty[1] } });
+      res.jsonp( { data: { game: resulty[0][0], teams: resulty[2], players: resulty[1], tags: resulty[3] } } );
       res.end();
     });
   });
 });
+
+app.post( '/api/games/:game/tags', function( req, res ) {
+  var queryObject = url.parse( req.url, true ).query;
+	var game = mysql_real_escape_string( req.params.game );
+	_logger.debug( 'game: ' + game );
+	_logger.debug( req.body );
+	if( 'tag' in req.body ) {
+		var _pw = false;
+		for( var i in cfg.users ) {
+			if( cfg.users[i].password == queryObject.password ) {
+				_pw = true;
+				_logger.debug( 'user: ' + cfg.users[i].name );
+			}
+		}
+		//
+		if( _pw ) {
+			var sql = 'insert into GameTag( TAG_ID, PUBLIC_ID ) values( ?, ? )';
+			dbpool.getConnection( function( err, conn ) {
+				conn.query( sql, [ req.body.tag, game ], function( err, rows, fields ) {
+					res.jsonp( { data: rows, error: err, fields: fields } );
+					res.end();
+					conn.release();
+				} );
+			} );
+		}
+		else {
+			res.jsonp( { error: 'not authorized' } );
+			res.end();
+		}
+	}
+	else {
+		res.jsonp( { error: 'no tag specified' } );
+		res.end();
+	}
+	/*
+	*/
+} );
 
 /*
 app.get( '/api/games/:game/tags', function( req, res ) {
@@ -504,18 +577,6 @@ app.get( '/api/games/:game/tags', function( req, res ) {
 	} );
 } );
 
-app.get( '/api/games/:game/tag/add/:tag', function( req, res ) {
-	var game = mysql_real_escape_string( req.params.game );
-	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'insert into game_tags( tag_id, PUBLIC_ID ) values( '+ tag +', \''+ game +'\' )';
-	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows, fields ) {
-			res.jsonp( { data: { rows: rows, err: err, fields: fields } } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
 */
 
 app.get('/api/games/:game/get', function (req, res) {
@@ -549,7 +610,7 @@ app.get( '/api/owners', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -830,7 +891,7 @@ app.get( '/api/gametypes', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -989,7 +1050,7 @@ app.get('/api/gametypes/:gametype/players/:player', function (req, res) {
 app.get( '/api/gametypes/:gametype/players/:player/games', function (req, res) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
 	var player = mysql_real_escape_string( req.params.player );
-	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, ( case when ( GAME_TYPE in ("ca","ctf","tdm","ad","harv","fctf","rr","ft","dom") and g.WINNING_TEAM = gp.TEAM and gp.RANK > 0 ) or ( ( RANK = 1 and GAME_TYPE = "ffa" ) or ( RANK = 1 and GAME_TYPE = "race" ) or ( RANK = 1 and GAME_TYPE = "duel" ) ) then 1 else 0 end ) as WIN, RANK, RULESET, RANKED, PREMIUM, p.NAME as PLAYER, p.ID as PLAYER_ID, c.NAME as CLAN, c.ID as CLAN_ID '
+	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, ( case when ( GAME_TYPE in ("ca","ctf","tdm","ad","harv","fctf","rr","ft","dom") and g.WINNING_TEAM = gp.TEAM and gp.RANK > 0 ) or ( ( RANK = 1 and GAME_TYPE = "ffa" ) or ( RANK = 1 and GAME_TYPE = "race" ) or ( RANK = 1 and GAME_TYPE = "duel" ) ) then 1 else 0 end ) as WIN, RANK, RULESET, RANKED, PREMIUM, p.NAME as PLAYER, p.ID as PLAYER_ID, c.NAME as CLAN, c.ID as CLAN_ID, gp.* '
   + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Clan c on c.ID=gp.CLAN_ID left join Player o on o.ID=g.OWNER_ID '
   + ' where g.GAME_TYPE=? and gp.PLAYER_ID=( select ID from Player where NAME=? ) order by NULL';
 	dbpool.getConnection( function( err, conn ) {
@@ -1009,7 +1070,7 @@ app.get( '/api/overview', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -1043,12 +1104,45 @@ app.get( '/api/tags', function ( req, res ) {
 	var sql = 'SELECT ID, NAME as TAG, count(*) as tagged_games FROM Tag t left join GameTag gt on t.ID=gt.TAG_ID group by ID';
 	dbpool.getConnection( function( err, conn ) {
 		conn.query( sql, function( err, rows, fields ) {
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			//res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
 			res.end();
 			conn.release();
 		} );
 	} );
+} );
+
+app.post( '/api/tags', function( req, res ) {
+  var queryObject = url.parse( req.url, true ).query;
+	_logger.debug( req.body );
+	if( 'name' in req.body ) {
+		var _pw = false;
+		for( var i in cfg.users ) {
+			if( cfg.users[i].password == queryObject.password ) {
+				_pw = true;
+				_logger.debug( 'user: ' + cfg.users[i].name );
+			}
+		}
+		//
+		if( _pw ) {
+			var sql = 'insert into Tag( NAME, DESCR ) values( ?, ? )';
+			dbpool.getConnection( function( err, conn ) {
+				conn.query( sql, [ req.body.name, req.body.descr ], function( err, rows, fields ) {
+					res.jsonp( { data: rows, error: err, fields: fields } );
+					res.end();
+					conn.release();
+				} );
+			} );
+		}
+		else {
+			res.jsonp( { error: 'not authorized' } );
+			res.end();
+		}
+	}
+	else {
+		res.jsonp( { error: 'no tag specified' } );
+		res.end();
+	}
 } );
 
 app.get( '/api/tags/:tag', function ( req, res ) {
@@ -1256,7 +1350,7 @@ app.get( '/api/maps', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -1306,7 +1400,7 @@ app.get( '/api/clans', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -1337,6 +1431,10 @@ app.get( '/api/clans', function ( req, res ) {
 } );
 
 app.get( '/api/clans/:clan', function ( req, res ) {
+	res.jsonp( { data: [], error: 'no deal!' } );
+	res.end();
+	// too slow :)
+	/*
   var clan = mysql_real_escape_string( req.params.clan );
 	var sql = 'select p.NAME as PLAYER, c.ID as CLAN_ID, c.NAME as CLAN, p.COUNTRY, count(*) as MATCHES_PLAYED, sum(KILLS) as KILLS, sum(DEATHS) as DEATHS, sum(PLAY_TIME) as PLAY_TIME, avg(HITS/SHOTS)*100 as AVG_ACC from GamePlayer gp left join Player p on p.ID=gp.PLAYER_ID left join Clan c on c.ID=gp.CLAN_ID where gp.CLAN_ID=? group by gp.PLAYER_ID';
 	dbpool.getConnection( function( err, conn ) {
@@ -1349,6 +1447,7 @@ app.get( '/api/clans/:clan', function ( req, res ) {
 			conn.release();
 		} );
 	} );
+	*/
 } );
 
 app.get( '/api/top/last30days/kills', function ( req, res ) {
@@ -1369,7 +1468,7 @@ app.get( '/api/top/last30days/kills', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
@@ -1416,7 +1515,7 @@ app.get( '/api/top/all/kills', function ( req, res ) {
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
-		_logger.debug( 'cache is missing, fetching data' );
+		_logger.warn( 'cache is missing, fetching data' );
 		var rows = qlscache.query( sql, [], req.route.path )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );

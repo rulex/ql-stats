@@ -41,8 +41,11 @@
 					</ul>
 					<div class="col-sm-2 pull-right navbar-form">
 						<div class="input-group">
-							<input id="player_search" class="form-control" type="text" placeholder="Search player" value="" />
+							<input id="player_search" class="form-control input-sm" type="text" placeholder="Search player" value="" />
 						</div>
+					</div>
+					<div class="col-sm-2 pull-right navbar-form">
+						<span onclick="$( '#admin_settings' ).slideToggle();" class="btn glyphicon glyphicon-cog"></span>
 					</div>
 				</div>
 			</div>
@@ -53,12 +56,21 @@
 				<span id="current_url"></span>
 				<span id="loading" class="col-sm-1 loading"></span>
 			</div>
-			<hr />
-			<div class="row">
-				<div id="error" class="col-sm-11 "></div>
+			<div class="row-fluid">
+				<div id="error" class="col-sm-12 "></div>
 			</div>
-			<div class="row">
-				<div ng-view class="col-sm-12 small"></div>
+			<div id="admin_settings" style="display: none;" class="container">
+				<div class="row-fluid">
+					<div class="col-sm-4">
+						<h3><span class="glyphicon glyphicon-cog"></span> Settings</h3>
+						<div class="input-group">
+							<input placeholder="Password" type="password" class="form-control" id="admin_password" />
+						</div>
+					</div>
+				</div>
+			</div>
+			<hr />
+			<div ng-view class="container">
 			</div>
 		</div>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
