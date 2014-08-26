@@ -127,6 +127,9 @@ CREATE TABLE GamePlayer(
 	SG_S int,
 	SG_H int,
 	SG_K smallint,
+	HMG_S int,
+	HMG_H int,
+	HMG_K smallint,
 --
 	PRIMARY KEY( ID ),
 	KEY IX_GAME_PLAYER( GAME_ID, PLAYER_ID ),

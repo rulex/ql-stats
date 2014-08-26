@@ -215,6 +215,17 @@ function insertGamePlayer(p, gameId, timestamp) {
       var values = getPromisedValues(promises);
       var player = values[0];
       var clan = values[1];
+			var _hmg_shots = 0;
+			var _hmg_hits = 0;
+			var _hmg_kills = 0;
+			if( 'HMG_HITS' in p && 'HMG_KILLS' in p && 'HMG_SHOTS' in p ) {
+				_hmg_hits = p.HMG_HITS;
+				_hmg_kills = p.HMG_KILLS;
+				_hmg_shots = p.HMG_SHOTS;
+			}
+			else {
+				_logger.debug( p.PUBLIC_ID + ' missing HMG' );
+			}
       var data = [
         gameId, player.ID, player.CLAN_ID, p.RANK,
         SCORE, parseInt(QUIT), p.DAMAGE_DEALT, p.DAMAGE_TAKEN, p.KILLS,
@@ -225,7 +236,7 @@ function insertGamePlayer(p, gameId, timestamp) {
         p.MACHINEGUN_HITS, p.MACHINEGUN_KILLS, p.MACHINEGUN_SHOTS, p.NAILGUN_HITS, p.NAILGUN_KILLS, p.NAILGUN_SHOTS,
         p.PLASMA_HITS, p.PLASMA_KILLS, p.PLASMA_SHOTS, p.PROXMINE_HITS, p.PROXMINE_KILLS, p.PROXMINE_SHOTS,
         p.RAILGUN_HITS, p.RAILGUN_KILLS, p.RAILGUN_SHOTS, p.ROCKET_HITS, p.ROCKET_KILLS, p.ROCKET_SHOTS,
-        p.SHOTGUN_HITS, p.SHOTGUN_KILLS, p.SHOTGUN_SHOTS
+        p.SHOTGUN_HITS, p.SHOTGUN_KILLS, p.SHOTGUN_SHOTS, _hmg_hits, _hmg_kills, _hmg_shots
       ];
       data = data.map(function (value) { return Number.isNaN(value) ? null : value; });
 
