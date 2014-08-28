@@ -3,19 +3,46 @@
 
 	<div class="row-fluid">
 
-		<div class="col-md-3 well">
-			<h3 class="text-center">Match distribution</h3>
-			<div id="chart2" style="height: 250px;"></div>
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Match distribution</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="chart2_total"></h4>
+					<div id="chart2" style="height: 250px;"></div>
+				</div>
+			</div>
 		</div>
 
-		<div class="col-md-3 well">
-			<h3 class="text-center">Kills distribution</h3>
-			<div id="chart" style="height: 250px;"></div>
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Kills distribution</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="chart_total"></h4>
+					<div id="chart" style="height: 250px;"></div>
+				</div>
+			</div>
 		</div>
 
-		<div class="col-md-6 well">
-			<h3 class="text-center">Saved Matches</h3>
-			<div id="matchesline" style="height: 250px;"></div>
+		<!--
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Ruleset distribution</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="rulesetchart_total"></h4>
+					<div id="rulesetchart" style="height: 250px;"></div>
+				</div>
+			</div>
+		</div>
+		-->
+
+		<div class="col-md-6">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Saved Matches</div>
+				<div class="panel-body">
+					<h4 class="text-center">Saved matches over time</h4>
+					<div id="matchesline" style="height: 250px;"></div>
+				</div>
+			</div>
 		</div>
 
 	</div>
@@ -23,18 +50,23 @@
 	<div class="row-fluid">
 		<div class="col-md-12">
 
-		<table id="table_overview" class="table table-condensed table-bordered ">
-			<thead>
-				<tr>
-					<th data-dynatable-column="GAME_TYPE">GAME_TYPE</th>
-					<th data-dynatable-column="MATCHES_PLAYED">MATCHES</th>
-					<th data-dynatable-column="TOTAL_KILLS" title="KILLS">KILLS</th>
-					<th class="hidden-xs" data-dynatable-column="GAME_LENGTH">GAME_LENGTH</th>
-				</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Saved Matches</div>
+				<div class="panel-body">
+					<table id="table_overview" class="table table-condensed table-bordered table-hover ">
+						<thead>
+							<tr>
+								<th data-dynatable-column="GAME_TYPE">GAME_TYPE</th>
+								<th data-dynatable-column="MATCHES_PLAYED">MATCHES</th>
+								<th data-dynatable-column="TOTAL_KILLS" title="KILLS">KILLS</th>
+								<th class="hidden-xs" data-dynatable-column="GAME_LENGTH">GAME_LENGTH</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+			</div>
 
 		</div>
 	</div>

@@ -26,7 +26,7 @@
 				</div>
 				<div class="navbar-collapse collapse">
 					<ul class="nav navbar-nav">
-						<li><a id="overview" class="isnav" href="#">Overview</a></li>
+						<li><a id="overview" class="isnav" href="#"><span class="glyphicon glyphicon-home"></span> Overview</a></li>
 						<li><a id="games" class="isnav" href="#/games">Games</a></li>
 						<li><a id="players" class="isnav" href="#/players">Players</a></li>
 						<li><a id="clans" class="isnav" href="#/clans">Clans</a></li>
@@ -53,24 +53,37 @@
 
 		<div class="container">
 			<div>
+				<!--
 				<span id="current_url"></span>
+				-->
 				<span id="loading" class="col-sm-1 loading"></span>
 			</div>
 			<div class="row-fluid">
 				<div id="error" class="col-sm-12 "></div>
 			</div>
 			<div id="admin_settings" style="display: none;" class="container">
-				<div class="row-fluid">
-					<div class="col-sm-4">
+				<div class="row">
+					<div class="col-sm-2">
 						<h3><span class="glyphicon glyphicon-cog"></span> Settings</h3>
+					</div>
+					<div class="col-sm-4">
 						<div class="input-group">
+							<label for="admin_password">Admin Password</label>
 							<input placeholder="Password" type="password" class="form-control" id="admin_password" />
+						</div>
+					</div>
+					<div class="col-sm-4">
+						<div class="input-group">
+							<label for="apiurl">API URL <span data-html="true" data-placement="bottom" title="" data-content="This is the API URL to fetch data from<br><br>Default is fetching with ajax json from api you're browsing aka '/'<br><br>Or with ajax jsonp from eg. 'http://ql.leeto.fi/'" class="popthis glyphicon glyphicon-question-sign"></span></label>
+							<input value="/" type="text" class="form-control" id="apiurl" />
 						</div>
 					</div>
 				</div>
 			</div>
+			<!--
 			<hr />
-			<div ng-view class="container">
+			-->
+			<div ng-view id="theContent" class="container">
 			</div>
 		</div>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
@@ -79,6 +92,7 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular-resource.min.js"></script>
 		<script src="jquery.dynatable.js"></script>
+		<script src="jquery.blockUI.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 		<script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
 		<script src="http://code.highcharts.com/highcharts.js"></script>
