@@ -14,7 +14,7 @@ function getAjaxDataType() {
 $( function() {
 	// countries.json
 	$.ajax( {
-		url: getApiURL() + 'countries.json',
+		url: 'countries.json',
 		dataType: 'json',
 		success: function( data ) {
 			for( var i in data ) {
@@ -217,22 +217,32 @@ var dynatable_writers = {
 		return timediff( obj.PLAY_TIME * 1000 );
 	},
 	GAME_TYPE: function( obj ) {
-		var ranked = '';
-		var ruleset = '';
-		var premium = '';
+		var ranked = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
+		var ruleset = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="left" data-content="Classic Ruleset">C</div>';
+		var premium = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
+		var gt = '';
+		if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
+		else { gt = obj.GAME_TYPE.toLowerCase(); }
+		if( obj.RANKED == 1 ) { ranked = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Ranked match">R</div>'; }
+		if( obj.RULESET == 2 ) { ruleset = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="left" data-content="Turbo Ruleset">T</div>'; }
+		if( obj.RULESET == 3 ) { ruleset = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="left" data-content="QL Ruleset">Q</div>'; }
+		if( obj.PREMIUM == 1 ) { premium = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
+		var _ranked = '';
+		var _ruleset = '';
+		var _premium = '';
 		if( 'RANKED' in obj && 'RULESET' in obj && 'PREMIUM' in obj ) {
-			ranked = 'UNRANKED';
-			ruleset = 'CLASSIC';
-			premium = 'STANDARD';
-			if( obj.RANKED == 1 ) { ranked = 'RANKED'; }
-			if( obj.RULESET == 2 ) { ruleset = 'TURBO'; }
-			else if( obj.RULESET == 3 ) { ruleset = 'QL'; }
-			if( obj.PREMIUM == 1 ) { premium = 'PREMIUM'; }
+			_ranked = 'UNRANKED';
+			_ruleset = 'CLASSIC';
+			_premium = 'STANDARD';
+			if( obj.RANKED == 1 ) { _ranked = 'RANKED'; }
+			if( obj.RULESET == 2 ) { _ruleset = 'TURBO'; }
+			else if( obj.RULESET == 3 ) { _ruleset = 'QL'; }
+			if( obj.PREMIUM == 1 ) { _premium = 'PREMIUM'; }
 		}
 		var gt = '';
 		if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
 		else { gt = obj.GAME_TYPE.toLowerCase(); }
-		return '<div rel="popover" data-html="true" data-placement="left" data-content="' + premium + '<br>' + ranked + '<br>' + ruleset + '" data-original-title="' + GT[gt] + '" class="btn btn-xs popthis "> <a class="btn btn-xs btn-default" title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + gt + '</a>';
+		return '<div rel="popover" data-html="true" data-container="body" data-placement="left" data-content="' + _premium + '<br>' + _ranked + '<br>' + _ruleset + '" data-original-title="' + GT[gt] + '" class="btn btn-xs popthis "> <a class="btn btn-xs btn-default" title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + gt + '</a></div> <div class="pull-right btn-group btn-group-xs">' + ruleset + ranked + premium + '</div>';
 	},
 	SCORE: function( obj ) {
 		return thousandSeparator( obj.SCORE );
@@ -935,19 +945,23 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			// info
 			var g = data.data.game;
 			var p = data.data.players;
-			var ranked = 'UNRANKED';
-			var ruleset = '';
-			var premium = 'STANDARD';
+			var ranked = '<div class="btn btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
+			var ruleset = '<div class="btn btn-info popthis" data-container="body" data-html="true" data-placement="left" data-content="Classic Ruleset">C</div>';
+			var premium = '<div class="btn btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
 			var gt = '';
 			if( g.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
 			else { gt = g.GAME_TYPE.toLowerCase(); }
-			if( g.RANKED == 1 ) { ranked = 'RANKED'; }
-			if( g.RULESET == 2 ) { ruleset = 'PQL'; }
-			if( g.PREMIUM == 1 ) { premium = 'PREMIUM'; }
-			$( '#info' ).append( '<div rel="popover" data-html="true" data-placement="left" data-content="' + ranked + '' + ruleset + '" data-original-title="' + gt + '" class="btn btn-xs popthis "> <a class="btn btn-xs btn-default" title="' + gt + '" href="#/gametypes/' + g.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + gt + '</a></div>' );
-			$( '#info' ).append( ' on <a class="map-popup" href="#/maps/'+ g.MAP +'">' + g.MAP + '</a> ' );
-			$( '#info' ).append( ' ' + timediff( g.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago ' );
-			if( g.OWNER_ID !== null ) {
+			if( g.RANKED == 1 ) { ranked = '<div class="btn btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Ranked match">R</div>'; }
+			if( g.RULESET == 2 ) { ruleset = '<div class="btn btn-danger popthis" data-container="body" data-html="true" data-placement="left" data-content="Turbo Ruleset">T</div>'; }
+			if( g.RULESET == 3 ) { ruleset = '<div class="btn btn-success popthis" data-container="body" data-html="true" data-placement="left" data-content="QL Ruleset">Q</div>'; }
+			if( g.PREMIUM == 1 ) { premium = '<div class="btn btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
+			var img = '<a style="color: #000;" href="#/maps/' + g.MAP + '"><div class=""><img title="' + g.MAP + '" alt="' + g.MAP + '" class="img-thumbnail dumbnail" src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + g.MAP + '_v2014051402.0.jpg/50%" /><div class="wrapper"><div class="map-name">' + g.MAP + '</div></div></div></a>';
+			$( '#info' ).append( '<div class="gametype btn-group btn-group-xs">' + ruleset + ranked + premium + '</div>' );
+			$( '#info' ).append( img );
+			$( '#info_title' ).append( '<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + GT[g.GAME_TYPE] + '' );
+			//$( '#info' ).append( ' ' + timediff( g.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago ' );
+			$( '#info' ).append( 'Game Length: ' + timediff( g.GAME_LENGTH * 1000 ) );
+			if( g.OWNER_ID !== null && g.OWNER_ID != 269750 ) {
 				$( '#info' ).append( ' hosted by <a href="#/owners/'+ g.OWNER +'">' + g.OWNER + '</a> ' );
 			}
 			// tags
@@ -1017,65 +1031,131 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				data: acc,
 				formatter: function( y ) { return y + '%'; },
 			} );
-			// kills
+			// KILLS IMPRESSIVE EXCELLENT HUMILIATION
 			var kills = [];
+			var _imp = [];
+			var _exc = [];
+			var _hum = [];
 			for( var i in p ) {
 				kills.push( { label: p[i].PLAYER, value: p[i].KILLS } );
+				_imp.push( { label: p[i].PLAYER, value: p[i].IMPRESSIVE } );
+				_exc.push( { label: p[i].PLAYER, value: p[i].EXCELLENT } );
+				_hum.push( { label: p[i].PLAYER, value: p[i].HUMILIATION } );
 			}
 			Morris.Donut( {
 				element: 'kills',
 				data: kills,
 				formatter: function( y ) { return y + ''; },
 			} );
+			Morris.Donut( {
+				element: 'imp',
+				data: _imp,
+				formatter: function( y ) { return y + ''; },
+			} );
+			Morris.Donut( {
+				element: 'exc',
+				data: _exc,
+				formatter: function( y ) { return y + ''; },
+			} );
+			Morris.Donut( {
+				element: 'hum',
+				data: _hum,
+				formatter: function( y ) { return y + ''; },
+			} );
 			// weapons
 			var RL_A = [];
-			var RG_A = [];
-			var LG_A = [];
 			var RL_K = [];
+			var RG_A = [];
 			var RG_K = [];
+			var LG_A = [];
 			var LG_K = [];
+			var PG_A = [];
+			var PG_K = [];
+			var GL_A = [];
+			var GL_K = [];
+			var SG_A = [];
+			var SG_K = [];
 			for( var i in p ) {
 				if( p[i].QUIT !== 1 ) {
 					if( p[i].RL_H !== 0 && p[i].RL_S !== 0 )
 						RL_A.push( { label: p[i].PLAYER, value: ( p[i].RL_H / p[i].RL_S * 100 ).toFixed(2) } );
-					if( p[i].RG_H !== 0 && p[i].RG_S !== 0 )
-						RG_A.push( { label: p[i].PLAYER, value: ( p[i].RG_H / p[i].RG_S * 100 ).toFixed(2) } );
-					if( p[i].LG_H !== 0 && p[i].LG_S !== 0 )
-						LG_A.push( { label: p[i].PLAYER, value: ( p[i].LG_H / p[i].LG_S * 100 ).toFixed(2) } );
 					if( p[i].RL_K !== 0 )
 						RL_K.push( { label: p[i].PLAYER, value: p[i].RL_K } );
+					if( p[i].RG_H !== 0 && p[i].RG_S !== 0 )
+						RG_A.push( { label: p[i].PLAYER, value: ( p[i].RG_H / p[i].RG_S * 100 ).toFixed(2) } );
 					if( p[i].RG_K !== 0 )
 						RG_K.push( { label: p[i].PLAYER, value: p[i].RG_K } );
+					if( p[i].LG_H !== 0 && p[i].LG_S !== 0 )
+						LG_A.push( { label: p[i].PLAYER, value: ( p[i].LG_H / p[i].LG_S * 100 ).toFixed(2) } );
 					if( p[i].LG_K !== 0 )
 						LG_K.push( { label: p[i].PLAYER, value: p[i].LG_K } );
+					if( p[i].PG_H !== 0 && p[i].PG_S !== 0 )
+						PG_A.push( { label: p[i].PLAYER, value: ( p[i].PG_H / p[i].PG_S * 100 ).toFixed(2) } );
+					if( p[i].PG_K !== 0 )
+						PG_K.push( { label: p[i].PLAYER, value: p[i].PG_K } );
+					if( p[i].GL_H !== 0 && p[i].GL_S !== 0 )
+						GL_A.push( { label: p[i].PLAYER, value: ( p[i].GL_H / p[i].GL_S * 100 ).toFixed(2) } );
+					if( p[i].GL_K !== 0 )
+						GL_K.push( { label: p[i].PLAYER, value: p[i].GL_K } );
+					if( p[i].SG_H !== 0 && p[i].SG_S !== 0 )
+						SG_A.push( { label: p[i].PLAYER, value: ( p[i].SG_H / p[i].SG_S * 100 ).toFixed(2) } );
+					if( p[i].SG_K !== 0 )
+						SG_K.push( { label: p[i].PLAYER, value: p[i].SG_K } );
 				}
 			}
 			Morris.Donut( {
-				element: 'weap1',
+				element: 'rl',
 				data: RL_A,
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
-				element: 'weap2',
+				element: 'rlk',
+				data: RL_K,
+			} );
+			Morris.Donut( {
+				element: 'rg',
 				data: RG_A,
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
-				element: 'weap3',
+				element: 'rgk',
+				data: RG_K,
+			} );
+			Morris.Donut( {
+				element: 'lg',
 				data: LG_A,
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
-				element: 'weapk1',
-				data: RL_K,
-			} );
-			Morris.Donut( {
-				element: 'weapk2',
-				data: RG_K,
-			} );
-			Morris.Donut( {
-				element: 'weapk3',
+				element: 'lgk',
 				data: LG_K,
+			} );
+			Morris.Donut( {
+				element: 'pg',
+				data: PG_A,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			Morris.Donut( {
+				element: 'pgk',
+				data: PG_K,
+			} );
+			Morris.Donut( {
+				element: 'gl',
+				data: GL_A,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			Morris.Donut( {
+				element: 'glk',
+				data: GL_K,
+			} );
+			Morris.Donut( {
+				element: 'sg',
+				data: SG_A,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			Morris.Donut( {
+				element: 'sgk',
+				data: SG_K,
 			} );
 			// dynatable
 			$( '#players_table' ).bind( 'dynatable:init', function( e, dynatable ) {
