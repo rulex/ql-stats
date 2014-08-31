@@ -352,6 +352,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/countries/:country', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
 	when( '/gametypes/:gametype', { controller: GametypeCtrl, templateUrl: 'gametype.html' } ).
+	when( '/gametypes/:gametype/maps', { controller: GametypeMapsCtrl, templateUrl: 'maps.html' } ).
 	when( '/gametypes/:gametype/top/all', { controller: GametypeTopAllCtrl, templateUrl: 'top.html' } ).
 	when( '/gametypes/:gametype/players/:player', { controller: PlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags/:tag', { controller: TagCtrl, templateUrl: 'tag.html' } ).
@@ -1845,6 +1846,37 @@ function GametypeCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var lol = theLiz.gametype( gt );
 	$scope.gametype = lol;
 	$scope.date = new Date().getTime();
+}
+function GametypeMapsCtrl( $scope, theLiz, $timeout, $routeParams ) {
+	var gt = $routeParams.gametype;
+	onLoading();
+	setNavbarActive();
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: getApiURL() + 'api/gametypes/' + gt + '/maps',
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			$( '#table_maps' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
+			} );
+			$( '#table_maps' ).dynatable( {
+				features: dynatable_features,
+				writers: dynatable_writers,
+				table: dynatable_table,
+				dataset: {
+					perPageDefault: 200,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			onError( data );
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
 }
 function GametypeTopAllCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
