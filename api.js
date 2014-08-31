@@ -1050,7 +1050,8 @@ app.get('/api/gametypes/:gametype/players/:player', function (req, res) {
 app.get( '/api/gametypes/:gametype/players/:player/games', function (req, res) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
 	var player = mysql_real_escape_string( req.params.player );
-	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, ( case when ( GAME_TYPE in ("ca","ctf","tdm","ad","harv","fctf","rr","ft","dom") and g.WINNING_TEAM = gp.TEAM and gp.RANK > 0 ) or ( ( RANK = 1 and GAME_TYPE = "ffa" ) or ( RANK = 1 and GAME_TYPE = "race" ) or ( RANK = 1 and GAME_TYPE = "duel" ) ) then 1 else 0 end ) as WIN, RANK, RULESET, RANKED, PREMIUM, p.NAME as PLAYER, p.ID as PLAYER_ID, c.NAME as CLAN, c.ID as CLAN_ID, gp.* '
+	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, ( case when ( GAME_TYPE in ("ca","ctf","tdm","ad","harv","fctf","rr","ft","dom") and g.WINNING_TEAM = gp.TEAM and gp.RANK > 0 ) or ( ( RANK = 1 and GAME_TYPE = "ffa" ) or ( RANK = 1 and GAME_TYPE = "race" ) '
+	+ 'or ( RANK = 1 and GAME_TYPE = "duel" ) ) then 1 else 0 end ) as WIN, RANK, RULESET, RANKED, PREMIUM, p.NAME as PLAYER, p.ID as PLAYER_ID, c.NAME as CLAN, c.ID as CLAN_ID, gp.* '
   + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Clan c on c.ID=gp.CLAN_ID left join Player o on o.ID=g.OWNER_ID '
   + ' where g.GAME_TYPE=? and gp.PLAYER_ID=( select ID from Player where NAME=? ) order by NULL';
 	dbpool.getConnection( function( err, conn ) {
@@ -1069,10 +1070,11 @@ app.get( '/api/gametypes/:gametype/maps', function ( req, res ) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
 	var sql = 'select m.NAME as MAP, g.MAP_ID, count(g.ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where g.GAME_TYPE=? group by MAP_ID';
 	qlscache.readCacheFile();
-	var routeStatus = qlscache.checkRoute( req.route.path );
+	var routePath = req.route.path + gametype;
+	var routeStatus = qlscache.checkRoute( routePath );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [gametype], req.route.path )
+		var rows = qlscache.query( sql, [gametype], routePath )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -1080,22 +1082,22 @@ app.get( '/api/gametypes/:gametype/maps', function ( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( req.route.path, rows );
+			qlscache.writeCache( routePath, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( req.route.path );
+		var _cache = qlscache.readCache( routePath );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [gametype], req.route.path )
+		var rows = qlscache.query( sql, [gametype], routePath )
 		.then( function( rows ) {
-			qlscache.writeCache( req.route.path, rows );
+			qlscache.writeCache( routePath, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( req.route.path );
+		var _cache = qlscache.readCache( routePath );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
