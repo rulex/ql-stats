@@ -921,18 +921,78 @@ app.get( '/api/gametypes', function ( req, res ) {
 	}
 } );
 
-app.get( '/api/gametypes/:gametype', function ( req, res ) {
-	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, avg(NUM_PLAYERS) as NUM_PLAYERS_AVG from Game where GAME_TYPE=? group by GAME_TYPE';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, [req.params.gametype], function( err, rows, fields ) {
-			if( err ) { _logger.error( err ); }
+app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
+	var gt = req.params.gametype;
+	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game where GAME_TYPE=? group by GAME_TYPE order by 1';
+	qlscache.readCacheFile();
+	var routePath = req.route.path + gt;
+	var routeStatus = qlscache.checkRoute( routePath );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [gt], routePath )
+		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows[0] } );
+			res.jsonp( { data: rows } );
 			res.end();
-			conn.release();
-		} );
-	} );
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [gt], routePath )
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+
+app.get( '/api/gametypes/:gametype/games/graphs/permonth', function( req, res ) {
+  var gt = req.params.gametype;
+  var sql = 'select FROM_UNIXTIME(GAME_TIMESTAMP,"%Y-%m") as date, year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, day(FROM_UNIXTIME(GAME_TIMESTAMP)) as day,count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, month ;';
+	var routePath = req.route.path + gt;
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( routePath );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [gt], routePath )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [gt], routePath )
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
 } );
 
 app.get( '/api/gametypes/:gametype/top/all/kills', function ( req, res ) {
@@ -1821,6 +1881,61 @@ app.get( '/api/rulesets/:ruleset/games/graphs/permonth', function( req, res ) {
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
 		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+var GUNS = {
+	RL: 'Rocket Launcher',
+	RG: 'Rail Gun',
+	LG: 'Lightning Gun',
+	GL: 'Grenade Launcher',
+	PG: 'Plasma Gun',
+	MG: 'Machine Gun',
+	HMG: 'HMG',
+	SG: 'Shotgun',
+	BFG: 'Big Fucking Gun',
+	NG: 'Nailgun',
+	CG: 'Chaingun',
+	G: 'Gauntlet',
+}
+app.get( '/api/weapons', function( req, res ) {
+  sql = "select sum(RL_S) as RL_S, sum(RG_S) as RG_S, sum(LG_S) as LG_S, sum(GL_S) as GL_S, sum(PG_S) as PG_S, sum(MG_S) as MG_S, sum(HMG_S) as HMG_S, sum(SG_S) as SG_S, sum(BFG_S) as BFG_S, sum(NG_S) as NG_S, sum(CG_S) as CG_S from GamePlayer";
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'sum(RL_S) as RL_S, sum(RG_S) as RG_S, sum(LG_S) as LG_S, sum(GL_S) as GL_S, sum(PG_S) as PG_S, sum(MG_S) as MG_S, sum(HMG_S) as HMG_S, sum(SG_S) as SG_S, sum(BFG_S) as BFG_S, sum(NG_S) as NG_S, sum(CG_S) as CG_S ' );
+	//sql.push( ' sum(RL_H) as RL_H, sum(RG_H) as RG_H, sum(LG_H) as LG_H, sum(GL_H) as GL_H, sum(PG_H) as PG_H, sum(MG_H) as MG_H, sum(HMG_H) as HMG_H, sum(SG_H) as SG_H, sum(BFG_H) as BFG_H, sum(NG_H) as NG_H, sum(CG_H) as CG_H, ' );
+	//sql.push( ' sum(RL_K) as RL_K, sum(RG_K) as RG_K, sum(LG_K) as LG_K, sum(GL_K) as GL_K, sum(PG_K) as PG_K, sum(MG_K) as MG_K, sum(HMG_K) as HMG_K, sum(SG_K) as SG_K, sum(BFG_K) as BFG_K, sum(NG_K) as NG_K, sum(CG_K) as CG_K ' );
+	sql.push( 'from GamePlayer' );
+	sql = sql.join( ' ' );
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [], req.route.path )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [], req.route.path )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}

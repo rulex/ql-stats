@@ -72,6 +72,26 @@ $( function() {
 	}, 'a.map-popup' );
 } );
 
+// _S, _H, _K
+var GUNS = {
+	RL: 'Rocket Launcher',
+	RG: 'Rail Gun',
+	LG: 'Lightning Gun',
+	GL: 'Grenade Launcher',
+	PG: 'Plasma Gun',
+	MG: 'Machine Gun',
+	HMG: 'HMG',
+	SG: 'Shotgun',
+	BFG: 'Big Fucking Gun',
+	NG: 'Nailgun',
+	CG: 'Chaingun',
+	G: 'Gauntlet',
+}
+var RULESETS = {
+	1: 'Classic',
+	2: 'Turbo',
+	3: 'QL',
+}
 var GT = {
 	ca: 'Clan Arena',
 	duel: 'Duel',
@@ -89,7 +109,8 @@ var GT = {
 }
 
 var dynatable_table = {
-	headRowClass: 'well well-sm'
+	headRowClass: 'well well-sm',
+	copyHeaderClass: true,
 }
 var dynatable_writers = {
 	COUNTRY: function( obj ) {
@@ -122,7 +143,7 @@ var dynatable_writers = {
 			country = obj.COUNTRY.toLowerCase();
 			countrylink = '<div class="btn btn-default playerflag popthis" data-html="true" data-placement="left" data-container="body" data-content="' + countryobj.name + '" ><img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ country +'_v2013071601.0.gif" alt="'+ country.toUpperCase() +'" /></div>';
 		}
-		return '<div class="btn-group btn-group-xs">' + countrylink + '<a class="btn btn-default" href="#/players/'+ obj.PLAYER +'">' + obj.PLAYER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/players/' + obj.PLAYER + '">Player page</a></li><li><a href="#/race/players/' + obj.PLAYER + '">Race page</a></li><li><a href="#/owners/' + obj.PLAYER + '">Owner page</a></li></ul></div></a></div> ' + clanlink;
+		return '<div class="btn-group btn-group-xs">' + countrylink + '<a class="btn btn-default" href="#/players/'+ obj.PLAYER +'">' + obj.PLAYER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/players/' + obj.PLAYER + '">Player profile</a></li><li><a href="#/race/players/' + obj.PLAYER + '">Race profile</a></li><li><a href="#/owners/' + obj.PLAYER + '">Owner profile</a></li></ul></div></a></div> ' + clanlink;
 	},
 	CLAN: function( obj ) {
 		if( obj.CLAN_ID !== null )
@@ -189,12 +210,15 @@ var dynatable_writers = {
 	HUMILIATION: function( obj ) {
 		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.HUMILIATION/obj.MATCHES_PLAYED).toFixed(2) +' hum/game on average">'+ obj.HUMILIATION +'</span>';
 	},
+	DAMAGE_TAKEN: function( obj ) {
+		return thousandSeparator( obj.DAMAGE_TAKEN );
+	},
 	DAMAGE_DEALT: function( obj ) {
-		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ (obj.DAMAGE_DEALT/obj.PLAY_TIME).toFixed(2) +' dmg/sec">'+ obj.DAMAGE_DEALT +'</span>';
+		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ (obj.DAMAGE_DEALT/obj.PLAY_TIME).toFixed(2) +' dmg/sec  ' + ( obj.DAMAGE_DEALT - obj.DAMAGE_TAKEN ) + ' netDMG">'+ thousandSeparator( obj.DAMAGE_DEALT ) +'</span>';
 	},
 	OWNER: function( obj ) {
 		if( obj.OWNER !== null && obj.OWNER_ID != 269750 && obj.OWNER != "" )
-			return '<div class="btn-group btn-group-xs"><a class="btn btn-default" href="#/owners/'+ obj.OWNER +'">' + obj.OWNER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/owners/' + obj.OWNER + '">Owner page</a></li><li><a href="#/players/' + obj.OWNER + '">Player page</a></li><li><a href="#/race/players/' + obj.OWNER + '">Race page</a></li></ul></div></a></div>';
+			return '<div class="btn-group btn-group-xs"><a class="btn btn-default" href="#/owners/'+ obj.OWNER +'">' + obj.OWNER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/owners/' + obj.OWNER + '">Owner profile</a></li><li><a href="#/players/' + obj.OWNER + '">Player profile</a></li><li><a href="#/race/players/' + obj.OWNER + '">Race profile</a></li></ul></div></a></div>';
 		else
 			return '';
 	},
@@ -211,13 +235,13 @@ var dynatable_writers = {
 		if( parseHash().indexOf( 'race' ) > -1 ) {
 			return obj.GAME_TIMESTAMP;
 		}
-		return timediff( ( obj.GAME_TIMESTAMP *1000 ), new Date().getTime() ) + ' ago';
+		return '<div rel="popover" class="popthis" data-html="true" data-placement="bottom" data-content="'+ new Date( obj.GAME_TIMESTAMP *1000 ) +'">' + timediff( ( obj.GAME_TIMESTAMP *1000 ), new Date().getTime() ) + ' ago';
 	},
 	GAME_LENGTH: function( obj ) {
 		return timediff( obj.GAME_LENGTH * 1000 );
 	},
 	PLAY_TIME: function( obj ) {
-		return timediff( obj.PLAY_TIME * 1000 );
+		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.PLAY_TIME +' sec">'+ timediff( obj.PLAY_TIME * 1000 ) +'</div></span>';
 	},
 	GAME_TYPE: function( obj ) {
 		var ranked = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
@@ -267,17 +291,17 @@ var dynatable_writers = {
 	},
 	PQL_strafe: function( obj ) {
 		if( obj.LEADERS[1] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[1].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[1].PLAYER + '">' + obj.LEADERS[1].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[1].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[1].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[1].SCORE ) + ' </span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[1].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[1].PLAYER + '?ruleset=pql&weapons=off">' + obj.LEADERS[1].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[1].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[1].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[1].SCORE ) + ' </span>';
 		else return '';
 	},
 	VQL_weapons: function( obj ) {
 		if( obj.LEADERS[2] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[2].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[2].PLAYER + '">' + obj.LEADERS[2].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[2].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[2].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[2].SCORE ) + ' </span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[2].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[2].PLAYER + '?ruleset=vql&weapons=on">' + obj.LEADERS[2].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[2].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[2].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[2].SCORE ) + ' </span>';
 		else return '';
 	},
 	VQL_strafe: function( obj ) {
 		if( obj.LEADERS[3] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[3].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[3].PLAYER + '">' + obj.LEADERS[3].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[3].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[3].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[3].SCORE ) + ' </span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[3].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[3].PLAYER + '?ruleset=vql&weapons=off">' + obj.LEADERS[3].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[3].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[3].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[3].SCORE ) + ' </span>';
 		else return '';
 	},
 	GAME_LENGTH_SUM: function( obj ) {
@@ -290,28 +314,27 @@ var dynatable_writers = {
 		// this->
 		if( 'HITS' in obj && 'SHOTS' in obj )
 			return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.HITS + ' hits of ' + obj.SHOTS + ' shots">'+ ( obj.HITS / obj.SHOTS * 100 ).toFixed(1) +'%</span>';
-		else if( 'ACC' in obj ) 
+		else if( 'ACC' in obj )
 			return '<span>'+ obj.ACC +'%</span>';
 	},
 	RL: function( obj ) {
-		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.RL_H + ' hits of ' + obj.RL_S + ' shots">'+ ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) +'%</span>';
+		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="' + obj.RL_K + ' kills '+ obj.RL_H + ' hits of ' + obj.RL_S + ' shots">'+ ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) +'%</span>';
 	},
 	RG: function( obj ) {
-		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.RG_H + ' hits of ' + obj.RG_S + ' shots">'+ ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) +'%</span>';
+		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="' + obj.RG_K + ' kills '+ obj.RG_H + ' hits of ' + obj.RG_S + ' shots">'+ ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) +'%</span>';
 	},
 	LG: function( obj ) {
-		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.LG_H + ' hits of ' + obj.LG_S + ' shots">'+ ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) +'%</span>';
+		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="' + obj.LG_K + ' kills '+ obj.LG_H + ' hits of ' + obj.LG_S + ' shots">'+ ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) +'%</span>';
 		return '<span data-toggle="tooltip" data-placement="left" title="'+ obj.LG_H + ' hits of ' + obj.LG_S + ' shots.">' + ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%</span>';
 	},
-	RL_A: function( obj ) {
-		return ( obj.RL_H / obj.RL_S * 100 ).toFixed(2) + '%';
-	},
-	RG_A: function( obj ) {
-		return ( obj.RG_H / obj.RG_S * 100 ).toFixed(2) + '%';
-	},
-	LG_A: function( obj ) {
-		return ( obj.LG_H / obj.LG_S * 100 ).toFixed(2) + '%';
-	},
+	RL_A: function( obj ) { return ( obj.RL_S > 0 ) ? ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) + '%' : '-'; },
+	RG_A: function( obj ) { return ( obj.RG_S > 0 ) ? ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) + '%' : '-'; },
+	LG_A: function( obj ) { return ( obj.LG_S > 0 ) ? ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%' : '-'; },
+	GL_A: function( obj ) { return ( obj.GL_S > 0 ) ? ( obj.GL_H / obj.GL_S * 100 ).toFixed(1) + '%' : '-'; },
+	PG_A: function( obj ) { return ( obj.PG_S > 0 ) ? ( obj.PG_H / obj.PG_S * 100 ).toFixed(1) + '%' : '-'; },
+	HMG_A: function( obj ) { return ( obj.HMG_S > 0 ) ? ( obj.HMG_H / obj.HMG_S * 100 ).toFixed(1) + '%' : '-'; },
+	MG_A: function( obj ) { return ( obj.MG_S > 0 ) ? ( obj.MG_H / obj.MG_S * 100 ).toFixed(1) + '%' : '-'; },
+	BFG_A: function( obj ) { return ( obj.BFG_S > 0 ) ? ( obj.BFG_H / obj.BFG_S * 100 ).toFixed(1) + '%' : '-'; },
 };
 var dynatable_features = {
 	sort: true,
@@ -351,7 +374,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/countries', { controller: CountriesCtrl, templateUrl: 'countries.html' } ).
 	when( '/countries/:country', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/eloduel', { controller: EloDuelCtrl, templateUrl: 'elo_duel.html' } ).
-	when( '/gametypes/:gametype', { controller: GametypeCtrl, templateUrl: 'gametype.html' } ).
+	when( '/gametypes/:gametype', { controller: GametypeOverviewCtrl, templateUrl: 'overview.html' } ).
 	when( '/gametypes/:gametype/maps', { controller: GametypeMapsCtrl, templateUrl: 'maps.html' } ).
 	when( '/gametypes/:gametype/top/all', { controller: GametypeTopAllCtrl, templateUrl: 'top.html' } ).
 	when( '/gametypes/:gametype/players/:player', { controller: PlayerCtrl, templateUrl: 'player.html' } ).
@@ -371,6 +394,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/settings', { controller: SettingsCtrl } ).
 	when( '/rulesets/:ruleset/games', { controller: RulesetGamesCtrl, templateUrl: 'games2.html' } ).
 	when( '/rulesets/:ruleset', { controller: RulesetOverviewCtrl, templateUrl: 'overview.html' } ).
+	when( '/weapons', { controller: WeaponsCtrl, templateUrl: 'weapons.html' } ).
 	otherwise({ redirectTo: '/' });
 }]);
 
@@ -383,6 +407,27 @@ function SettingsCtrl( $scope, theLiz, $timeout ) {
 	$( '#current_url' ).html( printLocations() );
 	adminPassword = $( 'admin_password' ).val();
 	$( '#admin_settings' ).slideToggle();
+}
+function WeaponsCtrl( $scope, theLiz, $timeout ) {
+	onLoading();
+	setNavbarActive();
+	$.ajax( {
+		url: getApiURL() + 'api/weapons',
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			Morris.Donut( {
+				element: 'chart',
+				data: data.data,
+				//formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_kills*100 ).toFixed(1) + '%)'; },
+			} );
+		},
+		error: function( data ) {
+			onError( data );
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
 }
 function OverviewCtrl( $scope, theLiz, $timeout ) {
 	onLoading();
@@ -1218,7 +1263,8 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var p = $routeParams.player;
 	var t = $routeParams.tag;
 	// player nick top of page
-	$( '#player' ).html( p );
+	// '<div class="btn-group btn-group-xs">' + countrylink + '<a class="btn btn-default" href="#/players/'+ obj.PLAYER +'">' + obj.PLAYER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/players/' + obj.PLAYER + '">Player profile</a></li><li><a href="#/race/players/' + obj.PLAYER + '">Race profile</a></li><li><a href="#/owners/' + obj.PLAYER + '">Owner profile</a></li></ul></div></a></div> ' + clanlink;
+	$( '#player' ).html( '<div class="btn-group btn-group-lg"><a class="btn btn-default" href="#/players/'+ p +'">' + p + '</a><div class="btn-group btn-group-lg"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/players/' + p + '">Player profile</a></li><li><a href="#/race/players/' + p + '">Race profile</a></li><li><a href="#/owners/' + p + '">Owner profile</a></li></ul></div></a></div>' );
 	// player nick append to gametype buttons href
 	$( 'a.gametypebuttons' ).each( function() {
 		var _href = $(this).attr( "href" );
@@ -1243,6 +1289,8 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			// morris
 			var gametypes = [];
 			var _gametypes = {};
+			var rulesets = [];
+			var _rulesets = {};
 			var _maps = {};
 			var maps = [];
 			var yearmonth = [];
@@ -1254,6 +1302,7 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			for( var i in data.data ) {
 				d = data.data[i];
 				gt = d.GAME_TYPE.toLowerCase();
+				rls = d.RULESET;
 				// wins / losses / quits
 				if( d.WIN == 1 ) { wins++; }
 				else {  losses++; }
@@ -1261,6 +1310,9 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				// gametypes
 				if( gt in _gametypes ) { _gametypes[gt]++; }
 				else { _gametypes[gt] = 1; }
+				// rulesets
+				if( rls in _rulesets ) { _rulesets[rls]++; }
+				else { _rulesets[rls] = 1; }
 				// maps
 				if( d.MAP in _maps ) { _maps[d.MAP]++; }
 				else { _maps[d.MAP] = 1; }
@@ -1273,6 +1325,10 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			for( var i in _gametypes ) {
 				d = _gametypes[i];
 				gametypes.push( { label: GT[i], value: ( (_gametypes[i]/total*100) ).toFixed(2) } );
+			}
+			for( var i in _rulesets ) {
+				d = _rulesets[i];
+				rulesets.push( { label: RULESETS[i], value: ( (_rulesets[i]/total*100) ).toFixed(2) } );
 			}
 			for( var i in _maps ) {
 				d = _maps[i];
@@ -1313,6 +1369,12 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			Morris.Donut( {
 				element: 'gametypes',
 				data: gametypes,
+				formatter: function( y ) { return y + '%'; },
+			} );
+			// rulesets
+			Morris.Donut( {
+				element: 'rulesets',
+				data: rulesets,
 				formatter: function( y ) { return y + '%'; },
 			} );
 			// dynatable
@@ -1838,14 +1900,97 @@ function MapCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		},
 	} );
 }
-function GametypeCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+function GametypeOverviewCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	var gt = $routeParams.gametype;
-	var lol = theLiz.gametype( gt );
-	$scope.gametype = lol;
-	$scope.date = new Date().getTime();
+	$.ajax( {
+		url: getApiURL() + 'api/gametypes/' + gt + '/games/graphs/permonth',
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// matches
+			new Morris.Line( {
+				element: 'matchesline',
+				data: data.data,
+				xkey: 'date',
+				ykeys: [ 'c' ],
+				labels: [ 'Games' ],
+				hideHover: 'auto',
+			} );
+		},
+		error: function( data ) {
+			onError( data );
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
+	$.ajax( {
+		url: getApiURL() + 'api/gametypes/' + gt + '/overview',
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// morris
+			var _kills = [];
+			var _gametypesP = [];
+			var _gametypes = [];
+			var total_matches = 0;
+			var total_kills = 0;
+			for( var i in data.data ) {
+				d = data.data[i];
+				total_matches = total_matches + d.MATCHES_PLAYED;
+				total_kills = total_kills + d.TOTAL_KILLS;
+			}
+			// total matches / kills
+			$( '#chart_total' ).html( thousandSeparator( total_kills ) + ' total kills' );
+			$( '#chart2_total' ).html( thousandSeparator( total_matches ) + ' total matches' );
+			var _k = 0;
+			for( var i in data.data ) {
+				d = data.data[i];
+				_kills.push( { label: GT[d.GAME_TYPE], value: d.TOTAL_KILLS } );
+				_gametypes.push( { label: GT[d.GAME_TYPE], value: d.MATCHES_PLAYED } );
+				_gametypesP.push( { label: GT[d.GAME_TYPE], value: ( (d.MATCHES_PLAYED/total_matches*100) ).toFixed(1) } );
+			}
+			// gametypes matches
+			Morris.Donut( {
+				element: 'chart',
+				data: _kills,
+				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_kills*100 ).toFixed(1) + '%)'; },
+			} );
+			Morris.Donut( {
+				element: 'chart2',
+				data: _gametypes,
+				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_matches*100 ).toFixed(1) + '%)'; },
+			} );
+			// dynatable
+			$( '#table_overview' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
+			} );
+			$( '#table_overview' ).dynatable( {
+				features: {
+					sort: true,
+					perPageSelect: false,
+					paginate: false,
+					search: false,
+					recordCount: false,
+					pushState: false,
+				},
+				table: dynatable_table,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 50,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data
+				}
+			} );
+		},
+		error: function( data ) {
+			onError( data );
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
 }
 function GametypeMapsCtrl( $scope, theLiz, $timeout, $routeParams ) {
 	var gt = $routeParams.gametype;
@@ -2456,18 +2601,22 @@ function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 			Morris.Donut( {
 				element: 'pw',
 				data: pw.sort(),
+				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'ps',
 				data: ps.sort(),
+				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'vw',
 				data: vw.sort(),
+				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'vs',
 				data: vs.sort(),
+				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			// dynatable
 			$( '#table_race' ).dynatable( {
@@ -2523,8 +2672,30 @@ function RacePlayerCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 		},
 		success: function( data ) {
 			// page stuff
-			$( '#weapons' ).html( data.data.weapons.toUpperCase() );
-			$( '#ruleset' ).html( data.data.ruleset.toUpperCase() );
+			_r = data.data.ruleset;
+			_w = data.data.weapons;
+			$( '#pql' ).attr( 'href', $( '#pql' ).attr( 'href' ) + '?ruleset=pql&weapons=' + _w );
+			$( '#vql' ).attr( 'href', $( '#vql' ).attr( 'href' ) + '?ruleset=vql&weapons=' + _w );
+			$( '#won' ).attr( 'href', $( '#won' ).attr( 'href' ) + '?ruleset=' + _r + '&weapons=on' );
+			$( '#woff' ).attr( 'href', $( '#woff' ).attr( 'href' ) + '?ruleset=' + _r + '&weapons=off' );
+			if( _r == 'pql' ) {
+				$( '.vql' ).removeClass( 'active' );
+				$( '.pql' ).addClass( 'active' );
+			}
+			else {
+				$( '.pql' ).removeClass( 'active' );
+				$( '.vql' ).addClass( 'active' );
+			}
+			if( _w == 'on' ) {
+				$( '.woff' ).removeClass( 'active' );
+				$( '.won' ).addClass( 'active' );
+			}
+			else {
+				$( '.won' ).removeClass( 'active' );
+				$( '.woff' ).addClass( 'active' );
+			}
+			//$( '#weapons' ).html( data.data.weapons.toUpperCase() );
+			//$( '#ruleset' ).html( data.data.ruleset.toUpperCase() );
 			// morris
 			var avgRank = 0;
 			var gold = 0;
@@ -3074,5 +3245,17 @@ function getCountry( c ) {
 }
 function thousandSeparator( num ) {
 	return num.toString().replace( /\B(?=(\d{3})+(?!\d))/g, "," );
+}
+function Weaponsz( self ) {
+	// buttons
+	self.parent().children().removeClass( 'active' );
+	item = self.html();
+	self.addClass( 'active' );
+	// columns
+	weaps = [ '.wkills', '.wshots', '.whits', '.wacc' ];
+	for( var i in weaps ) {
+		$( weaps[i] ).hide();
+	}
+	$( '.w' + item ).show();
 }
 

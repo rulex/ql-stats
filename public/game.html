@@ -73,31 +73,79 @@
 
 <div class="row-fluid" style="clear: both;">
 
-		<table id="players_table" class="table table-condensed table-hover table-bordered">
-			<thead>
-				<tr>
-					<th data-dynatable-column="PLAYER">PLAYER<span class="pull-right"><small>CLAN</small></span></th>
-					<th data-dynatable-column="RANK" title="RANK">R</th>
-					<th class="teamgame" data-dynatable-column="TEAM_RANK" title="TEAM_RANK">TR</th>
-					<th class="teamgame" data-dynatable-column="TEAM">TEAM</th>
-					<th data-dynatable-column="PLAY_TIME">PLAY TIME</th>
-					<th data-dynatable-column="SCORE" title="SCORE">S</th>
-					<th class="antirace" data-dynatable-column="KILLS" title="KILLS">K</th>
-					<th data-dynatable-column="DEATHS" title="DEATHS">D</th>
-					<th class="antirace" data-dynatable-column="DAMAGE_DEALT" title="DAMAGE_DEALT">DD</th>
-					<th class="antirace" data-dynatable-column="DAMAGE_TAKEN" title="DAMAGE_TAKEN">DT</th>
-					<th class="antirace" data-dynatable-column="IMPRESSIVE" title="IMPRESSIVE">I</th>
-					<th class="antirace" data-dynatable-column="EXCELLENT" title="EXCELLENT">E</th>
-					<th class="antirace" data-dynatable-column="HUMILIATION" title="HUMILIATION">H</th>
-					<th class="antirace" data-dynatable-column="ACC">ACC</th>
-					<th class="antirace" data-dynatable-column="RL" title="ROCKET LAUNCHER">RL</th>
-					<th class="antirace" data-dynatable-column="RG" title="RAIL GUN">RG</th>
-					<th class="antirace" data-dynatable-column="LG" title="LIGHTNING GUN">LG</th>
-				</tr>
-			</thead>
-			<tbody>
-			</tbody>
-		</table>
+	<div class="pull-right">
+		<label>Weapon</label>
+		<div class="btn-group btn-group-sm">
+			<div class="btn btn-default active" onclick="Weaponsz($(this));">kills</div>
+			<div class="btn btn-default " onclick="Weaponsz($(this));">shots</div>
+			<div class="btn btn-default " onclick="Weaponsz($(this));">hits</div>
+			<div class="btn btn-default " onclick="Weaponsz($(this));">acc</div>
+		</div>
+	</div>
+	<table id="players_table" class="table table-condensed table-hover table-bordered">
+		<thead>
+			<tr>
+				<th data-dynatable-column="PLAYER">PLAYER<span class="pull-right"><small>CLAN</small></span></th>
+				<th data-dynatable-column="RANK" title="RANK">R</th>
+				<th class="teamgame" data-dynatable-column="TEAM_RANK" title="TEAM_RANK">TR</th>
+				<th class="teamgame" data-dynatable-column="TEAM">TEAM</th>
+				<th data-dynatable-column="PLAY_TIME">PLAY TIME</th>
+				<th data-dynatable-column="SCORE" title="SCORE">S</th>
+				<th class="antirace" data-dynatable-column="KILLS" title="KILLS">K</th>
+				<th data-dynatable-column="DEATHS" title="DEATHS">D</th>
+				<th class="antirace" data-dynatable-column="DAMAGE_DEALT" title="DAMAGE_DEALT">DD</th>
+				<th class="antirace" data-dynatable-column="DAMAGE_TAKEN" title="DAMAGE_TAKEN">DT</th>
+				<th class="antirace" data-dynatable-column="IMPRESSIVE" title="IMPRESSIVE">I</th>
+				<th class="antirace" data-dynatable-column="EXCELLENT" title="EXCELLENT">E</th>
+				<th class="antirace" data-dynatable-column="HUMILIATION" title="HUMILIATION">H</th>
+				<th class="antirace" data-dynatable-column="ACC">ACC</th>
+				<!--
+				<th class="antirace" data-dynatable-column="RL" title="ROCKET LAUNCHER">RL</th>
+				<th class="antirace" data-dynatable-column="RG" title="RAIL GUN">RG</th>
+				<th class="antirace" data-dynatable-column="LG" title="LIGHTNING GUN">LG</th>
+				-->
+				<!-- weapon kills -->
+				<th class="antirace wkills" data-dynatable-column="G_K" title="Gauntlet">G</th>
+				<th class="antirace wkills" data-dynatable-column="RL_K" title="ROCKET LAUNCHER">RL</th>
+				<th class="antirace wkills" data-dynatable-column="RG_K" title="Rail">RG</th>
+				<th class="antirace wkills" data-dynatable-column="LG_K" title="Lightning gun">LG</th>
+				<th class="antirace wkills" data-dynatable-column="GL_K" title="Grenade launcher">GL</th>
+				<th class="antirace wkills" data-dynatable-column="PG_K" title="Plasma gun">PG</th>
+				<th class="antirace wkills" data-dynatable-column="HMG_K" title="HMG">HMG</th>
+				<th class="antirace wkills" data-dynatable-column="MG_K" title="Machine gun">MG</th>
+				<th class="antirace wkills" data-dynatable-column="BFG_K" title="BFG">BFG</th>
+				<!-- weapon shots -->
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="RL_S" title="ROCKET LAUNCHER">RLs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="RG_S" title="Rail">RGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="LG_S" title="Lightning gun">LGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="GL_S" title="Grenade launcher">GLs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="PG_S" title="Plasma gun">PGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="HMG_S" title="HMG">HMGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="MG_S" title="Machine gun">MGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="BFG_S" title="BFG">BFGs</th>
+				<!-- weapon hits -->
+				<th class="antirace whits" style="display: none;" data-dynatable-column="RL_H" title="ROCKET LAUNCHER">RLh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="RG_H" title="Rail">RGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="LG_H" title="Lightning gun">LGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="GL_H" title="Grenade launcher">GLh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="PG_H" title="Plasma gun">PGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="HMG_H" title="HMG">HMGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="MG_H" title="Machine gun">MGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="BFG_H" title="BFG">BFGh</th>
+				<!-- weapon acc -->
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="RL_A" title="ROCKET LAUNCHER">RLa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="RG_A" title="Rail">RGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="LG_A" title="Lightning gun">LGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="GL_A" title="Grenade launcher">GLa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="PG_A" title="Plasma gun">PGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="HMG_A" title="HMG">HMGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="MG_A" title="Machine gun">MGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="BFG_A" title="BFG">BFGa</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
 
 </div>
 
