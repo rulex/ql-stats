@@ -60,7 +60,7 @@ function createSqlStatements() {
       'MG_H, MG_K, MG_S, NG_H, NG_K, NG_S, ' +
       'PG_H, PG_K, PG_S, PM_H, PM_K, PM_S, ' +
       'RG_H, RG_K, RG_S, RL_H, RL_K, RL_S, ' +
-      'SG_H, SG_K, SG_S';
+      'SG_H, SG_K, SG_S, HMG_H, HMG_K, HMG_S ';
   vals = "";
   for (i = 0, c = cols.split(",").length; i < c; i++)
     vals += ",?";
