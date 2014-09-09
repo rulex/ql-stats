@@ -12,6 +12,16 @@ function getAjaxDataType() {
 }
 
 $( function() {
+	// Morris.js inject name-drawing
+	var originalDrawEvent = Morris.Grid.prototype.drawEvent;
+	Morris.Grid.prototype.gridDefaults.eventTextSize = 12;
+	Morris.Grid.prototype.drawEvent = function( event, color ) {
+		originalDrawEvent.apply( this, arguments );
+		var idx = $.inArray( event, this.events );
+		if( ! this.options.eventLabels || ! this.options.eventLabels[idx] )
+			return;
+		this.raphael.text( this.transX( event ),this.top - this.options.eventTextSize, this.options.eventLabels[idx] ).attr( 'stroke', color ).attr( 'font-size', this.options.eventTextSize );
+	}
 	// countries.json
 	$.ajax( {
 		url: 'countries.json',
@@ -396,17 +406,25 @@ function OverviewCtrl( $scope, theLiz, $timeout ) {
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
-		url: getApiURL() + 'api/games/graphs/permonth',
+		url: getApiURL() + 'api/games/graphs/perweek',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// matches
+			dt = [];
+			for( var i in data.data ) {
+				d = data.data[i];
+				dt.push( { date: d.year + ' W' + d.week, c: d.c } );
+			}
 			new Morris.Line( {
 				element: 'matchesline',
-				data: data.data,
+				data: dt,
 				xkey: 'date',
 				ykeys: [ 'c' ],
 				labels: [ 'Games' ],
 				hideHover: 'auto',
+				events: [ '2013 W31', '2013 W44', '2014-08-27' ],
+				eventLineColors: [ '#B78779', '#7580AF' ],
+				eventLabels: [ 'Start Developing', 'Start Auto Collecting', 'New QL RLS' ],
 			} );
 		},
 		error: function( data ) {
@@ -513,6 +531,9 @@ function RulesetOverviewCtrl( $scope, theLiz, $timeout, $routeParams ) {
 				ykeys: [ 'c' ],
 				labels: [ 'Games' ],
 				hideHover: 'auto',
+				events: [ '2013 W31', '2013 W44', '2014-08-27' ],
+				eventLineColors: [ '#B78779', '#7580AF' ],
+				eventLabels: [ 'Start Developing', 'Start Auto Collecting', 'New QL RLS' ],
 			} );
 		},
 		error: function( data ) {
@@ -1868,17 +1889,25 @@ function GametypeOverviewCtrl( $scope, theLiz, $routeParams, $location, $timeout
 	$( '#current_url' ).html( printLocations() );
 	var gt = $routeParams.gametype;
 	$.ajax( {
-		url: getApiURL() + 'api/gametypes/' + gt + '/games/graphs/permonth',
+		url: getApiURL() + 'api/gametypes/' + gt + '/games/graphs/perweek',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// matches
+			dt = [];
+			for( var i in data.data ) {
+				d = data.data[i];
+				dt.push( { date: d.year + ' W' + d.week, c: d.c } );
+			}
 			new Morris.Line( {
 				element: 'matchesline',
-				data: data.data,
+				data: dt,
 				xkey: 'date',
 				ykeys: [ 'c' ],
 				labels: [ 'Games' ],
 				hideHover: 'auto',
+				events: [ '2013 W31', '2013 W44', '2014-08-27' ],
+				eventLineColors: [ '#B78779', '#7580AF' ],
+				eventLabels: [ 'Start Developing', 'Start Auto Collecting', 'New QL RLS' ],
 			} );
 		},
 		error: function( data ) {
