@@ -605,7 +605,7 @@ app.get('/api/games/:game/get', function (req, res) {
 } );
 
 app.get( '/api/owners', function ( req, res ) {
-  var sql = 'SELECT o.NAME as OWNER, count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC '
+  var sql = 'SELECT o.NAME as OWNER, o.COUNTRY as OWNER_COUNTRY,count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC '
   + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID group by o.NAME';
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
@@ -1650,6 +1650,19 @@ app.get( '/api/status/cache', function ( req, res ) {
 	qlscache.readCacheFile();
 	res.jsonp( { now: now, cached: qlscache.cacheControl } );
 	res.end();
+} );
+
+app.get( '/api/status/db/rows', function ( req, res ) {
+	var sql = 'SELECT TABLE_NAME, TABLE_ROWS  FROM INFORMATION_SCHEMA.TABLES  WHERE TABLE_SCHEMA=? ORDER BY TABLES.TABLE_ROWS DESC';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [cfg.mysql_db.database], function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
 } );
 
 app.get( '/status', function ( req, res ) {
