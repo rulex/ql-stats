@@ -133,17 +133,7 @@ var dynatable_writers = {
 		return '' + ( obj.NUM_PLAYERS/countryobj.area*1000 ).toFixed(1);
 	},
 	PLAYER: function( obj ) {
-		var clan = '';
-		var clanlink = '';
-		var country = '';
-		var countrylink = '';
-		if( 'CLAN_ID' in obj && obj.CLAN_ID !== null ) { clan = obj.CLAN; clanlink = '<small class="pull-right"><a href="#/clans/'+ obj.CLAN_ID +'">'+ obj.CLAN +'</a></small>'; }
-		if( 'COUNTRY' in obj && obj.COUNTRY !== null ) {
-			var countryobj = getCountry( obj.COUNTRY );
-			country = obj.COUNTRY.toLowerCase();
-			countrylink = '<div class="btn btn-default playerflag popthis" data-html="true" data-placement="left" data-container="body" data-content="' + countryobj.name + '" ><img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ country +'_v2013071601.0.gif" alt="'+ country.toUpperCase() +'" /></div>';
-		}
-		return '<div class="btn-group btn-group-xs">' + countrylink + '<a class="btn btn-default" href="#/players/'+ obj.PLAYER +'">' + obj.PLAYER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/players/' + obj.PLAYER + '">Player profile</a></li><li><a href="#/race/players/' + obj.PLAYER + '">Race profile</a></li><li><a href="#/owners/' + obj.PLAYER + '">Owner profile</a></li></ul></div></a></div> ' + clanlink;
+		return mkPlayerButton( obj, 'PLAYER', 'COUNTRY' );
 	},
 	CLAN: function( obj ) {
 		if( obj.CLAN_ID !== null )
@@ -217,10 +207,7 @@ var dynatable_writers = {
 		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ (obj.DAMAGE_DEALT/obj.PLAY_TIME).toFixed(2) +' dmg/sec  ' + ( obj.DAMAGE_DEALT - obj.DAMAGE_TAKEN ) + ' netDMG">'+ thousandSeparator( obj.DAMAGE_DEALT ) +'</span>';
 	},
 	OWNER: function( obj ) {
-		if( obj.OWNER !== null && obj.OWNER_ID != 269750 && obj.OWNER != "" )
-			return '<div class="btn-group btn-group-xs"><a class="btn btn-default" href="#/owners/'+ obj.OWNER +'">' + obj.OWNER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/owners/' + obj.OWNER + '">Owner profile</a></li><li><a href="#/players/' + obj.OWNER + '">Player profile</a></li><li><a href="#/race/players/' + obj.OWNER + '">Race profile</a></li></ul></div></a></div>';
-		else
-			return '';
+		return mkPlayerButton( obj, 'OWNER', 'OWNER_COUNTRY' );
 	},
 	PUBLIC_ID: function( obj ) {
 		return '<a href="#/games/'+ obj.PUBLIC_ID +'">' + shortenPID( obj.PUBLIC_ID ) + '</a>';
@@ -244,32 +231,7 @@ var dynatable_writers = {
 		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.PLAY_TIME +' sec">'+ timediff( obj.PLAY_TIME * 1000 ) +'</div></span>';
 	},
 	GAME_TYPE: function( obj ) {
-		var ranked = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
-		var ruleset = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Classic Ruleset">C</div>';
-		var premium = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
-		var gt = '';
-		if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
-		else { gt = obj.GAME_TYPE.toLowerCase(); }
-		if( obj.RANKED == 1 ) { ranked = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Ranked match">R</div>'; }
-		if( obj.RULESET == 2 ) { ruleset = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Turbo Ruleset">T</div>'; }
-		if( obj.RULESET == 3 ) { ruleset = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="QL Ruleset">Q</div>'; }
-		if( obj.PREMIUM == 1 ) { premium = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
-		var _ranked = '';
-		var _ruleset = '';
-		var _premium = '';
-		if( 'RANKED' in obj && 'RULESET' in obj && 'PREMIUM' in obj ) {
-			_ranked = 'UNRANKED';
-			_ruleset = 'CLASSIC';
-			_premium = 'STANDARD';
-			if( obj.RANKED == 1 ) { _ranked = 'RANKED'; }
-			if( obj.RULESET == 2 ) { _ruleset = 'TURBO'; }
-			else if( obj.RULESET == 3 ) { _ruleset = 'QL'; }
-			if( obj.PREMIUM == 1 ) { _premium = 'PREMIUM'; }
-		}
-		var gt = '';
-		if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
-		else { gt = obj.GAME_TYPE.toLowerCase(); }
-		return '<div class="btn-group btn-group-xs"><div class="popthis btn btn-default" data-html="true" data-container="body" data-placement="left" data-content="' + GT[gt] + '" > <a title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + '</a></div>' + ruleset + ranked + premium + '</div>';
+		return mkGameType( obj );
 	},
 	SCORE: function( obj ) {
 		return thousandSeparator( obj.SCORE );
@@ -3257,5 +3219,78 @@ function Weaponsz( self ) {
 		$( weaps[i] ).hide();
 	}
 	$( '.w' + item ).show();
+}
+function mkPlayerButton( obj, nickProperty, countryProperty ) {
+	countryBtn = mkCountryButton( obj[countryProperty] );
+	nickname = obj[nickProperty];
+	if( nickname == '' )
+		return '';
+	var out = [];
+	out.push( '<div class="btn-group btn-group-xs">' );
+	out.push( countryBtn );
+	out.push( '<a class="btn btn-default" href="#/players/'+ nickname +'">' + nickname + '</a>' );
+	out.push( '<div class="btn-group btn-group-xs">' );
+	out.push( '<a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>' );
+	out.push( '<ul class="dropdown-menu" >' );
+	out.push( '<li><a href="#/players/' + nickname + '">Player profile</a></li>' );
+	out.push( '<li><a href="#/race/players/' + nickname + '">Race profile</a></li>' );
+	out.push( '<li><a href="#/owners/' + nickname + '">Owner profile</a></li></ul></div></a></div>' );
+	out.push( mkPlayerClanLink( obj ) );
+	out.push( '</div>' );
+	return out.join( '' );
+}
+function mkCountryButton( c ) {
+	if( c !== null && typeof c != 'undefined' && c != '' ) {
+		var country = '';
+		var countrylink = [];
+		var countryobj = getCountry( c );
+		country = c.toLowerCase();
+		countrylink.push( '<div class="btn btn-default playerflag popthis" data-html="true" data-placement="left" data-container="body" data-content="' + countryobj.name + '" >' );
+		countrylink.push( '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ country +'_v2013071601.0.gif" alt="'+ country.toUpperCase() +'" />' );
+		countrylink.push( '</div>' );
+		return countrylink.join( '' );
+	}
+	return '';
+}
+function mkPlayerClanLink( obj ) {
+	var clan = '';
+	var clanlink = '';
+	if( 'CLAN_ID' in obj && obj.CLAN_ID !== null && obj.CLAN_ID != '' ) { clan = obj.CLAN; clanlink = '<small class="pull-right"><a href="#/clans/'+ obj.CLAN_ID +'">'+ obj.CLAN +'</a></small>'; }
+	return clanlink;
+}
+function mkGameType( obj ) {
+	var ranked = '';
+	var ruleset = '';
+	var premium = '';
+	var gt = '';
+	if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
+	else { gt = obj.GAME_TYPE.toLowerCase(); }
+	if( 'RANKED' in obj && 'RULESET' in obj && 'PREMIUM' in obj ) {
+		ranked = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
+		ruleset = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Classic Ruleset">C</div>';
+		premium = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
+		if( obj.RANKED == 1 ) { ranked = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Ranked match">R</div>'; }
+		if( obj.RULESET == 2 ) { ruleset = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Turbo Ruleset">T</div>'; }
+		if( obj.RULESET == 3 ) { ruleset = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="QL Ruleset">Q</div>'; }
+		if( obj.PREMIUM == 1 ) { premium = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
+	}
+	else {
+	}
+	var _ranked = '';
+	var _ruleset = '';
+	var _premium = '';
+	if( 'RANKED' in obj && 'RULESET' in obj && 'PREMIUM' in obj ) {
+		_ranked = 'UNRANKED';
+		_ruleset = 'CLASSIC';
+		_premium = 'STANDARD';
+		if( obj.RANKED == 1 ) { _ranked = 'RANKED'; }
+		if( obj.RULESET == 2 ) { _ruleset = 'TURBO'; }
+		else if( obj.RULESET == 3 ) { _ruleset = 'QL'; }
+		if( obj.PREMIUM == 1 ) { _premium = 'PREMIUM'; }
+	}
+	var gt = '';
+	if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
+	else { gt = obj.GAME_TYPE.toLowerCase(); }
+	return '<div class="btn-group btn-group-xs"><div class="popthis btn btn-default" data-html="true" data-container="body" data-placement="left" data-content="' + GT[gt] + '" > <a title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + '</a></div>' + ruleset + ranked + premium + '</div>';
 }
 
