@@ -463,7 +463,42 @@ app.get( '/api/games', function ( req, res ) {
 } );
 
 app.get( '/api/games/graphs/permonth', function ( req, res ) {
-  var sql = 'select FROM_UNIXTIME(GAME_TIMESTAMP,"%Y-%m") as date, year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, day(FROM_UNIXTIME(GAME_TIMESTAMP)) as day,count(GAME_TIMESTAMP) as c from Game group by year, month ;';
+  var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game group by year, month';
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.route.path );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [], req.route.path )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [], req.route.path )
+		.then( function( rows ) {
+			qlscache.writeCache( req.route.path, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+
+app.get( '/api/games/graphs/perweek', function ( req, res ) {
+  var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, count(GAME_TIMESTAMP) as c from Game group by year, week ;';
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( req.route.path );
 	if( routeStatus === 'MISSING' ) {
@@ -959,8 +994,45 @@ app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
 } );
 
 app.get( '/api/gametypes/:gametype/games/graphs/permonth', function( req, res ) {
-  var gt = req.params.gametype;
-  var sql = 'select FROM_UNIXTIME(GAME_TIMESTAMP,"%Y-%m") as date, year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, day(FROM_UNIXTIME(GAME_TIMESTAMP)) as day,count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, month ;';
+	var gt = req.params.gametype;
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, month';
+	var routePath = req.route.path + gt;
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( routePath );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [gt], routePath )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [gt], routePath )
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+
+app.get( '/api/gametypes/:gametype/games/graphs/perweek', function( req, res ) {
+	var gt = req.params.gametype;
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, week';
 	var routePath = req.route.path + gt;
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( routePath );
@@ -1493,6 +1565,21 @@ app.get( '/api/maps/:map/graphs/permonth', function ( req, res ) {
 	} );
 } );
 
+app.get( '/api/maps/:map/graphs/perweek', function ( req, res ) {
+  var map = mysql_real_escape_string( req.params.map );
+	var sql = 'select year(from_unixtime(GAME_TIMESTAMP)) as year, week(from_unixtime(GAME_TIMESTAMP)) as week, count(MAP_ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where m.NAME="'+ map +'" group by year, week';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+
 app.get( '/api/clans', function ( req, res ) {
 	var sql = 'select c.ID as CLAN_ID, c.NAME as CLAN from Clan c';
 	qlscache.readCacheFile();
@@ -1863,8 +1950,44 @@ app.get( '/api/rulesets/:ruleset/overview', function( req, res ) {
 	}
 } );
 app.get( '/api/rulesets/:ruleset/games/graphs/permonth', function( req, res ) {
-  var ruleset = req.params.ruleset;
-  var sql = 'select FROM_UNIXTIME(GAME_TIMESTAMP,"%Y-%m") as date, year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, day(FROM_UNIXTIME(GAME_TIMESTAMP)) as day,count(GAME_TIMESTAMP) as c from Game where RULESET=? group by year, month ;';
+	var ruleset = req.params.ruleset;
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game where RULESET=? group by year, month';
+	var routePath = req.route.path + ruleset;
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( routePath );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [ruleset], routePath )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [ruleset], routePath )
+		.then( function( rows ) {
+			qlscache.writeCache( routePath, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( routePath );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+app.get( '/api/rulesets/:ruleset/games/graphs/perweek', function( req, res ) {
+	var ruleset = req.params.ruleset;
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where RULESET=? group by year, week';
 	var routePath = req.route.path + ruleset;
 	qlscache.readCacheFile();
 	var routeStatus = qlscache.checkRoute( routePath );
