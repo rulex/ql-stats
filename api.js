@@ -29,6 +29,7 @@ try {
 }
 catch( err ) {
 	_logger.error( 'failed to parse cfg: ' + err );
+	process.exit();
 }
 
 //multipleStatements: true,
@@ -36,6 +37,11 @@ cfg.mysql_db.multipleStatements = true;
 cfg.mysql_db.waitForConnections = false;
 cfg.mysql_db.connectionLimit = 15;
 var dbpool = mysql.createPool( cfg.mysql_db );
+
+// core
+var ldcore = require( './ldcore.js' );
+ldcore.init( dbpool, { useCache: false } );
+ldcore.loginToQuakeliveWebsite();
 
 // counter
 var requests_counter = 0;
@@ -367,39 +373,41 @@ app.get( '/api/players/:player/clans', function ( req, res ) {
 } );
 
 app.get( '/api/players/:player/update', function ( req, res ) {
+  var queryObject = url.parse( req.url, true ).query;
   if (!allow_update) {
     res.jsonp({ data: {}, error: [{ not_allowed: "" }] });
     res.end();
     return;
   }
-
-  var nick = mysql_real_escape_string(req.params.player);
 	var d = new Date();
-	var url = 'http://www.quakelive.com/profile/matches_by_week/' + nick + '/' + d.getFullYear() + '-' + ( d.getMonth() + 1 ) + '-' + d.getUTCDate();
+	var _date = d.getFullYear() + '-' + ( d.getMonth() + 1 ) + '-' + d.getUTCDate();
+	if( typeof queryObject.date != 'undefined' ) { _date = queryObject.date; }
+  var nick = mysql_real_escape_string(req.params.player);
+	var _url = 'http://www.quakelive.com/profile/matches_by_week/' + nick + '/' + _date;
 
-  request( url, function( err, resp, body ) {
+  request( _url, function( err, resp, body ) {
 		if( err ) { throw err; }
 		$ = cheerio.load( body );
 
-		var loader = require('./ldcore.js');
 		var conn;
 		var updatedGames = [];
 		var scanned = 0;
     Q.ninvoke(dbpool, "getConnection")
 			.then(function(c) { conn = c; })
-			.then(function() { return loader.init(conn, { useCache: false })
+			.then(function() { return ldcore.init(conn, { useCache: false })
 			.then(function() {
         var tasks = [];
         $('.areaMapC').each(function () {
           ++scanned;
           var publicId = $(this).attr('id').split('_')[1];
           tasks.push(
-            loader.query('SELECT PUBLIC_ID FROM Game WHERE PUBLIC_ID=?', [publicId])
+            ldcore.query( 'SELECT PUBLIC_ID FROM Game WHERE PUBLIC_ID=?', [publicId] )
             .then(function(result) {
               if (result.length == 0) {
-                updatedGames.push(publicId);
-                return get_game(loader, publicId);
-              } else {
+                updatedGames.push( publicId );
+                return get_game( ldcore, publicId );
+              }
+							else {
                 return undefined;
               }
             })
@@ -617,23 +625,22 @@ app.get( '/api/games/:game/tags', function( req, res ) {
 app.get('/api/games/:game/get', function (req, res) {
   var publicId = req.params.game;
 	var sql = 'select PUBLIC_ID from Game where PUBLIC_ID=?';
-	var loader = require('./ldcore.js');
   var conn;
-  Q.ninvoke(dbpool, "getConnection")
-    .then(function(c) { conn = c; })
-    .then(function() { return loader.init(conn, { useCache: false }); })
-    .then(function() { return loader.query(sql, [publicId]); })
-    .then(function(rows) {
-      if (rows.length)
-        throw new Error("already exist");
-      return get_game(loader, publicId);
+  Q.ninvoke( dbpool, "getConnection" )
+    .then( function(c) { conn = c; } )
+    .then( function() { return ldcore.init( conn, { useCache: false } ); } )
+    .then( function() { return ldcore.query( sql, [publicId]); } )
+    .then( function(rows) {
+      if( rows.length )
+        _logger.log( "already exist" );
+      return get_game( ldcore, publicId );
     })
-    .then(function() {
-      res.jsonp({ data: { PUBLIC_ID: publicId } });
+    .then( function() {
+      res.jsonp( { data: { PUBLIC_ID: publicId } } );
       res.end();
     })
-    .fail(function (err) {
-      res.jsonp({ data: {}, error: err });
+    .fail( function( err ) {
+      res.jsonp( { data: {}, error: err } );
       res.end();
     })
     .finally(function() { conn.Release(); });
@@ -2112,15 +2119,16 @@ function mysql_real_escape_string( str ) {
 }
 
 // get game
-function get_game(loader, game_public_id) {
+function get_game( ldcore, game_public_id ) {
 	var url2 = 'http://www.quakelive.com/stats/matchdetails/' + "";
-	request( url2 + game_public_id, function( err, resp, body ) {
+	request( { uri: url2 + game_public_id, jar: ldcore._cookieJar, method: 'GET', timeout: 10000 }, function( err, resp, body ) {
+		console.log( body ); // ASDF
 		var j = JSON.parse( body );
 		// save to disk
 		if( j.UNAVAILABLE != 1 ) {
-		  return loader.processGame(j);
+		  return ldcore.processGame(j);
 		}
-	  return Q(undefined);
+	  return Q( undefined );
 	} );
 }
 
