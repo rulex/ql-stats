@@ -89,7 +89,6 @@ CREATE TABLE GamePlayer(
 	SHOTS integer,
 	TEAM tinyint,
 	TEAM_RANK tinyint,
-	HUMILIATION smallint,
 	IMPRESSIVE smallint,
 	EXCELLENT smallint,
 	PLAY_TIME smallint,
