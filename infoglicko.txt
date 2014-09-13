@@ -1,0 +1,48 @@
+initial draft
+add * except duel 
+AND ABS(GAME_LENGTH - PLAY_TIME) < 60 (so that a max of 1 minute difference) (timeout on league matches no more than 3 minutes usually)
+
+
+Duel
+WHERE map.NAME IN ('Aerowalk', 'Battleforged', 'BloodRun', 'Campgrounds', 'Cure', 'FuriousHeights', 'Lostworld', 'Sinister', 'Toxicity') AND game.GAME_TYPE = 'duel' and game.RULESET = 1
+
+TDM
+WHERE game.NUM_Players > 5 AND game.GAME_TYPE = 'tdm' AND map.NAME IN ('arcanecitadel', 'dreadfulplace', 'deepinside', 'grimdungeons', 'hiddenfortress', 'campgrounds', 'campgroundsintel', 'limbus', 'purgatory', 'terminatria', 'tornado') and game.RULESET = 3 AND ABS(GAME_LENGTH - PLAY_TIME) < 180
+
+
+TDM small
+WHERE game.NUM_PLAYERS  < 6 AND game.GAME_TYPE = 'tdm' AND map.NAME IN ('almostlost', 'bloodrun', 'campgrounds', 'furiousheights', 'fuse', 'hiddenfortress', 'leftbehind', 'terminatira') and game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 180
+
+CA 
+WHERE game.NUM_PLAYERS BETWEEN '6' AND '10' AND game.GAME_TYPE = 'ca' AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+CA Small
+WHERE game.NUM_Players < 6 AND game.GAME_TYPE = 'ca' AND game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+CA Large 
+WHERE game.NUM_Players > 9 AND game.GAME_TYPE = 'ca' AND game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+CTF 
+WHERE game.NUM_Players BETWEEN '8' AND '10' AND game.GAME_TYPE = 'ctf' AND game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 120
+
+CTF small
+WHERE game.NUM_Players  < 7 AND game.GAME_TYPE = 'ctf' AND game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+CTF large
+WHERE game.NUM_Players  > 9 AND game.GAME_TYPE = 'ctf' AND game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+FFA Clasic
+WHERE game.NUM_Players  BETWEEN '6' AND '10' AND game.GAME_TYPE = 'ffa' AND game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+FFA Classic Large
+WHERE game.NUM_Players  > 8 AND game.GAME_TYPE = 'ffa' AND game.RULESET = 1 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+FFA Default
+WHERE game.NUM_Players BETWEEN '6' AND '10' AND game.GAME_TYPE = 'ffa' AND game.RULESET = 3 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+FFA Default Large
+WHERE game.NUM_Players > 7 AND game.GAME_TYPE = 'ffa' AND game.RULESET = 3 AND ABS(GAME_LENGTH - PLAY_TIME) < 60
+
+
+
+
