@@ -46,7 +46,7 @@ function main() {
     .ninvoke(_dbpool, "getConnection")
     .then(function(conn) {
       _conn = conn;
-      return ld.init(conn);
+      return ld.init( conn, { loglevel: program.loglevel } );
     })
     .then(ld.loginToQuakeliveWebsite)
     .then(fetchAndProcessJsonInfiniteLoop)
