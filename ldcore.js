@@ -66,7 +66,7 @@ function createSqlStatements() {
     'GAME_ID, PLAYER_ID, CLAN_ID, RANK, ' +
       'SCORE, QUIT, DAMAGE_DEALT, DAMAGE_TAKEN, KILLS, ' +
       'DEATHS, HITS, SHOTS, TEAM, TEAM_RANK, ' +
-      'HUMILIATION, IMPRESSIVE, EXCELLENT, PLAY_TIME, G_K, ' +
+      'IMPRESSIVE, EXCELLENT, PLAY_TIME, G_K, ' +
       'BFG_H, BFG_K, BFG_S, CG_H, CG_K, CG_S, ' +
       'GL_H, GL_K, GL_S, LG_H, LG_K, LG_S, ' +
       'MG_H, MG_K, MG_S, NG_H, NG_K, NG_S, ' +
@@ -264,7 +264,7 @@ function insertGamePlayer(p, gameId, timestamp) {
         gameId, player.ID, player.CLAN_ID, p.RANK,
         SCORE, parseInt(QUIT), p.DAMAGE_DEALT, p.DAMAGE_TAKEN, p.KILLS,
         p.DEATHS, p.HITS, p.SHOTS, TEAM, TEAM_RANK,
-        p.HUMILIATION, IMPRESSIVE, EXCELLENT, p.PLAY_TIME, p.GAUNTLET_KILLS,
+        IMPRESSIVE, EXCELLENT, p.PLAY_TIME, p.GAUNTLET_KILLS,
         p.BFG_HITS, p.BFG_KILLS, p.BFG_SHOTS, p.CHAINGUN_HITS, p.CHAINGUN_KILLS, p.CHAINGUN_SHOTS,
         p.GRENADE_HITS, p.GRENADE_KILLS, p.GRENADE_SHOTS, p.LIGHTNING_HITS, p.LIGHTNING_KILLS, p.LIGHTNING_SHOTS,
         p.MACHINEGUN_HITS, p.MACHINEGUN_KILLS, p.MACHINEGUN_SHOTS, p.NAILGUN_HITS, p.NAILGUN_KILLS, p.NAILGUN_SHOTS,
@@ -351,7 +351,7 @@ function getCachedItem(table, objWithName) {
 }
 
 function query( sql, params ) {
-	_coreLogger.debug( sql, params );
+	//_coreLogger.debug( sql, params );
   var defer = Q.defer();
   params = params || [];
   _conn.query( sql, params, function( err, result ) {
