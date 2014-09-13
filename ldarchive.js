@@ -45,7 +45,7 @@ function main() {
     .ninvoke(_dbpool, "getConnection")
     .then(function (conn) {
       _conn = conn;
-      return ld.init( conn, {} );
+      return ld.init( conn, { loglevel: program.loglevel } );
     })
     .then(loadAndProcessJsonFileLoop)
     .fail(function (err) { _logger.error(err.stack); })
@@ -134,17 +134,19 @@ function processFile(file) {
         .fcall(function() { _logger.debug("Loading " + file); })
         .then(function() { return Q.nfcall(fs.readFile, file); })
         .then(function(data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
-        .then(function(json) {
-          var game = JSON.parse(json);
-          // changed from PUBLIC_ID to GAME_EXPIRES_FULL as it is the last object in the json
-	  if (!game.GAME_EXPIRES_FULL) {
-            //_logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
-	    _logger.warn(file + ": Incomplete json data. File was ignored.");
-            return undefined;
-          }
-          return ld.processGame(game)
-            .then(function() { _profilingInfo.incProcessed(); });
-        });
+				.then(function(json) {
+					var game = JSON.parse(json);
+					// changed from PUBLIC_ID to GAME_EXPIRES_FULL as it is the last object in the json
+					/*
+					if (!game.GAME_EXPIRES_FULL) {
+						//_logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
+						_logger.warn(file + ": Incomplete json data. File was ignored.");
+						return undefined;
+					}
+					*/
+					return ld.processGame(game)
+						.then(function() { _profilingInfo.incProcessed(); });
+				});
     })
     .catch(function (err) { _logger.error(file + ": " + err); });
 }
