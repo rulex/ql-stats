@@ -6,13 +6,13 @@ var fs = require( 'fs' )
 	, Q = require( 'q' )
 ;
 var program = require( 'commander' );
-
+// changed starting figure temp for easier compare to qlranks initially
 program
 	.version( '0.0.1' )
 	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
 	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
 	.option( '-t, --tau <Number>', 'Glicko2 tau value. Default 0.5' )
-	.option( '-r, --rating <Number>', 'Glicko2 starting rating. Default 1000' )
+	.option( '-r, --rating <Number>', 'Glicko2 starting rating. Default 1250' )
 	.option( '-d, --rd <Number>', 'Glicko2 rd value. Default 200' )
 	.option( '-v, --vol <Number>', 'Glicko2 vol value. Default 0.06' )
 	.option( '-o, --output <file>', '' )
@@ -88,6 +88,7 @@ dbpool.getConnection( function( err, conn ) {
 	} );
 } );
 
+// current competitive pool as of 13th sept 14
 function _GamePlayer() {
 	var duelMaps = [
 		'aerowalk',
@@ -112,7 +113,9 @@ function _GamePlayer() {
 	sql.push( 'where g.GAME_TYPE="duel"' );
 	sql.push( 'and m.NAME in ( "' + duelMaps.join( '", "' ) + '" )' );
 	sql.push( 'and g.RANKED=1' );
-	sql.push( 'and g.GAME_LENGTH > 500' );
+	// min accepted forfeit time 2 minutes 
+	sql.push( 'and g.GAME_LENGTH > 120' );
+	// add if afk and force ready check ie dmg < 300 or should be ok. will check later on average lowest dmg and place just under over 2 week result set
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { _glickoLogger.error( err ); }
 		conn.query( sql.join( ' ' ), function( err, rows ) {
