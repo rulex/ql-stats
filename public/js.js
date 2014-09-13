@@ -3292,7 +3292,7 @@ function Weaponsz( self ) {
 	item = self.html();
 	self.addClass( 'active' );
 	// columns
-	weaps = [ '.wkills', '.wshots', '.whits', '.wacc' ];
+	weaps = [ '.wKills', '.wShots', '.wHits', '.wAccuracy' ];
 	for( var i in weaps ) {
 		$( weaps[i] ).hide();
 	}
