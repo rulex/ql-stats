@@ -15,7 +15,6 @@ exports.getCachedClan = getCachedClan;
 exports.getCachedPlayer = getCachedPlayer;
 exports.loginToQuakeliveWebsite = loginToQuakeliveWebsite;
 exports._coreLogger = _coreLogger;
-exports.initLogger = initLogger;
 exports._cookieJar = _cookieJar;
 
 var _config; // config data from cfg.json file
@@ -40,14 +39,9 @@ var _cookieJar; // www.quakelive.com login cookies
 //==========================================================================================
 
 // returns a Q promise to initialze the cache
-function initLogger() {
-  _coreLogger = log4js.getLogger( "ldcore" );
-  _coreLogger.setLevel( log4js.levels.DEBUG );
-}
 function init(conn, options) {
   _coreLogger = log4js.getLogger( "ldcore" );
-  _coreLogger.setLevel( log4js.levels.DEBUG );
- 
+  _coreLogger.setLevel( options.loglevel || log4js.levels.DEBUG );
   _conn = conn;
   createSqlStatements();
   if (!options || options.useCache !== false)

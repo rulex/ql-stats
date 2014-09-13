@@ -5,10 +5,10 @@ var fs = require( 'fs' )
 	, Q = require( 'q' )
 ;
 
-qls_logger = log4js.getLogger( "qlscache" );
-qls_logger.setLevel( log4js.levels.DEBUG );
 
-exports.init = function( ConfigFile ) {
+exports.init = function( ConfigFile, loglevel ) {
+	qls_logger = log4js.getLogger( 'qlscache' );
+	qls_logger.setLevel( loglevel || log4js.levels.DEBUG );
 	exports.file = ConfigFile.api.cache.file || './qlscache.json';
 	exports.dir = ConfigFile.api.cache.dir || './cachedir/';
 	exports.time = ConfigFile.api.cache.time || 60*60*1000;

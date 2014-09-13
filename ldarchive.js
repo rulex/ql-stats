@@ -21,22 +21,31 @@ var _conn; // DB connection
 var _cookieJar; // www.quakelive.com login cookies
 var _profilingInfo;
 
+var program = require( 'commander' );
+program
+	.version( '0.0.1' )
+	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
+	.option( '-d, --dir <directory>', 'Directory to scan' )
+	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.option( '-n, --nologin', 'Don\'t log in to quakelive.com. For use with */update & */get routes' )
+	.parse( process.argv );
+
 main();
 
 function main() {
-  _logger = log4js.getLogger("ldarchive");
-  _logger.setLevel(log4js.levels.INFO);
-  var data = fs.readFileSync(__dirname + '/cfg.json');
+  _logger = log4js.getLogger( 'ldarchive' );
+  _logger.setLevel( program.loglevel || log4js.levels.DEBUG );
+  var data = fs.readFileSync( program.config || __dirname + '/cfg.json' );
   _config = JSON.parse(data);
-//	_config.loader.jsondir = '/home/siaw/ql-stats/games/2014-05/';
-  _config.loader.jsondir = './games/'; // use relative path
-  _dbpool = mysql.createPool(_config.mysql_db);
+	_config.loader.jsondir = program.dir;
+	_config.mysql_db.database = 'qlstats2_new';
+  _dbpool = mysql.createPool( _config.mysql_db );
   Q.longStackSupport = false;
   Q
     .ninvoke(_dbpool, "getConnection")
     .then(function (conn) {
       _conn = conn;
-      return ld.init(conn);
+      return ld.init( conn, {} );
     })
     .then(loadAndProcessJsonFileLoop)
     .fail(function (err) { _logger.error(err.stack); })

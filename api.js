@@ -14,14 +14,22 @@ var log4js = require( 'log4js' );
 var race = require('./racecache.js');
 var allow_update = false;
 var bodyParser = require( 'body-parser' );
-_logger = log4js.getLogger( "api" );
-_logger.setLevel( log4js.levels.DEBUG );
+var program = require( 'commander' );
+var compress = require( 'compression' );
+var logger = require ( 'morgan' );
 
-var compress    = require('compression');
-var logger      = require ('morgan');
+program
+	.version( '0.0.3' )
+	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
+	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.option( '-n, --nologin', 'Don\'t log in to quakelive.com. For use with */update & */get routes' )
+	.parse( process.argv );
+
+_logger = log4js.getLogger( 'api' );
+_logger.setLevel( log4js.levels[program.level] || log4js.levels.DEBUG );
 
 // read cfg.json
-var data = fs.readFileSync( __dirname + '/cfg.json' );
+var data = fs.readFileSync( program.config || __dirname + '/cfg.json' );
 var cfg;
 try {
 	cfg = JSON.parse( data );
@@ -40,8 +48,10 @@ var dbpool = mysql.createPool( cfg.mysql_db );
 
 // core
 var ldcore = require( './ldcore.js' );
-ldcore.init( dbpool, { useCache: false } );
-ldcore.loginToQuakeliveWebsite();
+ldcore.init( dbpool, { useCache: false, loglevel: program.loglevel } );
+if( program.nologin ) {
+	ldcore.loginToQuakeliveWebsite();
+}
 
 // counter
 var requests_counter = 0;
@@ -51,7 +61,7 @@ var requests_counter_total = 0;
 
 // cache
 var qlscache = require( './qlscache.js' );
-qlscache.init( cfg );
+qlscache.init( cfg, program.loglevel );
 
 var maxAge_public, maxAge_api, http_cache_time;
 var env = process.env.NODE_ENV || 'development';
@@ -394,39 +404,39 @@ app.get( '/api/players/:player/update', function ( req, res ) {
 		var scanned = 0;
     Q.ninvoke(dbpool, "getConnection")
 			.then(function(c) { conn = c; })
-			.then(function() { return ldcore.init(conn, { useCache: false })
 			.then(function() {
-        var tasks = [];
-        $('.areaMapC').each(function () {
-          ++scanned;
-          var publicId = $(this).attr('id').split('_')[1];
-          tasks.push(
-            ldcore.query( 'SELECT PUBLIC_ID FROM Game WHERE PUBLIC_ID=?', [publicId] )
-            .then(function(result) {
-              if (result.length == 0) {
-                updatedGames.push( publicId );
-                return get_game( ldcore, publicId );
-              }
-							else {
-                return undefined;
-              }
-            })
-          );
-        });
-        return Q.allSettled(tasks);
-      })
-      .then(function() {
-        res.jsonp({ data: { player: nick, updated: updatedGames.length, scanned: scanned, updated_games: updatedGames } });
-        res.end();
-        })
-      .fail(function (err) {
-        res.jsonp({ data: { }, error: err });
-        res.end();
-      })
-			.finally(function () {
-			  conn.release();
-      });
-		} );
+				return ldcore.init( conn, { useCache: false } ).then(function() {
+					var tasks = [];
+					$('.areaMapC').each(function () {
+						++scanned;
+						var publicId = $(this).attr('id').split('_')[1];
+						tasks.push(
+								ldcore.query( 'SELECT PUBLIC_ID FROM Game WHERE PUBLIC_ID=?', [publicId] )
+								.then(function(result) {
+									if (result.length == 0) {
+										updatedGames.push( publicId );
+										return get_game( ldcore, publicId );
+									}
+									else {
+										return undefined;
+									}
+								})
+								);
+					});
+					return Q.allSettled(tasks);
+				})
+				.then(function() {
+					res.jsonp({ data: { player: nick, updated: updatedGames.length, scanned: scanned, updated_games: updatedGames } });
+					res.end();
+				})
+				.fail(function (err) {
+					res.jsonp({ data: { }, error: err });
+					res.end();
+				})
+				.finally(function () {
+					conn.release();
+				});
+			} );
 	} );
 } );
 

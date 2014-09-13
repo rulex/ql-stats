@@ -21,13 +21,20 @@ var _dbpool; // DB connection pool
 var _conn; // DB connection
 var _adaptivePollDelaySec = 15; // will be reduced to 60 after first (=full) batch. Values are 15,30,60,120
 var _lastGameTimestamp = ""; // last timestamp retrieved from live game tracker, used to get next incremental set of games
+var program = require( 'commander' );
+
+program
+	.version( '0.0.2' )
+	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
+	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.parse( process.argv );
 
 main();
 
 function main() {
   _logger = log4js.getLogger( "ldtracker" );
-  _logger.setLevel( log4js.levels.DEBUG );
-  var data = fs.readFileSync(__dirname + '/cfg.json');
+  _logger.setLevel( program.loglevel || log4js.levels.DEBUG );
+  var data = fs.readFileSync( program.config || __dirname + '/cfg.json' );
   _config = JSON.parse(data);
   if (!(_config.loader.saveDownloadedJson || _config.loader.importDownloadedJson)) {
     _logger.error("At least one of loader.saveDownloadedJson or loader.importDownloadedJson must be set in cfg.json");
