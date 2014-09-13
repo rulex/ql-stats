@@ -208,7 +208,7 @@ var dynatable_writers = {
 		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.EXCELLENT/obj.MATCHES_PLAYED).toFixed(2) +' exc/game on average">'+ obj.EXCELLENT +'</span>';
 	},
 	HUMILIATION: function( obj ) {
-		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.HUMILIATION/obj.MATCHES_PLAYED).toFixed(2) +' hum/game on average">'+ obj.HUMILIATION +'</span>';
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.G_K/obj.MATCHES_PLAYED).toFixed(2) +' hum/game on average">'+ obj.G_K +'</span>';
 	},
 	DAMAGE_TAKEN: function( obj ) {
 		return thousandSeparator( obj.DAMAGE_TAKEN );
@@ -1072,7 +1072,7 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				kills.push( { label: p[i].PLAYER, value: p[i].KILLS } );
 				_imp.push( { label: p[i].PLAYER, value: p[i].IMPRESSIVE } );
 				_exc.push( { label: p[i].PLAYER, value: p[i].EXCELLENT } );
-				_hum.push( { label: p[i].PLAYER, value: p[i].HUMILIATION } );
+				_hum.push( { label: p[i].PLAYER, value: p[i].G_K } );
 			}
 			Morris.Donut( {
 				element: 'kills',
