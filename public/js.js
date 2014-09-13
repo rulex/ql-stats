@@ -118,6 +118,23 @@ var GT = {
 	fctf: 'fctf',
 }
 
+var morris_events = [
+	//'2013-07-16',
+	'2013 W31',
+	'2013 W44',
+	'2013-12-17',
+	'2014-07-19',
+	'2014-08-27',
+];
+var morris_eventLabels = [
+	//'Race',
+	'Start Developing',
+	'Start Auto Collecting',
+	'Standalone',
+	'QC2014',
+	'New QL rulesets',
+];
+
 var dynatable_table = {
 	headRowClass: 'well well-sm',
 	copyHeaderClass: true,
@@ -175,7 +192,7 @@ var dynatable_writers = {
 	},
 	RANK: function( obj ) {
 		if( obj.RANK == -1 ) {
-			return '<span data-toggle="tooltip" class="btn btn-xs btn-danger popthis" data-placement="left" data-content="Quit">'+ obj.RANK +'</span>';
+			return '<span data-toggle="tooltip" class="btn btn-xs btn-danger popthis" data-placement="left" data-content="Quit"><i>'+ obj.RANK +'</i></span>';
 		}
 		else {
 			return obj.RANK;
@@ -183,7 +200,7 @@ var dynatable_writers = {
 	},
 	TEAM_RANK: function( obj ) {
 		if( obj.TEAM_RANK == -1 ) {
-			return '<span data-toggle="tooltip" class="btn btn-xs btn-danger popthis" data-placement="left" data-content="Quit">'+ obj.TEAM_RANK +'</span>';
+			return '<span data-toggle="tooltip" class="btn btn-xs btn-danger popthis" data-placement="left" data-content="Quit"><i>'+ obj.TEAM_RANK +'</i></span>';
 		}
 		else {
 			return obj.TEAM_RANK;
@@ -214,7 +231,7 @@ var dynatable_writers = {
 		return thousandSeparator( obj.DAMAGE_TAKEN );
 	},
 	DAMAGE_DEALT: function( obj ) {
-		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ (obj.DAMAGE_DEALT/obj.PLAY_TIME).toFixed(2) +' dmg/sec  ' + ( obj.DAMAGE_DEALT - obj.DAMAGE_TAKEN ) + ' netDMG">'+ thousandSeparator( obj.DAMAGE_DEALT ) +'</span>';
+		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ (obj.DAMAGE_DEALT/obj.PLAY_TIME).toFixed(2) +' dmg/sec  ' + ( obj.DAMAGE_DEALT - obj.DAMAGE_TAKEN ) + ' netDMG"><i>'+ thousandSeparator( obj.DAMAGE_DEALT ) +'</i></span>';
 	},
 	OWNER: function( obj ) {
 		return mkPlayerButton( obj, 'OWNER', 'OWNER_COUNTRY' );
@@ -238,7 +255,7 @@ var dynatable_writers = {
 		return timediff( obj.GAME_LENGTH * 1000 );
 	},
 	PLAY_TIME: function( obj ) {
-		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.PLAY_TIME +' sec">'+ timediff( obj.PLAY_TIME * 1000 ) +'</div></span>';
+		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ obj.PLAY_TIME +' sec"><i>'+ timediff( obj.PLAY_TIME * 1000 ) +'</i></div></span>';
 	},
 	GAME_TYPE: function( obj ) {
 		return mkGameType( obj );
@@ -285,9 +302,9 @@ var dynatable_writers = {
 	ACC: function( obj ) {
 		// this->
 		if( 'HITS' in obj && 'SHOTS' in obj )
-			return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="'+ obj.HITS + ' hits of ' + obj.SHOTS + ' shots">'+ ( obj.HITS / obj.SHOTS * 100 ).toFixed(1) +'%</span>';
+			return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ obj.HITS + ' hits of ' + obj.SHOTS + ' shots"><i>'+ ( obj.HITS / obj.SHOTS * 100 ).toFixed(1) +'%</i></span>';
 		else if( 'ACC' in obj )
-			return '<span>'+ obj.ACC +'%</span>';
+			return '<span><i>'+ obj.ACC +'%</i></span>';
 	},
 	RL: function( obj ) {
 		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="' + obj.RL_K + ' kills '+ obj.RL_H + ' hits of ' + obj.RL_S + ' shots">'+ ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) +'%</span>';
@@ -299,6 +316,37 @@ var dynatable_writers = {
 		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="' + obj.LG_K + ' kills '+ obj.LG_H + ' hits of ' + obj.LG_S + ' shots">'+ ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) +'%</span>';
 		return '<span data-toggle="tooltip" data-placement="left" title="'+ obj.LG_H + ' hits of ' + obj.LG_S + ' shots.">' + ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%</span>';
 	},
+	// kills
+	G_K: function( obj ) { return ( obj.G_K > 0 ) ? obj.G_K : '-'; },
+	RL_K: function( obj ) { return ( obj.RL_K > 0 ) ? obj.RL_K : '-'; },
+	RG_K: function( obj ) { return ( obj.RG_K > 0 ) ? obj.RG_K : '-'; },
+	LG_K: function( obj ) { return ( obj.LG_K > 0 ) ? obj.LG_K : '-'; },
+	GL_K: function( obj ) { return ( obj.GL_K > 0 ) ? obj.GL_K : '-'; },
+	PG_K: function( obj ) { return ( obj.PG_K > 0 ) ? obj.PG_K : '-'; },
+	HMG_K: function( obj ) { return ( obj.HMG_K > 0 ) ? obj.HMG_K : '-'; },
+	MG_K: function( obj ) { return ( obj.MG_K > 0 ) ? obj.MG_K : '-'; },
+	BFG_K: function( obj ) { return ( obj.BFG_K > 0 ) ? obj.BFG_K : '-'; },
+	// shots
+	G_S: function( obj ) { return ( obj.G_S > 0 ) ? thousandSeparator( obj.G_S ) : '-'; },
+	RL_S: function( obj ) { return ( obj.RL_S > 0 ) ? thousandSeparator( obj.RL_S ) : '-'; },
+	RG_S: function( obj ) { return ( obj.RG_S > 0 ) ? thousandSeparator( obj.RG_S ) : '-'; },
+	LG_S: function( obj ) { return ( obj.LG_S > 0 ) ? thousandSeparator( obj.LG_S ) : '-'; },
+	GL_S: function( obj ) { return ( obj.GL_S > 0 ) ? thousandSeparator( obj.GL_S ) : '-'; },
+	PG_S: function( obj ) { return ( obj.PG_S > 0 ) ? thousandSeparator( obj.PG_S ) : '-'; },
+	HMG_S: function( obj ) { return ( obj.HMG_S > 0 ) ? thousandSeparator( obj.HMG_S ) : '-'; },
+	MG_S: function( obj ) { return ( obj.MG_S > 0 ) ? thousandSeparator( obj.MG_S ) : '-'; },
+	BFG_S: function( obj ) { return ( obj.BFG_S > 0 ) ? thousandSeparator( obj.BFG_S ) : '-'; },
+	// hits
+	G_H: function( obj ) { return ( obj.G_H > 0 ) ? thousandSeparator( obj.G_H ) : '-'; },
+	RL_H: function( obj ) { return ( obj.RL_H > 0 ) ? thousandSeparator( obj.RL_H ) : '-'; },
+	RG_H: function( obj ) { return ( obj.RG_H > 0 ) ? thousandSeparator( obj.RG_H ) : '-'; },
+	LG_H: function( obj ) { return ( obj.LG_H > 0 ) ? thousandSeparator( obj.LG_H ) : '-'; },
+	GL_H: function( obj ) { return ( obj.GL_H > 0 ) ? thousandSeparator( obj.GL_H ) : '-'; },
+	PG_H: function( obj ) { return ( obj.PG_H > 0 ) ? thousandSeparator( obj.PG_H ) : '-'; },
+	HMG_H: function( obj ) { return ( obj.HMG_H > 0 ) ? thousandSeparator( obj.HMG_H ) : '-'; },
+	MG_H: function( obj ) { return ( obj.MG_H > 0 ) ? thousandSeparator( obj.MG_H ) : '-'; },
+	BFG_H: function( obj ) { return ( obj.BFG_H > 0 ) ? thousandSeparator( obj.BFG_H ) : '-'; },
+	// acc
 	RL_A: function( obj ) { return ( obj.RL_S > 0 ) ? ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) + '%' : '-'; },
 	RG_A: function( obj ) { return ( obj.RG_S > 0 ) ? ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) + '%' : '-'; },
 	LG_A: function( obj ) { return ( obj.LG_S > 0 ) ? ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%' : '-'; },
@@ -422,9 +470,9 @@ function OverviewCtrl( $scope, theLiz, $timeout ) {
 				ykeys: [ 'c' ],
 				labels: [ 'Games' ],
 				hideHover: 'auto',
-				events: [ '2013 W31', '2013 W44', '2014-08-27' ],
+				events: morris_events,
 				eventLineColors: [ '#B78779', '#7580AF' ],
-				eventLabels: [ 'Start Developing', 'Start Auto Collecting', 'New QL RLS' ],
+				eventLabels: morris_eventLabels,
 			} );
 		},
 		error: function( data ) {
@@ -531,9 +579,9 @@ function RulesetOverviewCtrl( $scope, theLiz, $timeout, $routeParams ) {
 				ykeys: [ 'c' ],
 				labels: [ 'Games' ],
 				hideHover: 'auto',
-				events: [ '2013 W31', '2013 W44', '2014-08-27' ],
+				events: morris_events,
 				eventLineColors: [ '#B78779', '#7580AF' ],
-				eventLabels: [ 'Start Developing', 'Start Auto Collecting', 'New QL RLS' ],
+				eventLabels: morris_eventLabels,
 			} );
 		},
 		error: function( data ) {
@@ -975,6 +1023,7 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// info
+			$( '.wshots' ).hide();
 			var g = data.data.game;
 			var p = data.data.players;
 			var ranked = '<div class="btn btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
@@ -1055,7 +1104,7 @@ function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			// accuracy
 			var acc = [];
 			for( var i in p ) {
-				if( p[i].SHOTS !== 0 && p[i].HITS !== 0 )
+				if( p[i].SHOTS !== 0 && p[i].HITS !== 0 && p[i].RANK != -1 )
 					acc.push( { label: p[i].PLAYER, value: ( p[i].HITS / p[i].SHOTS * 100 ).toFixed(2) } );
 			}
 			Morris.Donut( {
@@ -1905,9 +1954,9 @@ function GametypeOverviewCtrl( $scope, theLiz, $routeParams, $location, $timeout
 				ykeys: [ 'c' ],
 				labels: [ 'Games' ],
 				hideHover: 'auto',
-				events: [ '2013 W31', '2013 W44', '2014-08-27' ],
+				events: morris_events,
 				eventLineColors: [ '#B78779', '#7580AF' ],
-				eventLabels: [ 'Start Developing', 'Start Auto Collecting', 'New QL RLS' ],
+				eventLabels: morris_eventLabels,
 			} );
 		},
 		error: function( data ) {
@@ -3264,7 +3313,9 @@ function mkPlayerButton( obj, nickProperty, countryProperty ) {
 	out.push( '<li><a href="#/players/' + nickname + '">Player profile</a></li>' );
 	out.push( '<li><a href="#/race/players/' + nickname + '">Race profile</a></li>' );
 	out.push( '<li><a href="#/owners/' + nickname + '">Owner profile</a></li></ul></div></a></div>' );
-	out.push( mkPlayerClanLink( obj ) );
+	if( nickProperty == 'PLAYER' ) {
+		out.push( mkPlayerClanLink( obj ) );
+	}
 	out.push( '</div>' );
 	return out.join( '' );
 }
@@ -3296,11 +3347,11 @@ function mkGameType( obj ) {
 	else { gt = obj.GAME_TYPE.toLowerCase(); }
 	if( 'RANKED' in obj && 'RULESET' in obj && 'PREMIUM' in obj ) {
 		ranked = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
-		ruleset = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Classic Ruleset">C</div>';
+		ruleset = '<a class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Classic Ruleset" href="#/rulesets/' + obj.RULESET + '">C</a>';
 		premium = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
 		if( obj.RANKED == 1 ) { ranked = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Ranked match">R</div>'; }
-		if( obj.RULESET == 2 ) { ruleset = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Turbo Ruleset">T</div>'; }
-		if( obj.RULESET == 3 ) { ruleset = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="QL Ruleset">Q</div>'; }
+		if( obj.RULESET == 2 ) { ruleset = '<a class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Turbo Ruleset" href="#/rulesets/' + obj.RULESET + '">T</a>'; }
+		if( obj.RULESET == 3 ) { ruleset = '<a class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="QL Ruleset" href="#/rulesets/' + obj.RULESET + '">Q</a>'; }
 		if( obj.PREMIUM == 1 ) { premium = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
 	}
 	else {

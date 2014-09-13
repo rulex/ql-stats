@@ -72,16 +72,19 @@
 </div>
 
 <div class="row-fluid" style="clear: both;">
-
 	<div class="pull-right">
 		<label>Weapon</label>
 		<div class="btn-group btn-group-sm">
-			<div class="btn btn-default active" onclick="Weaponsz($(this));">kills</div>
-			<div class="btn btn-default " onclick="Weaponsz($(this));">shots</div>
-			<div class="btn btn-default " onclick="Weaponsz($(this));">hits</div>
-			<div class="btn btn-default " onclick="Weaponsz($(this));">acc</div>
+			<div class="btn btn-default active" onclick="Weaponsz($(this));">Kills</div>
+			<div class="btn btn-default " onclick="Weaponsz($(this));">Shots</div>
+			<div class="btn btn-default " onclick="Weaponsz($(this));">Hits</div>
+			<div class="btn btn-default " onclick="Weaponsz($(this));">Accuracy</div>
 		</div>
 	</div>
+</div>
+
+<div class="row-fluid" style="clear: both;">
+
 	<table id="players_table" class="table table-condensed table-hover table-bordered">
 		<thead>
 			<tr>
@@ -115,32 +118,32 @@
 				<th class="antirace wkills" data-dynatable-column="MG_K" title="Machine gun">MG</th>
 				<th class="antirace wkills" data-dynatable-column="BFG_K" title="BFG">BFG</th>
 				<!-- weapon shots -->
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="RL_S" title="ROCKET LAUNCHER">RLs</th>
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="RG_S" title="Rail">RGs</th>
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="LG_S" title="Lightning gun">LGs</th>
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="GL_S" title="Grenade launcher">GLs</th>
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="PG_S" title="Plasma gun">PGs</th>
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="HMG_S" title="HMG">HMGs</th>
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="MG_S" title="Machine gun">MGs</th>
-				<th class="antirace wshots" style="display: none;" data-dynatable-column="BFG_S" title="BFG">BFGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="RL_S" title="ROCKET LAUNCHER Shots">RLs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="RG_S" title="Rail Shots">RGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="LG_S" title="Lightning gun Shots">LGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="GL_S" title="Grenade launcher Shots">GLs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="PG_S" title="Plasma gun Shots">PGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="HMG_S" title="HMG Shots">HMGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="MG_S" title="Machine gun Shots">MGs</th>
+				<th class="antirace wshots" style="display: none;" data-dynatable-column="BFG_S" title="BFG Shots">BFGs</th>
 				<!-- weapon hits -->
-				<th class="antirace whits" style="display: none;" data-dynatable-column="RL_H" title="ROCKET LAUNCHER">RLh</th>
-				<th class="antirace whits" style="display: none;" data-dynatable-column="RG_H" title="Rail">RGh</th>
-				<th class="antirace whits" style="display: none;" data-dynatable-column="LG_H" title="Lightning gun">LGh</th>
-				<th class="antirace whits" style="display: none;" data-dynatable-column="GL_H" title="Grenade launcher">GLh</th>
-				<th class="antirace whits" style="display: none;" data-dynatable-column="PG_H" title="Plasma gun">PGh</th>
-				<th class="antirace whits" style="display: none;" data-dynatable-column="HMG_H" title="HMG">HMGh</th>
-				<th class="antirace whits" style="display: none;" data-dynatable-column="MG_H" title="Machine gun">MGh</th>
-				<th class="antirace whits" style="display: none;" data-dynatable-column="BFG_H" title="BFG">BFGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="RL_H" title="ROCKET LAUNCHER Hits">RLh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="RG_H" title="Rail Hits">RGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="LG_H" title="Lightning gun Hits">LGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="GL_H" title="Grenade launcher Hits">GLh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="PG_H" title="Plasma gun Hits">PGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="HMG_H" title="HMG Hits">HMGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="MG_H" title="Machine gun Hits">MGh</th>
+				<th class="antirace whits" style="display: none;" data-dynatable-column="BFG_H" title="BFG Hits">BFGh</th>
 				<!-- weapon acc -->
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="RL_A" title="ROCKET LAUNCHER">RLa</th>
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="RG_A" title="Rail">RGa</th>
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="LG_A" title="Lightning gun">LGa</th>
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="GL_A" title="Grenade launcher">GLa</th>
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="PG_A" title="Plasma gun">PGa</th>
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="HMG_A" title="HMG">HMGa</th>
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="MG_A" title="Machine gun">MGa</th>
-				<th class="antirace wacc" style="display: none;" data-dynatable-column="BFG_A" title="BFG">BFGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="RL_A" title="ROCKET LAUNCHER Accuracy">RLa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="RG_A" title="Rail Accuracy">RGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="LG_A" title="Lightning gun Accuracy">LGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="GL_A" title="Grenade launcher Accuracy">GLa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="PG_A" title="Plasma gun Accuracy">PGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="HMG_A" title="HMG Accuracy">HMGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="MG_A" title="Machine gun Accuracy">MGa</th>
+				<th class="antirace wacc" style="display: none;" data-dynatable-column="BFG_A" title="BFG Accuracy">BFGa</th>
 			</tr>
 		</thead>
 		<tbody>
