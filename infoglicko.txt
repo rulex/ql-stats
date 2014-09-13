@@ -4,7 +4,7 @@ AND ABS(GAME_LENGTH - PLAY_TIME) < 60 (so that a max of 1 minute difference) (ti
 
 
 Duel
-WHERE map.NAME IN ('Aerowalk', 'Battleforged', 'BloodRun', 'Campgrounds', 'Cure', 'FuriousHeights', 'Lostworld', 'Sinister', 'Toxicity') AND game.GAME_TYPE = 'duel' and game.RULESET = 1
+WHERE map.NAME IN ('Aerowalk', 'Battleforged', 'BloodRun', 'Campgrounds', 'Cure', 'FuriousHeights', 'Lostworld', 'Sinister', 'Toxicity') AND game.GAME_TYPE = 'duel' AND game.RULESET = 1 AND game.RANKED = 1
 
 TDM
 WHERE game.NUM_Players > 5 AND game.GAME_TYPE = 'tdm' AND map.NAME IN ('arcanecitadel', 'dreadfulplace', 'deepinside', 'grimdungeons', 'hiddenfortress', 'campgrounds', 'campgroundsintel', 'limbus', 'purgatory', 'terminatria', 'tornado') and game.RULESET = 3 AND ABS(GAME_LENGTH - PLAY_TIME) < 180
