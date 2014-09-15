@@ -11,6 +11,8 @@ program
 	.version( '0.0.1' )
 	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
 	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.option( '-s, --start <timestamp>', 'Unix timestamp. Add games from this date' )
+	.option( '-e, --end <timestamp>', 'Unix timestamp. Add games up to this date' )
 	.option( '-t, --tau <Number>', 'Glicko2 tau value. Default 0.5' )
 	.option( '-r, --rating <Number>', 'Glicko2 starting rating. Default 1250' )
 	.option( '-d, --rd <Number>', 'Glicko2 rd value. Default 200' )
@@ -41,7 +43,7 @@ var dbpool = mysql.createPool( cfg.mysql_db );
 
 var glickoSettings = {
 	tau: program.tau || 0.5,
-	rating: program.rating || 1000,
+	rating: program.rating || 1250,
 	rd: program.rd || 200,
 	vol: program.vol || 0.06,
 }
@@ -111,6 +113,10 @@ function _GamePlayer() {
 	sql.push( 'on m.ID=g.MAP_ID' );
 	//sql.push( 'where g.GAME_TIMESTAMP > 1409533332' );
 	sql.push( 'where g.GAME_TYPE="duel"' );
+	if( program.start )
+		sql.push( 'and g.GAME_TIMESTAMP > ' + program.start );
+	if( program.end )
+		sql.push( 'and g.GAME_TIMESTAMP < ' + program.end );
 	sql.push( 'and m.NAME in ( "' + duelMaps.join( '", "' ) + '" )' );
 	sql.push( 'and g.RANKED=1' );
 	// min accepted forfeit time 2 minutes 
