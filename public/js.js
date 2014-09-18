@@ -2863,7 +2863,7 @@ function ActivityCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				d.date = _date;
 				dt.push( d );
 			}
-			_gametypes = [ 'total', 'duel', 'ffa', 'ca', 'tdm', 'race', 'dom', 'rr', 'ad', 'harv' ];
+			_gametypes = [ 'total', 'duel', 'ffa', 'ca', 'tdm', 'race', 'dom', 'rr', 'ad', 'harv', 'ft' ];
 			console.log( dt );
 			new Morris.Line( {
 				element: 'chart',
