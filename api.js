@@ -2085,7 +2085,7 @@ app.get( '/api/weapons', function( req, res ) {
 		res.end();
 	}
 } );
-app.get( '/api/activity/week', function( req, res ) {
+app.get( '/api/activity/week/matches', function( req, res ) {
 	var sql = [];
 	sql.push( 'select' );
 	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
@@ -2106,6 +2106,64 @@ app.get( '/api/activity/week', function( req, res ) {
 	sql.push( 'count(*) as total' );
 	sql.push( 'from Game' );
 	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.url );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [], req.url )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.url, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.url );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [], req.url )
+		.then( function( rows ) {
+			qlscache.writeCache( req.url, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.url );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+app.get( '/api/activity/week/players', function( req, res ) {
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year,' );
+	sql.push( 'month,' );
+	sql.push( 'day,' );
+	sql.push( 'hour,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from (' );
+	sql.push( 'select' );
+	sql.push( 'p.NAME,' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'count(*)' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'group by day, hour, p.NAME' );
+	sql.push( ') a' );
 	sql.push( 'group by day, hour' );
 	sql = sql.join( ' ' );
 	qlscache.readCacheFile();

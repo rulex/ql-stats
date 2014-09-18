@@ -2852,7 +2852,7 @@ function ActivityCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
-		url: getApiURL() + 'api/activity/week',
+		url: getApiURL() + 'api/activity/week/matches',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// matches
@@ -2873,6 +2873,40 @@ function ActivityCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				ykeys: _gametypes,
 				labels: _gametypes,
 				hideHover: 'auto',
+				events: [ '2014-09-17 21:00' ],
+				eventLabels: [ 'Steam release' ],
+			} );
+		},
+		error: function( data ) {
+			onError( data );
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
+	$.ajax( {
+		url: getApiURL() + 'api/activity/week/players',
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// matches
+			dt = [];
+			for( var i in data.data ) {
+				d = data.data[i];
+				_date = d.year + '-' + d.month + '-' + d.day + ' ' + d.hour + ':00';
+				d.date = _date;
+				dt.push( d );
+			}
+			console.log( dt );
+			new Morris.Line( {
+				element: 'chart2',
+				data: dt,
+				pointSize: 2,
+				xkey: 'date',
+				ykeys: [ 'total' ],
+				labels: [ 'total' ],
+				hideHover: 'auto',
+				events: [ '2014-09-17 21:00' ],
+				eventLabels: [ 'Steam release' ],
 			} );
 		},
 		error: function( data ) {
