@@ -977,11 +977,10 @@ app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
 	var gt = req.params.gametype;
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game where GAME_TYPE=? group by GAME_TYPE order by 1';
 	qlscache.readCacheFile();
-	var routePath = req.route.path + gt;
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [gt], routePath )
+		var rows = qlscache.query( sql, [gt], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -989,22 +988,22 @@ app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [gt], routePath )
+		var rows = qlscache.query( sql, [gt], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -1013,12 +1012,11 @@ app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
 app.get( '/api/gametypes/:gametype/games/graphs/permonth', function( req, res ) {
 	var gt = req.params.gametype;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, month';
-	var routePath = req.route.path + gt;
 	qlscache.readCacheFile();
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [gt], routePath )
+		var rows = qlscache.query( sql, [gt], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -1026,22 +1024,22 @@ app.get( '/api/gametypes/:gametype/games/graphs/permonth', function( req, res ) 
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [gt], routePath )
+		var rows = qlscache.query( sql, [gt], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -1050,12 +1048,11 @@ app.get( '/api/gametypes/:gametype/games/graphs/permonth', function( req, res ) 
 app.get( '/api/gametypes/:gametype/games/graphs/perweek', function( req, res ) {
 	var gt = req.params.gametype;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, week';
-	var routePath = req.route.path + gt;
 	qlscache.readCacheFile();
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [gt], routePath )
+		var rows = qlscache.query( sql, [gt], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -1063,22 +1060,22 @@ app.get( '/api/gametypes/:gametype/games/graphs/perweek', function( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [gt], routePath )
+		var rows = qlscache.query( sql, [gt], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -1219,11 +1216,10 @@ app.get( '/api/gametypes/:gametype/maps', function ( req, res ) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
 	var sql = 'select m.NAME as MAP, g.MAP_ID, count(g.ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where g.GAME_TYPE=? group by MAP_ID';
 	qlscache.readCacheFile();
-	var routePath = req.route.path + gametype;
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [gametype], routePath )
+		var rows = qlscache.query( sql, [gametype], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -1231,22 +1227,22 @@ app.get( '/api/gametypes/:gametype/maps', function ( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [gametype], routePath )
+		var rows = qlscache.query( sql, [gametype], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -1897,12 +1893,11 @@ app.get( '/api/rulesets/:ruleset/games', function ( req, res ) {
   + 'left outer join Player o on o.ID=g.OWNER_ID '
   + 'where g.RULESET=? and g.GAME_TIMESTAMP > ' + ( ( new Date().getTime() - ( 24*60*60*1000 ) ) / 1000 )
   + 'order by g.GAME_TIMESTAMP desc LIMIT 1000';
-	var routePath = req.route.path + ruleset;
 	qlscache.readCacheFile();
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -1910,22 +1905,22 @@ app.get( '/api/rulesets/:ruleset/games', function ( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -1933,12 +1928,11 @@ app.get( '/api/rulesets/:ruleset/games', function ( req, res ) {
 app.get( '/api/rulesets/:ruleset/overview', function( req, res ) {
   var ruleset = req.params.ruleset;
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game where RULESET=? group by GAME_TYPE order by 1';
-	var routePath = req.route.path + ruleset;
 	qlscache.readCacheFile();
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -1946,22 +1940,22 @@ app.get( '/api/rulesets/:ruleset/overview', function( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -1969,12 +1963,11 @@ app.get( '/api/rulesets/:ruleset/overview', function( req, res ) {
 app.get( '/api/rulesets/:ruleset/games/graphs/permonth', function( req, res ) {
 	var ruleset = req.params.ruleset;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game where RULESET=? group by year, month';
-	var routePath = req.route.path + ruleset;
 	qlscache.readCacheFile();
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -1982,22 +1975,22 @@ app.get( '/api/rulesets/:ruleset/games/graphs/permonth', function( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -2005,12 +1998,11 @@ app.get( '/api/rulesets/:ruleset/games/graphs/permonth', function( req, res ) {
 app.get( '/api/rulesets/:ruleset/games/graphs/perweek', function( req, res ) {
 	var ruleset = req.params.ruleset;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where RULESET=? group by year, week';
-	var routePath = req.route.path + ruleset;
 	qlscache.readCacheFile();
-	var routeStatus = qlscache.checkRoute( routePath );
+	var routeStatus = qlscache.checkRoute( req.url );
 	if( routeStatus === 'MISSING' ) {
 		_logger.warn( 'cache is missing, fetching data' );
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: rows } );
@@ -2018,22 +2010,22 @@ app.get( '/api/rulesets/:ruleset/games/graphs/perweek', function( req, res ) {
 			return rows;
 		})
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		} )
 	}
 	else if( routeStatus === 'OLD' ) {
 		_logger.debug( 'cache is old, send old cache and fetch new' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
-		var rows = qlscache.query( sql, [ruleset], routePath )
+		var rows = qlscache.query( sql, [ruleset], req.url )
 		.then( function( rows ) {
-			qlscache.writeCache( routePath, rows );
+			qlscache.writeCache( req.url, rows );
 		})
 	}
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
-		var _cache = qlscache.readCache( routePath );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}
@@ -2089,6 +2081,61 @@ app.get( '/api/weapons', function( req, res ) {
 	else {
 		_logger.debug( 'cache is fresh, fetching from cached file...' );
 		var _cache = qlscache.readCache( req.route.path );
+		res.jsonp( { data: _cache } );
+		res.end();
+	}
+} );
+app.get( '/api/activity/week', function( req, res ) {
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'sum( IF( GAME_TYPE="duel", 1, 0 ) ) as duel,' );
+	sql.push( 'sum( IF( GAME_TYPE="ca", 1, 0 ) ) as ca,' );
+	sql.push( 'sum( IF( GAME_TYPE="ffa", 1, 0 ) ) as ffa,' );
+	sql.push( 'sum( IF( GAME_TYPE="tdm", 1, 0 ) ) as tdm,' );
+	sql.push( 'sum( IF( GAME_TYPE="ctf", 1, 0 ) ) as ctf,' );
+	sql.push( 'sum( IF( GAME_TYPE="race", 1, 0 ) ) as race,' );
+	sql.push( 'sum( IF( GAME_TYPE="rr", 1, 0 ) ) as rr,' );
+	sql.push( 'sum( IF( GAME_TYPE="ad", 1, 0 ) ) as ad,' );
+	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
+	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
+	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from Game' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	qlscache.readCacheFile();
+	var routeStatus = qlscache.checkRoute( req.url );
+	if( routeStatus === 'MISSING' ) {
+		_logger.warn( 'cache is missing, fetching data' );
+		var rows = qlscache.query( sql, [], req.url )
+		.then( function( rows ) {
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: rows } );
+			res.end();
+			return rows;
+		})
+		.then( function( rows ) {
+			qlscache.writeCache( req.url, rows );
+		} )
+	}
+	else if( routeStatus === 'OLD' ) {
+		_logger.debug( 'cache is old, send old cache and fetch new' );
+		var _cache = qlscache.readCache( req.url );
+		res.jsonp( { data: _cache } );
+		res.end();
+		var rows = qlscache.query( sql, [], req.url )
+		.then( function( rows ) {
+			qlscache.writeCache( req.url, rows );
+		})
+	}
+	else {
+		_logger.debug( 'cache is fresh, fetching from cached file...' );
+		var _cache = qlscache.readCache( req.url );
 		res.jsonp( { data: _cache } );
 		res.end();
 	}

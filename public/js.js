@@ -431,6 +431,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/rulesets/:ruleset/games', { controller: RulesetGamesCtrl, templateUrl: 'games2.html' } ).
 	when( '/rulesets/:ruleset', { controller: RulesetOverviewCtrl, templateUrl: 'overview.html' } ).
 	when( '/weapons', { controller: WeaponsCtrl, templateUrl: 'weapons.html' } ).
+	when( '/activity', { controller: ActivityCtrl, templateUrl: 'activity.html' } ).
 	otherwise({ redirectTo: '/' });
 }]);
 
@@ -2836,6 +2837,42 @@ function TopCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 					perPageOptions: [10,20,50,100,200],
 					records: data.data
 				}
+			} );
+		},
+		error: function( data ) {
+			onError( data );
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
+}
+function ActivityCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
+	onLoading();
+	setNavbarActive();
+	$( '#current_url' ).html( printLocations() );
+	$.ajax( {
+		url: getApiURL() + 'api/activity/week',
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// matches
+			dt = [];
+			for( var i in data.data ) {
+				d = data.data[i];
+				_date = d.year + '-' + d.month + '-' + d.day + ' ' + d.hour + ':00';
+				d.date = _date;
+				dt.push( d );
+			}
+			_gametypes = [ 'total', 'duel', 'ffa', 'ca', 'tdm', 'race', 'dom', 'rr', 'ad', 'harv' ];
+			console.log( dt );
+			new Morris.Line( {
+				element: 'chart',
+				data: dt,
+				pointSize: 2,
+				xkey: 'date',
+				ykeys: _gametypes,
+				labels: _gametypes,
+				hideHover: 'auto',
 			} );
 		},
 		error: function( data ) {
