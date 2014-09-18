@@ -12,6 +12,12 @@ function getAjaxDataType() {
 }
 
 $( function() {
+	// google analytics
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-54810866-1', 'auto' );
 	// Morris.js inject name-drawing
 	var originalDrawEvent = Morris.Grid.prototype.drawEvent;
 	Morris.Grid.prototype.gridDefaults.eventTextSize = 12;
@@ -48,6 +54,12 @@ $( function() {
 				dataType: getAjaxDataType(),
 				success: function( data ) {
 					response( $.map( data.data, function( item ) {
+						ga( 'send', {
+							'hitType': 'event',
+							'eventCategory': 'button',
+							'eventAction': 'click',
+							'eventLabel': 'player-search-nav',
+						} );
 						return { label: item.PLAYER, value: item.PLAYER }
 					} ) );
 				}
@@ -120,19 +132,21 @@ var GT = {
 
 var morris_events = [
 	//'2013-07-16',
-	'2013 W31',
-	'2013 W44',
+	//'2013 W31',
+	//'2013 W44',
 	'2013-12-17',
 	'2014-07-19',
 	'2014-08-27',
+	'2014-09-17',
 ];
 var morris_eventLabels = [
 	//'Race',
-	'Start Developing',
-	'Start Auto Collecting',
+	//'Start Developing',
+	//'Start Auto Collecting',
 	'Standalone',
 	'QC2014',
-	'New QL rulesets',
+	'New Rulesets',
+	'Steam',
 ];
 
 var dynatable_table = {
@@ -219,10 +233,12 @@ var dynatable_writers = {
 		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.KILLS/obj.MATCHES_PLAYED).toFixed(2) +' kills/game with a ratio of '+ (obj.KILLS/obj.DEATHS).toFixed(2) +' on average">'+ obj.KILLS +'</span>';
 	},
 	IMPRESSIVE: function( obj ) {
-		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.IMPRESSIVE/obj.MATCHES_PLAYED).toFixed(2) +' imp/game on average">'+ obj.IMPRESSIVE +'</span>';
+		val = ( obj.IMPRESSIVE > 0 ) ? obj.IMPRESSIVE : '-';
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.IMPRESSIVE/obj.MATCHES_PLAYED).toFixed(2) +' imp/game on average">'+ val +'</span>';
 	},
 	EXCELLENT: function( obj ) {
-		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.EXCELLENT/obj.MATCHES_PLAYED).toFixed(2) +' exc/game on average">'+ obj.EXCELLENT +'</span>';
+		val = ( obj.EXCELLENT > 0 ) ? obj.EXCELLENT : '-';
+		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.EXCELLENT/obj.MATCHES_PLAYED).toFixed(2) +' exc/game on average">'+ val +'</span>';
 	},
 	HUMILIATION: function( obj ) {
 		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.G_K/obj.MATCHES_PLAYED).toFixed(2) +' hum/game on average">'+ obj.G_K +'</span>';
@@ -568,20 +584,25 @@ function RulesetOverviewCtrl( $scope, theLiz, $timeout, $routeParams ) {
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
-		url: getApiURL() + 'api/rulesets/' + ruleset + '/games/graphs/permonth',
+		url: getApiURL() + 'api/rulesets/' + ruleset + '/games/graphs/perweek',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
+			dt = [];
+			for( var i in data.data ) {
+				d = data.data[i];
+				dt.push( { date: d.year + ' W' + d.week, c: d.c } );
+			}
 			// matches
 			new Morris.Line( {
 				element: 'matchesline',
-				data: data.data,
+				data: dt,
 				xkey: 'date',
 				ykeys: [ 'c' ],
 				labels: [ 'Games' ],
 				hideHover: 'auto',
-				events: morris_events,
-				eventLineColors: [ '#B78779', '#7580AF' ],
-				eventLabels: morris_eventLabels,
+				//events: morris_events,
+				//eventLineColors: [ '#B78779', '#7580AF' ],
+				//eventLabels: morris_eventLabels,
 			} );
 		},
 		error: function( data ) {
@@ -2312,6 +2333,7 @@ function TagCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	var lol = theLiz.tag( t );
 	$scope.tag = lol;
 	$scope.date = new Date().getTime();
+	onComplete();
 }
 function TagsCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
@@ -2685,7 +2707,7 @@ function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 	} );
 }
 function RaceMapCtrl($scope, theLiz, $routeParams, $location, $timeout) {
-	//onLoading();
+	onLoading();
 	setNavbarActive();
   $('#current_url').html(printLocations());
   var m = $routeParams.map;
@@ -2696,6 +2718,7 @@ function RaceMapCtrl($scope, theLiz, $routeParams, $location, $timeout) {
   $scope.map = m;
   $scope.ordercolumn = 'RANK';
   $scope.ordertype = false;
+	onComplete();
 }
 function RacePlayerCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 	onLoading();
@@ -3234,6 +3257,8 @@ function submitGameTag( tagId, game ) {
 }
 function onLoading() {
 	//$( '#loading' ).addClass( 'loading' );
+	ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) } );
+	//ga( 'send', 'event', 'tab4', 'clicked' );
 	$( '#theContent' ).block( {
 		message: '<div><span class="loading"></span></div>',
 		css: { border: '3px solid #000', padding: '20px' }
@@ -3372,5 +3397,14 @@ function mkGameType( obj ) {
 	if( obj.GAME_TYPE == 'harv' ) { gt = 'harvester'; }
 	else { gt = obj.GAME_TYPE.toLowerCase(); }
 	return '<div class="btn-group btn-group-xs"><div class="popthis btn btn-default" data-html="true" data-container="body" data-placement="left" data-content="' + GT[gt] + '" > <a title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + '</a></div>' + ruleset + ranked + premium + '</div>';
+}
+function adminSettings() {
+	$( '#admin_settings' ).slideToggle();
+	ga( 'send', {
+		'hitType': 'event',
+		'eventCategory': 'button',
+		'eventAction': 'click',
+		'eventLabel': 'admin button',
+	} );
 }
 
