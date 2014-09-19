@@ -2103,6 +2103,13 @@ app.get( '/api/activity/week/matches', function( req, res ) {
 	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
 	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
 	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'sum( IF( PREMIUM=1, 1, 0 ) ) as premium,' );
+	sql.push( 'sum( IF( PREMIUM=0, 1, 0 ) ) as standard,' );
+	sql.push( 'sum( IF( RANKED=1, 1, 0 ) ) as ranked,' );
+	sql.push( 'sum( IF( RANKED=0, 1, 0 ) ) as unranked,' );
+	sql.push( 'sum( IF( RULESET=1, 1, 0 ) ) as classic,' );
+	sql.push( 'sum( IF( RULESET=2, 1, 0 ) ) as turbo,' );
+	sql.push( 'sum( IF( RULESET=3, 1, 0 ) ) as ql,' );
 	sql.push( 'count(*) as total' );
 	sql.push( 'from Game' );
 	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
