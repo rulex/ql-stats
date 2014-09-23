@@ -337,6 +337,7 @@ var dynatable_writers = {
 	RL_K: function( obj ) { return ( obj.RL_K > 0 ) ? obj.RL_K : '-'; },
 	RG_K: function( obj ) { return ( obj.RG_K > 0 ) ? obj.RG_K : '-'; },
 	LG_K: function( obj ) { return ( obj.LG_K > 0 ) ? obj.LG_K : '-'; },
+	SG_K: function( obj ) { return ( obj.SG_K > 0 ) ? obj.SG_K : '-'; },
 	GL_K: function( obj ) { return ( obj.GL_K > 0 ) ? obj.GL_K : '-'; },
 	PG_K: function( obj ) { return ( obj.PG_K > 0 ) ? obj.PG_K : '-'; },
 	HMG_K: function( obj ) { return ( obj.HMG_K > 0 ) ? obj.HMG_K : '-'; },
@@ -347,6 +348,7 @@ var dynatable_writers = {
 	RL_S: function( obj ) { return ( obj.RL_S > 0 ) ? thousandSeparator( obj.RL_S ) : '-'; },
 	RG_S: function( obj ) { return ( obj.RG_S > 0 ) ? thousandSeparator( obj.RG_S ) : '-'; },
 	LG_S: function( obj ) { return ( obj.LG_S > 0 ) ? thousandSeparator( obj.LG_S ) : '-'; },
+	SG_S: function( obj ) { return ( obj.SG_S > 0 ) ? thousandSeparator( obj.SG_S ) : '-'; },
 	GL_S: function( obj ) { return ( obj.GL_S > 0 ) ? thousandSeparator( obj.GL_S ) : '-'; },
 	PG_S: function( obj ) { return ( obj.PG_S > 0 ) ? thousandSeparator( obj.PG_S ) : '-'; },
 	HMG_S: function( obj ) { return ( obj.HMG_S > 0 ) ? thousandSeparator( obj.HMG_S ) : '-'; },
@@ -357,6 +359,7 @@ var dynatable_writers = {
 	RL_H: function( obj ) { return ( obj.RL_H > 0 ) ? thousandSeparator( obj.RL_H ) : '-'; },
 	RG_H: function( obj ) { return ( obj.RG_H > 0 ) ? thousandSeparator( obj.RG_H ) : '-'; },
 	LG_H: function( obj ) { return ( obj.LG_H > 0 ) ? thousandSeparator( obj.LG_H ) : '-'; },
+	SG_H: function( obj ) { return ( obj.SG_H > 0 ) ? thousandSeparator( obj.SG_H ) : '-'; },
 	GL_H: function( obj ) { return ( obj.GL_H > 0 ) ? thousandSeparator( obj.GL_H ) : '-'; },
 	PG_H: function( obj ) { return ( obj.PG_H > 0 ) ? thousandSeparator( obj.PG_H ) : '-'; },
 	HMG_H: function( obj ) { return ( obj.HMG_H > 0 ) ? thousandSeparator( obj.HMG_H ) : '-'; },
@@ -366,6 +369,7 @@ var dynatable_writers = {
 	RL_A: function( obj ) { return ( obj.RL_S > 0 ) ? ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) + '%' : '-'; },
 	RG_A: function( obj ) { return ( obj.RG_S > 0 ) ? ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) + '%' : '-'; },
 	LG_A: function( obj ) { return ( obj.LG_S > 0 ) ? ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%' : '-'; },
+	SG_A: function( obj ) { return ( obj.SG_S > 0 ) ? ( obj.SG_H / obj.SG_S * 100 ).toFixed(1) + '%' : '-'; },
 	GL_A: function( obj ) { return ( obj.GL_S > 0 ) ? ( obj.GL_H / obj.GL_S * 100 ).toFixed(1) + '%' : '-'; },
 	PG_A: function( obj ) { return ( obj.PG_S > 0 ) ? ( obj.PG_H / obj.PG_S * 100 ).toFixed(1) + '%' : '-'; },
 	HMG_A: function( obj ) { return ( obj.HMG_S > 0 ) ? ( obj.HMG_H / obj.HMG_S * 100 ).toFixed(1) + '%' : '-'; },
@@ -2863,15 +2867,53 @@ function ActivityCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				d.date = _date;
 				dt.push( d );
 			}
-			_gametypes = [ 'total', 'duel', 'ffa', 'ca', 'tdm', 'race', 'dom', 'rr', 'ad', 'harv', 'ft' ];
+			_gametypes = [ 'duel', 'ffa', 'ca', 'tdm', 'ctf', 'dom', 'ft', 'race', 'rr', 'ad', 'harv', 'fctf' ];
 			console.log( dt );
+			// matches
 			new Morris.Line( {
 				element: 'chart',
 				data: dt,
 				pointSize: 2,
 				xkey: 'date',
+				ykeys: ['total'],
+				labels: ['Matches played'],
+				hideHover: 'auto',
+				events: [ '2014-09-17 21:00' ],
+				eventLabels: [ 'Steam release' ],
+			} );
+			// matches/gametype
+			new Morris.Line( {
+				element: 'chart3',
+				data: dt,
+				lineWidth: 1,
+				pointSize: 2,
+				xkey: 'date',
 				ykeys: _gametypes,
 				labels: _gametypes,
+				hideHover: 'auto',
+				events: [ '2014-09-17 21:00' ],
+				eventLabels: [ 'Steam release' ],
+			} );
+			// matches/ruleset
+			new Morris.Line( {
+				element: 'chart4',
+				data: dt,
+				pointSize: 2,
+				xkey: 'date',
+				ykeys: [ 'classic', 'turbo', 'ql' ],
+				labels: [ 'classic', 'turbo', 'ql' ],
+				hideHover: 'auto',
+				events: [ '2014-09-17 21:00' ],
+				eventLabels: [ 'Steam release' ],
+			} );
+			// premium/standard ranked/unranked
+			new Morris.Line( {
+				element: 'chart5',
+				data: dt,
+				pointSize: 2,
+				xkey: 'date',
+				ykeys: [ 'premium', 'standard', 'ranked', 'unranked' ],
+				labels: [ 'premium', 'standard', 'ranked', 'unranked' ],
 				hideHover: 'auto',
 				events: [ '2014-09-17 21:00' ],
 				eventLabels: [ 'Steam release' ],
@@ -2903,7 +2945,20 @@ function ActivityCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 				pointSize: 2,
 				xkey: 'date',
 				ykeys: [ 'total' ],
-				labels: [ 'total' ],
+				labels: [ 'Unique players' ],
+				hideHover: 'auto',
+				events: [ '2014-09-17 21:00' ],
+				eventLabels: [ 'Steam release' ],
+			} );
+			_gametypes = [ 'duel', 'ffa', 'ca', 'tdm', 'ctf', 'dom', 'ft', 'race', 'rr', 'ad', 'harv', 'fctf' ];
+			new Morris.Line( {
+				element: 'chart6',
+				lineWidth: 1,
+				data: dt,
+				pointSize: 2,
+				xkey: 'date',
+				ykeys: _gametypes,
+				labels: _gametypes,
 				hideHover: 'auto',
 				events: [ '2014-09-17 21:00' ],
 				eventLabels: [ 'Steam release' ],
