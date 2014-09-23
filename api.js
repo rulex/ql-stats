@@ -86,7 +86,7 @@ if( 'production' == env ) {
 app.use( log4js.connectLogger( _logger, { level: log4js.levels.INFO, format: ':response-timems :method :url ' } ) );
 // http log to file
 var logFile = fs.createWriteStream( cfg.api.httplogfile, { flags: 'w' } );
-app.use( logger( { stream: logFile } ) );
+app.use( logger ('combined', {stream: logFile }));
 app.use( bodyParser.urlencoded( { extended: true } ) );
 // count requests made
 app.use( function( req, res, next ) {
