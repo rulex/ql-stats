@@ -2645,6 +2645,7 @@ function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 				}
 			}
 			// oldest/newest record
+			/*
 			$( '#pwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ipw.min.ifo.SCORE + ' on ' + ipw.min.map + '" data-original-title="" class="popthis">' + timediff( ipw.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ipw.min.ifo.PLAYER + ' </div>'  );
 			$( '#pwinfo' ).append( '<br>' );
 			$( '#pwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ipw.max.ifo.SCORE + ' on ' + ipw.max.map + '" data-original-title="" class="popthis">' + timediff( ipw.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ipw.max.ifo.PLAYER + ' </div>'  );
@@ -2660,6 +2661,7 @@ function RaceCtrl($scope, theLiz, $routeParams, $location, $timeout) {
 			$( '#vsinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivs.min.ifo.SCORE + ' on ' + ivs.min.map + '" data-original-title="" class="popthis">' + timediff( ivs.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ivs.min.ifo.PLAYER + ' </div>'  );
 			$( '#vsinfo' ).append( '<br>' );
 			$( '#vsinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivs.max.ifo.SCORE + ' on ' + ivs.max.map + '" data-original-title="" class="popthis">' + timediff( ivs.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ivs.max.ifo.PLAYER + ' </div>'  );
+			*/
 			//
 			for( var i in _pw ) { pw.push( { label: i, value: _pw[i] } ); }
 			for( var i in _ps ) { ps.push( { label: i, value: _ps[i] } ); }
