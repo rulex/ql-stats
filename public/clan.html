@@ -1,40 +1,23 @@
 
-
-
 <div class="row-fluid">
 
-	<div class="span12 well">
-		<div class="row-fluid"><h3>Players</h3> </div>
-		<table class="table table-condensed table-striped table-hover">
+	<div class="col-sm-12 ">
+		<div class="row-fluid"><h3>Players</h3></div>
+		<table id="clan_table" class="table table-condensed table-striped table-hover">
 			<thead>
 				<tr>
-					<th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
-					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
-					<th><a href="" ng-click="ordercolumn='KILLS'; ordertype=!ordertype">KILLS</a></th>
-					<th><a href="" ng-click="ordercolumn='DEATHS'; ordertype=!ordertype">DEATHS</a></th>
-					<th><a href="" ng-click="ordercolumn='RATIO'; ordertype=!ordertype">RATIO</a></th>
-					<th><a href="" ng-click="ordercolumn='PLAY_TIME'; ordertype=!ordertype">PLAY_TIME</a></th>
-					<th><a href="" ng-click="ordercolumn='AVG_ACC'; ordertype=!ordertype">AVG_ACC</a></th>
+					<th data-dynatable-column="PLAYER" title="PLAYER">PLAYER</th>
+					<th data-dynatable-column="MATCHES_PLAYED" title="MATCHES_PLAYED">MATCHES_PLAYED</th>
+					<th data-dynatable-column="KILLS" title="KILLS">KILLS</th>
+					<th data-dynatable-column="DEATHS" title="DEATHS">DEATHS</th>
+					<th data-dynatable-column="PLAY_TIME" title="PLAY_TIME">PLAY_TIME</th>
+					<th data-dynatable-column="AVG_ACC" title="AVG_ACC">AVG_ACC</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in clan.data | orderBy:ordercolumn:ordertype">
-					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/players/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
-					<td>{{ z.MATCHES_PLAYED | number }}</td>
-					<td>{{ z.KILLS | number }}</td>
-					<td>{{ z.DEATHS | number }}</td>
-					<td>{{ (z.KILLS/z.DEATHS) | number:2 }}</td>
-					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
-					<td>{{ z.AVG_ACC | number:2 }}</td>
-				</tr>
 			</tbody>
 		</table>
 	</div>
 
 </div>
-
-
-<div class="row-fluid">
-</div>
-
 

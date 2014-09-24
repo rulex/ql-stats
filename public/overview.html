@@ -1,44 +1,96 @@
 
 <div class="container">
 
-	<div class="row">
-		<div class="col-md-12">
+	<div class="row-fluid">
 
-		<table class="table table-condensed table-striped ">
-			<thead>
-				<tr>
-					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
-					<th><a href="" ng-click="ordercolumn='TOTAL_KILLS'; ordertype=!ordertype">KILLS</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_LENGTH'; ordertype=!ordertype">GAME_LENGTH</a></th>
-					<th><a href="" ng-click="ordercolumn='MATCHES_PLAYED'; ordertype=!ordertype">MATCHES_PLAYED</a></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>Total</td>
-					<td>Total</td>
-					<td>{{ sum( overview.data, 'TOTAL_KILLS' ) | number }}</td>
-					<td>{{ ( date-sum( overview.data, 'GAME_LENGTH' )*1000 ) | timeago }}</td>
-					<td>{{ sum( overview.data, 'MATCHES_PLAYED' ) | number }}</td>
-				</tr>
-				<tr ng-repeat="z in overview.data | orderBy:ordercolumn:ordertype">
-					<td><img style="float: left;" src="http://cdn.quakelive.com/web/2013121709/images/gametypes/sm/{{ z.GAME_TYPE | gametype }}_v2013121709.0.png" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" /></td>
-							
-					<td><a href="#/gametypes/{{ z.GAME_TYPE }}">{{ z.GAME_TYPE }}</a></td>
-					<td>{{ z.TOTAL_KILLS | number }}</td>
-					<td>{{ date-z.GAME_LENGTH*1000 | timeago }}</td>
-					<td>{{ z.MATCHES_PLAYED | number }}</td>
-				</tr>
-			</tbody>
-		</table>
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Gametypes</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="chart2_total"></h4>
+					<div id="chart2" style="height: 250px;"></div>
+				</div>
+			</div>
+		</div>
+
 		<!--
-		<div class="row" id="table_player_games_">
-			<div class="col-lg-1 col-center">
-				<div class="loading"></div>
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Rulesets</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="rulesetchart_total"></h4>
+					<div id="rulesetchart" style="height: 250px;"></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Ranked Matches</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="rankedchart_total"></h4>
+					<div id="rankedchart" style="height: 250px;"></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Premium Matches</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="premiumchart_total"></h4>
+					<div id="premiumchart" style="height: 250px;"></div>
+				</div>
 			</div>
 		</div>
 		-->
+
+		<div class="col-md-3">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Kills distribution</div>
+				<div class="panel-body">
+					<h4 class="text-center" id="chart_total"></h4>
+					<div id="chart" style="height: 250px;"></div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="row">
+
+		<div class="col-md-12">
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Saved Matches</div>
+				<div class="panel-body">
+					<h4 class="text-center">Saved matches over time</h4>
+					<div id="matchesline" style="height: 250px;"></div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="row-fluid">
+		<div class="col-md-12">
+
+			<div class="panel panel-sm panel-default">
+				<div class="panel-heading">Saved Matches</div>
+				<div class="panel-body">
+					<table id="table_overview" class="table table-condensed table-bordered table-hover ">
+						<thead>
+							<tr>
+								<th data-dynatable-column="GAME_TYPE">GAME_TYPE</th>
+								<th data-dynatable-column="MATCHES_PLAYED">MATCHES</th>
+								<th data-dynatable-column="TOTAL_KILLS" title="KILLS">KILLS</th>
+								<th class="hidden-xs" data-dynatable-column="GAME_LENGTH">GAME_LENGTH</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+			</div>
 
 		</div>
 	</div>

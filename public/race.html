@@ -1,28 +1,82 @@
+<!--
 <a href="#/players">Show by player</a>
+-->
 
-<h1>Race leaders</h1>
+<h1 class="text-center">Race leaders</h1>
+
+
+<div class="row-fluid ">
+
+	<div class="col-sm-3 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">PQL Weapons</div>
+			<div class="panel-body">
+				<div id="pw" style="height: 150px;"></div>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-3 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">PQL Strafe</div>
+			<div class="panel-body">
+				<div id="ps" style="height: 150px;"></div>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-3 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">VQL Weapons</div>
+			<div class="panel-body">
+				<div id="vw" style="height: 150px;"></div>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-3 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">VQL Strafe</div>
+			<div class="panel-body">
+				<div id="vs" style="height: 150px;"></div>
+			</div>
+		</div>
+	</div>
+
+</div>
 
 <div class="row-fluid">
-	<div class="span12 well">
-		<table class="table table-condensed table-striped table-hover">
+	<div class="col-sm-12 ">
+		<table id="table_race" class="table table-condensed table-hover table-bordered">
 			<thead>
 				<tr>
-					<th>MAP</th>
-          <th>PQL weapons</th>
-          <th>PQL strafe</th>
-          <th>VQL weapons</th>
-          <th>VQL strafe</th>
+					<th data-dynatable-column="MAP">MAP</th>
+					<th data-dynatable-column="PQL_weapons">PQL weapons</th>
+					<th data-dynatable-column="PQL_strafe">PQL strafe</th>
+					<th data-dynatable-column="VQL_weapons">VQL weapons</th>
+					<th data-dynatable-column="VQL_strafe">VQL strafe</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in racemaps.data.maps | orderBy:ordercolumn:ordertype">
-					<td><a href="#/race/maps/{{ z.MAP }}">{{ z.MAP }}</a></td>
-          <td><a href="#/race/players/{{ z.LEADERS[0].PLAYER_NICK }}">{{ z.LEADERS[0].PLAYER_NICK }}</a>: {{ z.LEADERS[0].SCORE }}</td>
-          <td><a href="#/race/players/{{ z.LEADERS[1].PLAYER_NICK }}">{{ z.LEADERS[1].PLAYER_NICK }}</a>: {{ z.LEADERS[1].SCORE }}</td>
-          <td><a href="#/race/players/{{ z.LEADERS[2].PLAYER_NICK }}">{{ z.LEADERS[2].PLAYER_NICK }}</a>: {{ z.LEADERS[2].SCORE }}</td>
-          <td><a href="#/race/players/{{ z.LEADERS[3].PLAYER_NICK }}">{{ z.LEADERS[3].PLAYER_NICK }}</a>: {{ z.LEADERS[3].SCORE }}</td>
-				</tr>
 			</tbody>
 		</table>
+	</div>
+</div>
+
+<div class="row-fluid">
+	<div class="col-sm-12 ">
+		<h5 class="text-center">Longest standing & most recent records</h5>
+	</div>
+</div>
+
+<div class="row-fluid">
+	<div class="col-sm-3 ">
+		<div id="pwinfo"></div>
+	</div>
+	<div class="col-sm-3 ">
+		<div id="psinfo"></div>
+	</div>
+	<div class="col-sm-3 ">
+		<div id="vwinfo"></div>
+	</div>
+	<div class="col-sm-3 ">
+		<div id="vsinfo"></div>
 	</div>
 </div>

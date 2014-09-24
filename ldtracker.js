@@ -3,9 +3,10 @@
 */
 'use strict';
 
+
 var
   fs = require('graceful-fs'),
-  mysql = require('mysql2'),
+  mysql = require('mysql'),
   async = require('async'),
   request = require('request'),
   log4js = require('log4js'),
@@ -18,16 +19,22 @@ var _logger; // log4js logger
 var _config; // config data from cfg.json file
 var _dbpool; // DB connection pool
 var _conn; // DB connection
-var _cookieJar; // www.quakelive.com login cookies
-var _adaptivePollDelaySec = 120; // will be reduced to 60 after first (=full) batch. Values are 15,30,60,120
+var _adaptivePollDelaySec = 15; // will be reduced to 60 after first (=full) batch. Values are 15,30,60,120
 var _lastGameTimestamp = ""; // last timestamp retrieved from live game tracker, used to get next incremental set of games
+var program = require( 'commander' );
+
+program
+	.version( '0.0.2' )
+	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
+	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.parse( process.argv );
 
 main();
 
 function main() {
-  _logger = log4js.getLogger("ldtracker");
-  _logger.setLevel(log4js.levels.INFO);
-  var data = fs.readFileSync(__dirname + '/cfg.json');
+  _logger = log4js.getLogger( "ldtracker" );
+  _logger.setLevel( program.loglevel || log4js.levels.DEBUG );
+  var data = fs.readFileSync( program.config || __dirname + '/cfg.json' );
   _config = JSON.parse(data);
   if (!(_config.loader.saveDownloadedJson || _config.loader.importDownloadedJson)) {
     _logger.error("At least one of loader.saveDownloadedJson or loader.importDownloadedJson must be set in cfg.json");
@@ -39,9 +46,9 @@ function main() {
     .ninvoke(_dbpool, "getConnection")
     .then(function(conn) {
       _conn = conn;
-      return ld.init(conn);
+      return ld.init( conn, { loglevel: program.loglevel } );
     })
-    .then(loginToQuakeliveWebsite)
+    .then(ld.loginToQuakeliveWebsite)
     .then(fetchAndProcessJsonInfiniteLoop)
     .fail(function (err) { _logger.error(err.stack); })
     .done(function() { _logger.info("completed"); process.exit(); });
@@ -51,27 +58,6 @@ function main() {
 // QL live data tracker
 //==========================================================================================
 
-function loginToQuakeliveWebsite() {
-  var defer = Q.defer();
-  _cookieJar = request.jar();
-  request({
-      uri: "https://secure.quakelive.com/user/login",
-      timeout: 10000,
-      method: "POST",
-      form: { submit: "", email: _config.loader.ql_email, pass: _config.loader.ql_pass },
-      jar: _cookieJar
-    },
-    function(err) {
-      if (err) {
-        _logger.error("Error logging in to quakelive.com: " + err);
-        defer.reject(new Error(err));
-      } else {
-        _logger.info("Logged on to quakelive.com");
-        defer.resolve(_cookieJar);
-      }
-    });
-  return defer.promise;
-}
 
 function fetchAndProcessJsonInfiniteLoop() {
   _logger.info("Fetching data from http://www.quakelive.com/tracker/from/");
@@ -89,7 +75,7 @@ function requestJson() {
       uri: "http://www.quakelive.com/tracker/from/" + _lastGameTimestamp,
       timeout: 10000,
       method: "GET",
-      jar: _cookieJar
+      jar: ld._cookieJar
     },
     function (err, resp, body) {
       if (err)
@@ -105,10 +91,16 @@ function processBatch(json) {
 
   // adapt polling rate
   var len = batch.length;
-  if (len < 40 && _adaptivePollDelaySec < 120) // max 2min
+  if( len < 40 && _adaptivePollDelaySec < 120 ) {
     _adaptivePollDelaySec *= 2;
-  else if (len > 80 && _adaptivePollDelaySec > 15) // min 15sec
+	}
+	else if( len == 100 ) {
+		_adaptivePollDelaySec = 1;
+		_logger.debug( "Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec" );
+	}
+  else if( len > 80 ) {
     _adaptivePollDelaySec /= 2;
+	}
   _logger.info("Received " + len + " games. Next fetch in " + _adaptivePollDelaySec + "sec");
 
   if (len == 0)

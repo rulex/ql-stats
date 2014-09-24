@@ -1,135 +1,71 @@
 
-<div class="row-fluid">
+<div class="row-fluid ">
 
-	<div class="col-md-6 well">
-		<h3>{{ owner.data.owner.OWNER }} server owner</h3>
-		<table class="table table-condensed table-striped ">
-			<tbody>
-				<tr ng-repeat="(key,val) in owner.data.owner">
-					<td><b>{{ key }}</b></td>
-					<td>{{ val }}</td>
-				</tr>
-				<tr>
-					<td><b>UNIQUE_PLAYERS</b></td>
-					<td>{{ owner.asdf[0].UNIQUE_PLAYERS }}</td>
-				</tr>
-			</tbody>
-		</table>
+	<div class="col-sm-2 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Gametypes played</div>
+			<div class="panel-body" style="padding: 2px;">
+				<div id="gametypes" style="height: 150px;"></div>
+			</div>
+		</div>
 	</div>
 
-	<div class="col-md-6 ">
-		<a class="btn btn-primary" href="#/owners/{{ owner.data.owner.OWNER }}/games">Games</a>
-		<!--
-		<a class="btn btn-primary" href="#/owners/{{ owner.data.owner.OWNER }}/players">Players</a>
-		-->
+	<div class="col-sm-2 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Top10 Most DMG</div>
+			<div class="panel-body" style="padding: 2px;">
+				<div id="mostdmg" style="height: 150px;"></div>
+			</div>
+		</div>
 	</div>
 
-	<!--
-	<div class="span6 well">
-		<h3>Gametypes</h3>
-		<table class="table table-condensed table-striped ">
-			<thead>
-				<tr>
-					<th>Type</th>
-					<th>Games</th>
-				</tr>
-			<thead>
-			<tbody>
-				<tr ng-repeat="z in owner.data.types">
-					<td><b>{{ z.GAME_TYPE }}</b></td>
-					<td>{{ z.MATCHES_PLAYED }}</td>
-				</tr>
-			</tbody>
-		</table>
+	<div class="col-sm-2 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Top10 Most ACC</div>
+			<div class="panel-body" style="padding: 2px;">
+				<div id="mostacc" style="height: 150px;"></div>
+			</div>
+		</div>
 	</div>
 
-	<div class="span6 well">
-	<h3>Maps</h3>
-		<table class="table table-condensed table-striped ">
-			<thead>
-				<tr>
-					<th>Map</th>
-					<th>Games</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="z in owner.data.maps">
-					<td>{{ z.MAP }}</td>
-					<td>{{ z.MATCHES_PLAYED }}</td>
-				</tr>
-			</tbody>
-		</table>
+	<div class="col-sm-2 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Most played maps</div>
+			<div class="panel-body" style="padding: 2px;">
+				<div id="mapsgraph" style="height: 150px;"></div>
+			</div>
+		</div>
 	</div>
-	-->
+
+	<div class="col-sm-4 ">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Matches saved</div>
+			<div class="panel-body" style="padding: 2px;">
+				<div id="matches" style="height: 150px;"></div>
+			</div>
+		</div>
+	</div>
 
 </div>
 
-<!--
 <div class="row-fluid">
 
-	<div class="span6 well">
-		<h3>Players</h3>
-		<table class="table table-condensed table-striped table-bordered">
-			<thead>
-				<tr>
-					<th><a href="" ng-click="ordercolumn2='PLAYER_CLAN'; ordertype2=!ordertype2">Clan</a></th>
-					<th><a href="" ng-click="ordercolumn2='PLAYER_NICK'; ordertype2=!ordertype2">Player</a></th>
-					<th><a href="" ng-click="ordercolumn2='PLAY_TIME'; ordertype2=!ordertype2">PLAY_TIME</a></th>
-					<th><a href="" ng-click="ordercolumn2='MATCHES_PLAYED'; ordertype2=!ordertype2">Games</a></th>
-					<th><a href="" ng-click="ordercolumn2='DAMAGE_DEALT_PER_SEC_AVG'; ordertype2=!ordertype2">dmg/s</a></th>
-					<th><a href="" ng-click="ordercolumn2='KILLS'; ordertype2=!ordertype2">KILLS</a></th>
-					<th><a href="" ng-click="ordercolumn2='ACC'; ordertype2=!ordertype2">ACC</a></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="z in theplayers.data.players | orderBy:ordercolumn2:ordertype2">
-					<td><a href="#/clan/{{ z.PLAYER_CLAN | escape }}">{{ z.PLAYER_CLAN | cleanclan }}</a></td>
-					<td><img src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.PLAYER_COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.PLAYER_COUNTRY }}" /> <a href="#/owner/{{owner.data.owner.OWNER}}/player/{{z.PLAYER_NICK}}">{{ z.PLAYER_NICK }}</a></td>
-					<td>{{ date-z.PLAY_TIME*1000 | timeago }}</td>
-					<td>{{ z.MATCHES_PLAYED | number }}</td>
-					<td title="{{ z.DAMAGE_DEALT_PER_SEC_AVG | number:4 }}">{{ z.DAMAGE_DEALT_PER_SEC_AVG | number:2 }}</td>
-					<td title="{{ z.KILLS | number }}kills {{ z.DEATHS | number }}deaths ({{ z.RATIO | number:2 }}ratio)">{{ z.KILLS | number }}</td>
-					<td title="{{ z.ACC | number:4 }}">{{ z.ACC | number:1 }}%</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-
-	<div class="span6 well">
-
+	<div class="col-sm-12 ">
 		<h3>Games</h3>
-		<table class="table table-condensed table-striped ">
+		<table id="table_owner_games" class="table table-condensed">
 			<thead>
 				<tr>
-					<th><a href="" ng-click="ordercolumn3='PUBLIC_ID'; ordertype3=!ordertype3">PUBLIC_ID</a></th>
-					<th><a href="" ng-click="ordercolumn3='MAP'; ordertype3=!ordertype3">MAP</a></th>
-					<th><a href="" ng-click="ordercolumn='GAME_TYPE'; ordertype=!ordertype" title="GAME_TYPE">GT</a></th>
-					<th><a href="" ng-click="ordercolumn3='GAME_TIMESTAMP'; ordertype3=!ordertype3">GAME_TIMESTAMP</a></th>
+					<th data-dynatable-column="PUBLIC_ID">PUBLIC_ID</th>
+					<th data-dynatable-column="GAME_TYPE" title="GAME_TYPE">GT</th>
+					<th data-dynatable-column="MAP">MAP</th>
+					<th data-dynatable-column="GAME_TIMESTAMP">GAME_TIMESTAMP</th>
+					<th data-dynatable-column="OWNER">OWNER</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="z in thegames.data.games | orderBy:ordercolumn3:ordertype3">
-					<td><a href="#/game/{{ z.PUBLIC_ID }}">{{ z.PUBLIC_ID | shortenPID }}</a></td>
-					<td>
-						<a href="#/map/{{ z.MAP }}">
-							<img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ z.MAP }}_v2011071903.0.jpg" alt="{{ z.MAP }}" title="{{ z.MAP }}" style="height:42px;width:56px;border-width:0px;" />
-						</a>
-					</td>
-					<td>
-							<img style="float: left;" src="http://cdn.quakelive.com/web/2013071601/images/gametypes/sm/{{ z.GAME_TYPE }}_v2013071601.0.png" class="gameicon" alt="{{ z.GAME_TYPE }}" title="{{ z.GAME_TYPE }}" />
-						<div style="height: 14px; float: left;">
-							<div class="{{ z.RULESET | ruleset }}"></div>
-							<div class="{{ z.PREMIUM | premium }}"> </div>
-							<div class="{{ z.RANKED | ranked }}"></div>
-						</div>
-					</td>
-					<td>{{ z.GAME_TIMESTAMP*1000 | date:'yyyy-MM-dd HH:mm:ss' }}</td>
-				</tr>
 			</tbody>
 		</table>
-
 	</div>
 
 </div>
-	-->
 

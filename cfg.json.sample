@@ -8,21 +8,17 @@
 	"api": {
 		"port": 8585,
 		"httplogfile": "./http.log",
-		"games": {
-			"save": true,
-			"tempdir": "/tmp/",
-			"gamesdir": "./games/"
+		"cache": {
+			"file": "/tmp/qlscache.json",
+			"dir": "./cachedir/",
+			"time": 3600000
 		}
-	},
+	}
   "loader": {
     "saveDownloadedJson": true,
     "importDownloadedJson": true,
     "ql_email": "<change to-your-QL-datafeed-login-email>",
     "ql_pass": "<change to-your-QL-datafeed-login-pass>",
     "jsondir": "./jsons/"
-  },
-	"counter": {
-		"on": true,
-		"path": "/tmp/ql-stats-dev.counter"
-	}
+  }
 }

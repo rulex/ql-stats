@@ -3,7 +3,7 @@
 
 	<div class="col-md-12 ">
 
-		<table id="table_tags" class="table table-condensed table-striped ">
+		<table id="table_tags" class="table table-condensed table-bordered table-hover ">
 			<thead>
 				<tr>
 					<th data-dynatable-column="ID">ID</th>
@@ -14,12 +14,20 @@
 			<tbody>
 			</tbody>
 		</table>
-		<div class="row" id="table_tags_">
-			<div class="col-lg-1 col-center">
-				<div class="loading"></div>
-			</div>
-		</div>
 
+	</div>
+
+</div>
+
+<div style="display: none;" class="row-fluid admin" >
+
+	<div class="col-md-4 ">
+		<div class="input-group">
+			<h5>Add new tag</h5>
+			<input type="text" placeholder="Tag name" class="form-control" id="admin_tag_name" />
+			<input type="text" placeholder="Tag description" class="form-control" id="admin_tag_descr" />
+			<button id="admin_tag_submit" class="btn btn-default">Add</button>
+		</div>
 	</div>
 
 </div>

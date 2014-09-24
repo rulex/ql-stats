@@ -5,7 +5,7 @@
 
 var
   fs = require('graceful-fs'),
-  mysql = require('mysql2'),
+  mysql = require('mysql'),
   async = require('async'),
   request = require('request'),
   log4js = require('log4js'),
@@ -21,20 +21,31 @@ var _conn; // DB connection
 var _cookieJar; // www.quakelive.com login cookies
 var _profilingInfo;
 
+var program = require( 'commander' );
+program
+	.version( '0.0.1' )
+	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
+	.option( '-d, --dir <directory>', 'Directory to scan' )
+	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.option( '-n, --nologin', 'Don\'t log in to quakelive.com. For use with */update & */get routes' )
+	.parse( process.argv );
+
 main();
 
 function main() {
-  _logger = log4js.getLogger("ldarchive");
-  _logger.setLevel(log4js.levels.INFO);
-  var data = fs.readFileSync(__dirname + '/cfg.json');
+  _logger = log4js.getLogger( 'ldarchive' );
+  _logger.setLevel( program.loglevel || log4js.levels.DEBUG );
+  var data = fs.readFileSync( program.config || __dirname + '/cfg.json' );
   _config = JSON.parse(data);
-  _dbpool = mysql.createPool(_config.mysql_db);
+	_config.loader.jsondir = program.dir;
+	_config.mysql_db.database = 'qlstats2_new';
+  _dbpool = mysql.createPool( _config.mysql_db );
   Q.longStackSupport = false;
   Q
     .ninvoke(_dbpool, "getConnection")
     .then(function (conn) {
       _conn = conn;
-      return ld.init(conn);
+      return ld.init( conn, { loglevel: program.loglevel } );
     })
     .then(loadAndProcessJsonFileLoop)
     .fail(function (err) { _logger.error(err.stack); })
@@ -123,15 +134,19 @@ function processFile(file) {
         .fcall(function() { _logger.debug("Loading " + file); })
         .then(function() { return Q.nfcall(fs.readFile, file); })
         .then(function(data) { return isGzip ? Q.nfcall(zlib.gunzip, data) : data; })
-        .then(function(json) {
-          var game = JSON.parse(json);
-          if (!game.PUBLIC_ID) {
-            _logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
-            return undefined;
-          }
-          return ld.processGame(game)
-            .then(function() { _profilingInfo.incProcessed(); });
-        });
+				.then(function(json) {
+					var game = JSON.parse(json);
+					// changed from PUBLIC_ID to GAME_EXPIRES_FULL as it is the last object in the json
+					/*
+					if (!game.GAME_EXPIRES_FULL) {
+						//_logger.warn(file + ": no PUBLIC_ID in json data. File was ignored.");
+						_logger.warn(file + ": Incomplete json data. File was ignored.");
+						return undefined;
+					}
+					*/
+					return ld.processGame(game)
+						.then(function() { _profilingInfo.incProcessed(); });
+				});
     })
     .catch(function (err) { _logger.error(file + ": " + err); });
 }

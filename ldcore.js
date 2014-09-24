@@ -3,6 +3,7 @@
   zlib = require('zlib'),
   mysql = require('mysql2'),
   log4js = require('log4js'),
+  request = require('request'),
   Q = require('q');
 
 exports.init = init;
@@ -12,14 +13,26 @@ exports.saveGameJson = saveGameJson;
 exports.getCachedMap = getCachedMap;
 exports.getCachedClan = getCachedClan;
 exports.getCachedPlayer = getCachedPlayer;
+exports.loginToQuakeliveWebsite = loginToQuakeliveWebsite;
+exports._coreLogger = _coreLogger;
+exports._cookieJar = _cookieJar;
 
+var _config; // config data from cfg.json file
 var _sqlErrorQuery, _sqlErrorParams; // if an SQL error occurs, this can be printed for debugging purposes
 var _conn; // DB connection
 var _cache = { Map: {}, Clan: {}, Player: {} }; // NAME -> { ID [, ...] }; Player cache also contains CLAN_ID and COUNTRY
 var _sqlInsertGame; // SQL statement to insert into Game table
 var _sqlInsertGamePlayer; // SQL statement to insert into GamePlayer table
 var _sqlUpdatePlayer; // SQL statement to update Player CLAN_ID and COUNTRY
-var _logger; // log4js logger
+var _coreLogger; // log4js logger
+var _cookieJar; // www.quakelive.com login cookies
+
+  var data = fs.readFileSync(__dirname + '/cfg.json');
+  _config = JSON.parse(data);
+  if (!(_config.loader.saveDownloadedJson || _config.loader.importDownloadedJson)) {
+    _coreLogger.error("At least one of loader.saveDownloadedJson or loader.importDownloadedJson must be set in cfg.json");
+    process.exit();
+  }
 
 //==========================================================================================
 // SQL init
@@ -27,9 +40,8 @@ var _logger; // log4js logger
 
 // returns a Q promise to initialze the cache
 function init(conn, options) {
-  _logger = log4js.getLogger("ldcore");
-  _logger.setLevel(log4js.levels.DEBUG);
- 
+  _coreLogger = log4js.getLogger( "ldcore" );
+  _coreLogger.setLevel( options.loglevel || log4js.levels.DEBUG );
   _conn = conn;
   createSqlStatements();
   if (!options || options.useCache !== false)
@@ -54,13 +66,13 @@ function createSqlStatements() {
     'GAME_ID, PLAYER_ID, CLAN_ID, RANK, ' +
       'SCORE, QUIT, DAMAGE_DEALT, DAMAGE_TAKEN, KILLS, ' +
       'DEATHS, HITS, SHOTS, TEAM, TEAM_RANK, ' +
-      'HUMILIATION, IMPRESSIVE, EXCELLENT, PLAY_TIME, G_K, ' +
+      'IMPRESSIVE, EXCELLENT, PLAY_TIME, G_K, ' +
       'BFG_H, BFG_K, BFG_S, CG_H, CG_K, CG_S, ' +
       'GL_H, GL_K, GL_S, LG_H, LG_K, LG_S, ' +
       'MG_H, MG_K, MG_S, NG_H, NG_K, NG_S, ' +
       'PG_H, PG_K, PG_S, PM_H, PM_K, PM_S, ' +
       'RG_H, RG_K, RG_S, RL_H, RL_K, RL_S, ' +
-      'SG_H, SG_K, SG_S';
+      'SG_H, SG_K, SG_S, HMG_H, HMG_K, HMG_S ';
   vals = "";
   for (i = 0, c = cols.split(",").length; i < c; i++)
     vals += ",?";
@@ -80,7 +92,7 @@ function initCache(table) {
       for (var i = 0, c = rows.length; i < c; i++)
         cache[rows[i].NAME.toLowerCase()] = { ID: rows[i].ID };
       _cache[table] = cache;
-      _logger.info(table + " cache: " + cache.count);
+      _coreLogger.info(table + " cache: " + cache.count);
       return cache;
     });
 }
@@ -89,14 +101,36 @@ function initCache(table) {
 // common game data processing
 //==========================================================================================
 
+function loginToQuakeliveWebsite() {
+  var defer = Q.defer();
+  _cookieJar = request.jar();
+  request({
+      uri: "https://secure.quakelive.com/user/login",
+      timeout: 10000,
+      method: "POST",
+      form: { submit: "", email: _config.loader.ql_email, pass: _config.loader.ql_pass },
+      jar: _cookieJar
+    },
+    function(err) {
+      if (err) {
+        _coreLogger.error("Error logging in to quakelive.com: " + err);
+        defer.reject(new Error(err));
+      } else {
+        _coreLogger.info("Logged on to quakelive.com");
+        defer.resolve(_cookieJar);
+      }
+    });
+  return defer.promise;
+}
+
 function processGame(game) {
   return insertGame(game)
     .then(function (gameIdAndTimestamp) { return processGamePlayers(game, gameIdAndTimestamp[0], gameIdAndTimestamp[1]); })
     .catch(function (err) {
       if (err.toString().match(/uplicate/))
-        _logger.debug("dupe: " + game.PUBLIC_ID);
+        _coreLogger.debug("dupe: " + game.PUBLIC_ID);
       else
-        _logger.error(game.PUBLIC_ID + " - " + err.stack + getQueryErrorInfo());
+        _coreLogger.error(game.PUBLIC_ID + " - " + err.stack + getQueryErrorInfo());
     });
 }
 
@@ -158,7 +192,7 @@ function insertGame(g) {
       data = data.map(function (value) { return Number.isNaN(value) ? null : value; });
       return query(_sqlInsertGame, data)
         .then(function (result) {
-          _logger.debug("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
+          _coreLogger.debug("inserted game " + g.PUBLIC_ID + ": " + result.insertId);
           return [result.insertId, GAME_TIMESTAMP];
         });
     });
@@ -215,24 +249,35 @@ function insertGamePlayer(p, gameId, timestamp) {
       var values = getPromisedValues(promises);
       var player = values[0];
       var clan = values[1];
+			var _hmg_shots = 0;
+			var _hmg_hits = 0;
+			var _hmg_kills = 0;
+			if( 'HMG_HITS' in p && 'HMG_KILLS' in p && 'HMG_SHOTS' in p ) {
+				_hmg_hits = p.HMG_HITS;
+				_hmg_kills = p.HMG_KILLS;
+				_hmg_shots = p.HMG_SHOTS;
+			}
+			else {
+				_coreLogger.debug( p.PUBLIC_ID + ' missing HMG' );
+			}
       var data = [
         gameId, player.ID, player.CLAN_ID, p.RANK,
         SCORE, parseInt(QUIT), p.DAMAGE_DEALT, p.DAMAGE_TAKEN, p.KILLS,
         p.DEATHS, p.HITS, p.SHOTS, TEAM, TEAM_RANK,
-        p.HUMILIATION, IMPRESSIVE, EXCELLENT, p.PLAY_TIME, p.GAUNTLET_KILLS,
+        IMPRESSIVE, EXCELLENT, p.PLAY_TIME, p.GAUNTLET_KILLS,
         p.BFG_HITS, p.BFG_KILLS, p.BFG_SHOTS, p.CHAINGUN_HITS, p.CHAINGUN_KILLS, p.CHAINGUN_SHOTS,
         p.GRENADE_HITS, p.GRENADE_KILLS, p.GRENADE_SHOTS, p.LIGHTNING_HITS, p.LIGHTNING_KILLS, p.LIGHTNING_SHOTS,
         p.MACHINEGUN_HITS, p.MACHINEGUN_KILLS, p.MACHINEGUN_SHOTS, p.NAILGUN_HITS, p.NAILGUN_KILLS, p.NAILGUN_SHOTS,
         p.PLASMA_HITS, p.PLASMA_KILLS, p.PLASMA_SHOTS, p.PROXMINE_HITS, p.PROXMINE_KILLS, p.PROXMINE_SHOTS,
         p.RAILGUN_HITS, p.RAILGUN_KILLS, p.RAILGUN_SHOTS, p.ROCKET_HITS, p.ROCKET_KILLS, p.ROCKET_SHOTS,
-        p.SHOTGUN_HITS, p.SHOTGUN_KILLS, p.SHOTGUN_SHOTS
+        p.SHOTGUN_HITS, p.SHOTGUN_KILLS, p.SHOTGUN_SHOTS, _hmg_hits, _hmg_kills, _hmg_shots
       ];
       data = data.map(function (value) { return Number.isNaN(value) ? null : value; });
 
       // check if player has changed clan or country
       var isNewerData = !player.timestamp || player.timestamp < timestamp;
       if (isNewerData && (player.CLAN_ID != clan.ID && clan.ID || player.COUNTRY != p.PLAYER_COUNTRY && p.PLAYER_COUNTRY)) {
-        _logger.debug("updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
+        _coreLogger.debug("updating player " + p.PLAYER_NICK + ": old clan_id=" + player.CLAN_ID + ", country=" + player.COUNTRY + ", new clan_id=" + clan.ID + ", country=" + p.PLAYER_COUNTRY);
         if (clan.ID)
           player.CLAN_ID = clan.ID;
         if (p.PLAYER_COUNTRY)
@@ -244,7 +289,7 @@ function insertGamePlayer(p, gameId, timestamp) {
       return data;
     })
     .then(function (data) { return query(_sqlInsertGamePlayer, data); })
-    .fail(function (err) { _logger.error("#" + gameId + ", " + p.PLAYER_NICK + ": " + err.stack + getQueryErrorInfo()); });
+    .fail(function (err) { _coreLogger.error("#" + gameId + ", " + p.PLAYER_NICK + ": " + err.stack + getQueryErrorInfo()); });
 }
 
 function getCachedMap(name) {
@@ -284,7 +329,7 @@ function getCachedItem(table, objWithName) {
   var promise =
     query("insert into " + table + " (" + fields.substr(1) + ") values (" + placeholders.substr(1) + ")", values)
     .then(function (result) {
-      _logger.debug("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
+      _coreLogger.debug("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
       clone.ID = result.insertId;
       _cache[table][lower] = clone;
       return clone;
@@ -305,21 +350,22 @@ function getCachedItem(table, objWithName) {
   return promise;
 }
 
-function query(sql, params) {
+function query( sql, params ) {
+	//_coreLogger.debug( sql, params );
   var defer = Q.defer();
   params = params || [];
-  _conn.query(sql, params, function (err, result) {
-    if (err) {
+  _conn.query( sql, params, function( err, result ) {
+    if( err ) {
       _sqlErrorQuery = sql;
-      _sqlErrorParams = JSON.stringify(params);
-      defer.reject(new Error(err));
+      _sqlErrorParams = JSON.stringify( params );
+      defer.reject( new Error( err ) );
       //throw new Error(err);
       return;
     }
     _sqlErrorQuery = undefined;
     _sqlErrorParams = undefined;
-    defer.resolve(result);
-  });
+    defer.resolve( result );
+  } );
   return defer.promise;
 }
 
@@ -347,7 +393,7 @@ function saveGameJson(game, basedir) {
   var dirName1 = basedir + date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2);
   var dirName2 = dirName1 + "/" + ("0" + date.getDate()).slice(-2);
   var filePath = dirName2 + "/" + game.PUBLIC_ID + ".json.gz";
-  _logger.debug("saving JSON: " + filePath);
+  _coreLogger.debug("saving JSON: " + filePath);
   return createDir(dirName1)
     .then(createDir(dirName2))
     .then(function () {
@@ -357,7 +403,7 @@ function saveGameJson(game, basedir) {
     .then(function (gzip) {
       return Q.nfcall(fs.writeFile, filePath, gzip);
     })
-    .fail(function (err) { _logger.error("Can't save game JSON: " + err.stack); });
+    .fail(function (err) { _coreLogger.error("Can't save game JSON: " + err.stack); });
 }
 
 function createDir(dir) {
