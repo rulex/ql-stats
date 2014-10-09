@@ -60,7 +60,7 @@ var requests_counter_pub = 0;
 var requests_counter_total = 0;
 
 // cache
-var qlscache = require( './qlscache2.js' );
+var qlscache = require( './qlscache.js' );
 qlscache.init( cfg, program.loglevel );
 
 var maxAge_public, maxAge_api, http_cache_time;
@@ -276,6 +276,39 @@ app.get( '/api/search/teams', function ( req, res ) {
 	} );
 } );
 
+
+app.get( '/api/players', function (req, res) {
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'p.COUNTRY,' );
+	sql.push( 'p.NAME as PLAYER,' );
+	sql.push( 'c.NAME as CLAN,' );
+	sql.push( 'c.ID as CLAN_ID' );
+	sql.push( 'from Player p' );
+	sql.push( 'left join Clan c' );
+	sql.push( 'on c.ID=p.CLAN_ID' );
+	sql.push( 'order by p.NAME asc' );
+	sql.push( 'limit ' + _offset + ', ' + _perPage + '' );
+	sql1 = 'select count(ID) as totalRecordCount from Player';
+	sql = sql.join( ' ' );
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql + ';' + sql1, function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			conn.release();
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty[0], queryRecordCount: resulty[1][0].totalRecordCount, totalRecordCount: resulty[1][0].totalRecordCount, ms: ( new Date().getTime() - _start ) } );
+			res.end();
+		} );
+	} );
+} );
+
 app.get('/api/players/:player', function (req, res) {
   var nick = mysql_real_escape_string(req.params.player);
   var sql = 'SELECT ' +
@@ -441,27 +474,56 @@ app.get( '/api/players/:player/update', function ( req, res ) {
 } );
 
 app.get( '/api/games', function ( req, res ) {
-  var sql = 'SELECT g.PUBLIC_ID, g.GAME_TYPE, g.GAME_TIMESTAMP, g.TOTAL_KILLS, g.GAME_LENGTH, g.NUM_PLAYERS, m.NAME as MAP, o.NAME as OWNER, g.PREMIUM, g.RANKED, g.RULESET '
-  + 'FROM Game g '
-	+ 'inner join Map m on m.ID=g.MAP_ID '
-  + 'left outer join Player o on o.ID=g.OWNER_ID '
-  + 'where g.GAME_TIMESTAMP > ' + ( ( new Date().getTime() - ( 24*60*60*1000 ) ) / 1000 )
-  + 'order by g.GAME_TIMESTAMP desc LIMIT 1000';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
-	res.jsonp( _dt );
-	res.end();
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'g.PUBLIC_ID,' );
+	sql.push( 'g.GAME_TYPE,' );
+	sql.push( 'g.GAME_TIMESTAMP,' );
+	sql.push( 'g.TOTAL_KILLS,' );
+	sql.push( 'g.GAME_LENGTH,' );
+	sql.push( 'g.NUM_PLAYERS,' );
+	sql.push( 'g.PREMIUM,' );
+	sql.push( 'g.RANKED,' );
+	sql.push( 'g.RULESET,' );
+	sql.push( 'm.NAME as MAP,' );
+	sql.push( 'p.NAME as OWNER' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join Map m' );
+	sql.push( 'on m.ID=g.MAP_ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=g.OWNER_ID' );
+	sql.push( 'order by g.ID desc' );
+	sql.push( 'limit ' + _offset + ', ' + _perPage + '' );
+	sql2 = 'select count(ID) as totalRecordCount from Game';
+	sql = sql.join( ' ' );
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql + ';' + sql2, function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			conn.release();
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty[0], queryRecordCount: resulty[1][0].totalRecordCount, totalRecordCount: resulty[1][0].totalRecordCount, ms: ( new Date().getTime() - _start ) } );
+			res.end();
+		} );
+	} );
 } );
 
 app.get( '/api/games/graphs/permonth', function ( req, res ) {
   var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game group by year, month';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
 
 app.get( '/api/games/graphs/perweek', function ( req, res ) {
   var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, count(GAME_TIMESTAMP) as c from Game group by year, week ;';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -575,7 +637,7 @@ app.get('/api/games/:game/get', function (req, res) {
 app.get( '/api/owners', function ( req, res ) {
   var sql = 'SELECT o.NAME as OWNER, o.COUNTRY as OWNER_COUNTRY,count(*) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH_SUM, avg(GAME_LENGTH) as GAME_LENGTH_AVG, sum(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC '
   + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID group by o.NAME';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], { searchColumns: ['OWNER'] } );
 	res.jsonp( _dt );
 	res.end();
 });
@@ -773,62 +835,16 @@ app.get( '/api/owners/:owner', function ( req, res ) {
 	} );
 } );
 
-/*
-app.get( '/api/all/daily', function ( req, res ) {
-	// maps
-	sql = 'select count(*) as count, DATE(from_unixtime(GAME_TIMESTAMP)) as date, year(from_unixtime(GAME_TIMESTAMP)) as year, month(from_unixtime(GAME_TIMESTAMP)) as month, day(from_unixtime(GAME_TIMESTAMP)) as day from Games group by year,month,day order by NULL';
-	db.query( sql, function( err, rows, fields ) {
-		res.jsonp( { thedays: rows } );
-		res.end();
-	} );
-} );
-
-app.get( '/api/all/maps', function ( req, res ) {
-	// maps
-	sql = 'select count(*) as MATCHES_PLAYED, MAP from Games group by MAP order by MATCHES_PLAYED desc';
-	db.query( sql, function( err, rows, fields ) {
-		res.jsonp( { themaps: rows } );
-		res.end();
-	} );
-} );
-
-app.get( '/api/all', function ( req, res ) {
-	//var game = mysql_real_escape_string( req.url.split( '/' )[3] );
-	var sql = [];
-	// games
-	sql[0] = 'SELECT count(*) as MATCHES_PLAYED, SUM(TOTAL_KILLS) as TOTAL_KILLS, avg(AVG_ACC) as AVG_ACC FROM Games';
-	// players
-	sql[1] = 'SELECT sum(PLAY_TIME) as PLAY_TIME_SUM, sum(SHOTS) as SHOTS, sum(KILLS) as KILLS, sum(RL_K) as RL_K_SUM, sum(RG_K) as RG_K_SUM, sum(LG_K) as LG_K_SUM FROM Players ';
-	// UNIQUE_PLAYERS
-	sql[2] = 'select count(*) as UNIQUE_PLAYERS from ( select PLAYER_NICK from Players left join Games on Players.PUBLIC_ID=Games.PUBLIC_ID group by PLAYER_NICK ) as a';
-	// first/latest game
-	sql[3] = 'select min(GAME_TIMESTAMP) as min, max(GAME_TIMESTAMP) as max from Games';
-	// types
-	sql[4] = 'select GAME_TYPE, count(*) as MATCHES_PLAYED from Games group by GAME_TYPE order by MATCHES_PLAYED desc';
-	db.query( sql.join( ';' ), function( err, resulty ) {
-		res.jsonp( { games: resulty[0], UNIQUE_PLAYERS: resulty[2], min_max: resulty[3], gametypes: resulty[4], players: resulty[1] } );
-		res.end();
-	} );
-} );
-*/
-
 app.get( '/api/countries', function ( req, res ) {
 	sql = 'select COUNTRY, count(COUNTRY) as NUM_PLAYERS from Player group by COUNTRY';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows, fields ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
 } );
 
 app.get( '/api/gametypes', function ( req, res ) {
 	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH FROM Game group by GAME_TYPE order by 1';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -836,7 +852,7 @@ app.get( '/api/gametypes', function ( req, res ) {
 app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
 	var gt = req.params.gametype;
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game where GAME_TYPE=? group by GAME_TYPE order by 1';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [gt], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -844,7 +860,7 @@ app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
 app.get( '/api/gametypes/:gametype/games/graphs/permonth', function( req, res ) {
 	var gt = req.params.gametype;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, month';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [gt], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -852,7 +868,7 @@ app.get( '/api/gametypes/:gametype/games/graphs/permonth', function( req, res ) 
 app.get( '/api/gametypes/:gametype/games/graphs/perweek', function( req, res ) {
 	var gt = req.params.gametype;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, week';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [gt], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -989,16 +1005,16 @@ app.get( '/api/gametypes/:gametype/players/:player/games', function (req, res) {
 } );
 
 app.get( '/api/gametypes/:gametype/maps', function ( req, res ) {
-	var gametype = mysql_real_escape_string( req.params.gametype );
+	var gt = req.params.gametype;
 	var sql = 'select m.NAME as MAP, g.MAP_ID, count(g.ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where g.GAME_TYPE=? group by MAP_ID';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [gt], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
 
 app.get( '/api/overview', function ( req, res ) {
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game group by GAME_TYPE order by 1';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1062,14 +1078,41 @@ app.get( '/api/tags/:tag', function ( req, res ) {
 } );
 
 app.get( '/api/tags/:tag/games', function ( req, res ) {
+	_start = new Date().getTime();
 	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'SELECT g.*, p.NAME as OWNER, gt.*, m.NAME as MAP FROM Game g left join GameTag gt on g.PUBLIC_ID=gt.PUBLIC_ID left join Map m on m.ID=g.MAP_ID left join Player p on p.ID=g.OWNER_ID where gt.TAG_ID=' + tag + ' ';
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'SQL_CALC_FOUND_ROWS' );
+	sql.push( 'g.*,' );
+	sql.push( 'gt.*,' );
+	sql.push( 'p.NAME as OWNER,' );
+	sql.push( 'm.NAME as MAP' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GameTag gt' );
+	sql.push( 'on g.PUBLIC_ID=gt.PUBLIC_ID' );
+	sql.push( 'left join Map m' );
+	sql.push( 'on m.ID=g.MAP_ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=g.OWNER_ID' );
+	sql.push( 'where gt.TAG_ID=' + tag + '' );
+	sql.push( 'order by g.GAME_TIMESTAMP desc' );
+	sql.push( 'limit ' + _offset + ', ' + _perPage + '' );
+	sql1 = 'select FOUND_ROWS() as queryRecordCount';
+	sql2 = 'select count(TAG_ID) as totalRecordCount from GameTag where TAG_ID=' + tag;
+	sql = sql.join( ' ' );
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows, fields ) {
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
+		if( err ) { _logger.error( err ); }
+		conn.query( sql + ';' + sql1 + ';' + sql2, function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
 			conn.release();
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty[0], queryRecordCount: resulty[1][0].queryRecordCount, totalRecordCount: resulty[2][0].totalRecordCount, ms: ( new Date().getTime() - _start ) } );
+			res.end();
 		} );
 	} );
 } );
@@ -1250,7 +1293,7 @@ app.get( '/api/maps/:map', function ( req, res ) {
 
 app.get( '/api/maps', function ( req, res ) {
 	var sql = 'select m.NAME as MAP, g.MAP_ID, count(g.ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID group by MAP_ID';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1286,10 +1329,37 @@ app.get( '/api/maps/:map/graphs/perweek', function ( req, res ) {
 } );
 
 app.get( '/api/clans', function ( req, res ) {
-	var sql = 'select c.ID as CLAN_ID, c.NAME as CLAN from Clan c';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	//var sql = 'select c.ID as CLAN_ID, c.NAME as CLAN from Clan c';
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'ID as CLAN_ID,' );
+	sql.push( 'NAME as CLAN' );
+	sql.push( 'from Clan c' );
+	sql.push( 'order by c.NAME asc' );
+	sql.push( 'limit ' + _offset + ', ' + _perPage + '' );
+	sql1 = 'select count(ID) as totalRecordCount from Clan';
+	sql = sql.join( ' ' );
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql + ';' + sql1, function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			conn.release();
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty[0], queryRecordCount: resulty[1][0].totalRecordCount, totalRecordCount: resulty[1][0].totalRecordCount, ms: ( new Date().getTime() - _start ) } );
+			res.end();
+		} );
+	} );
+	/*
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
+	*/
 } );
 
 app.get( '/api/clans/:clan', function ( req, res ) {
@@ -1327,7 +1397,7 @@ app.get( '/api/top/last30days/kills', function ( req, res ) {
 		'where g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
 		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID ' +
 		'';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1346,7 +1416,7 @@ app.get( '/api/top/all/kills', function ( req, res ) {
 		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
 		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID ' +
 		'';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1460,7 +1530,7 @@ app.get('/api/race/players/:player', function (req, res) {
 });
 app.get( '/api/rulesets', function( req, res ) {
   sql = "select RULESET, count(RULESET) as MATCHES_PLAYED from Game group by RULESET";
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1472,28 +1542,28 @@ app.get( '/api/rulesets/:ruleset/games', function ( req, res ) {
   + 'left outer join Player o on o.ID=g.OWNER_ID '
   + 'where g.RULESET=? and g.GAME_TIMESTAMP > ' + ( ( new Date().getTime() - ( 24*60*60*1000 ) ) / 1000 )
   + 'order by g.GAME_TIMESTAMP desc LIMIT 1000';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [ruleset], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
 app.get( '/api/rulesets/:ruleset/overview', function( req, res ) {
   var ruleset = req.params.ruleset;
 	var sql = 'select GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game where RULESET=? group by GAME_TYPE order by 1';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [ruleset], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
 app.get( '/api/rulesets/:ruleset/games/graphs/permonth', function( req, res ) {
 	var ruleset = req.params.ruleset;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, count(GAME_TIMESTAMP) as c from Game where RULESET=? group by year, month';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [ruleset], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
 app.get( '/api/rulesets/:ruleset/games/graphs/perweek', function( req, res ) {
 	var ruleset = req.params.ruleset;
 	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where RULESET=? group by year, week';
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [ruleset], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1520,7 +1590,7 @@ app.get( '/api/weapons', function( req, res ) {
 	//sql.push( ' sum(RL_K) as RL_K, sum(RG_K) as RG_K, sum(LG_K) as LG_K, sum(GL_K) as GL_K, sum(PG_K) as PG_K, sum(MG_K) as MG_K, sum(HMG_K) as HMG_K, sum(SG_K) as SG_K, sum(BFG_K) as BFG_K, sum(NG_K) as NG_K, sum(CG_K) as CG_K ' );
 	sql.push( 'from GamePlayer' );
 	sql = sql.join( ' ' );
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1554,7 +1624,7 @@ app.get( '/api/activity/week/matches', function( req, res ) {
 	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
 	sql.push( 'group by day, hour' );
 	sql = sql.join( ' ' );
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
@@ -1606,7 +1676,7 @@ app.get( '/api/activity/week/players', function( req, res ) {
 	sql.push( ') a' );
 	sql.push( 'group by day, hour' );
 	sql = sql.join( ' ' );
-	_dt = qlscache.doCache( req.url, sql, [], {} );
+	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );

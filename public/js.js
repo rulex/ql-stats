@@ -160,7 +160,12 @@ var dynatable_writers = {
 			var countryobj = getCountry( obj.COUNTRY );
 			c = obj.COUNTRY.toLowerCase();
 		}
-		return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ c +'_v2013071601.0.gif" class="playerflag" /> ' + countryobj.name + '<small class="pull-right">' + countryobj.region + '</small>';
+		if( countryobj ) {
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ c +'_v2013071601.0.gif" class="playerflag" /> ' + countryobj.name + '<small class="pull-right">' + countryobj.region + '</small>';
+		}
+		else {
+			return '';
+		}
 	},
 	NUM_PLAYERS: function( obj ) {
 		return thousandSeparator( obj.NUM_PLAYERS );
@@ -171,7 +176,10 @@ var dynatable_writers = {
 			var countryobj = getCountry( obj.COUNTRY );
 			c = obj.COUNTRY.toLowerCase();
 		}
-		return '' + ( obj.NUM_PLAYERS/countryobj.area*1000 ).toFixed(1);
+		if( countryobj )
+			return '' + ( obj.NUM_PLAYERS/countryobj.area*1000 ).toFixed(1);
+		else
+			return '';
 	},
 	PLAYER: function( obj ) {
 		return mkPlayerButton( obj, 'PLAYER', 'COUNTRY' );
@@ -757,6 +765,24 @@ var _weapons = [
 var _weaponMore = [ '_S', '_H', '_K' ];
 function inDuelVsAfter() {
 	onComplete();
+	$( '#current_url' ).html( printLocations() );
+	$( document ).on( {
+		mouseenter: function() {
+			$(this).find( 'span' ).fadeIn( 'fast' );
+		},
+		mouseleave: function() {
+			$(this).find( 'span' ).hide();
+		}
+	}, 'a.gametypebtn' );
+	$scope.theurl = '';
+	$scope.date = new Date().getTime();
+	$scope.ordercolumn = 'KILLS';
+	$scope.ordertype = true;
+	$scope.$on( 'Search', function() {
+		$scope.players = theLiz.players_search( $( '#players_search' ).val() );
+	} );
+	$scope.showsearch = true;
+	onComplete();
 	console.log( 'AFTER' );
 	console.log( _duelVsMap );
 	var p1g = [];
@@ -1012,6 +1038,34 @@ function GamesCtrl( $scope, theLiz, $timeout ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
+	$( '#table_games' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
+		onComplete();
+	} );
+	$( '#table_games' ).dynatable( {
+		dataset: {
+			ajax: true,
+			ajaxUrl: getApiURL() + 'api/games',
+			ajaxDataType: getAjaxDataType(),
+			ajaxOnLoad: true,
+			processingText: 'Loading...',
+			records: [],
+			perPageDefault: 20,
+			perPageOptions: [10,20,50,100],
+		},
+		params: {
+			records: 'data',
+		},
+		features: {
+			sort: false,
+			search: false,
+			pushState: false,
+			perPageSelect: true,
+			paginate: true,
+			recordCount: true,
+		},
+		writers: dynatable_writers,
+	} );
+	/*
 	$.ajax( {
 		url: getApiURL() + 'api/games',
 		dataType: getAjaxDataType(),
@@ -1038,6 +1092,7 @@ function GamesCtrl( $scope, theLiz, $timeout ) {
 			//console.log( data );
 		},
 	} );
+	*/
 }
 function GameCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
@@ -1461,29 +1516,70 @@ function PlayerCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 function PlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
 	setNavbarActive();
-	onComplete();
 	$( '#current_url' ).html( printLocations() );
-	$( document ).on( {
-		mouseenter: function() {
-			$(this).find( 'span' ).fadeIn( 'fast' );
-		},
-		mouseleave: function() {
-			$(this).find( 'span' ).hide();
-		}
-	}, 'a.gametypebtn' );
-	$scope.theurl = '';
-	$scope.date = new Date().getTime();
-	$scope.ordercolumn = 'KILLS';
-	$scope.ordertype = true;
-	$scope.$on( 'Search', function() {
-		$scope.players = theLiz.players_search( $( '#players_search' ).val() );
+	$( '#table_players' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
+		onComplete();
 	} );
-	$scope.showsearch = true;
+	$( '#table_players' ).dynatable( {
+		dataset: {
+			ajax: true,
+			ajaxUrl: getApiURL() + 'api/players',
+			ajaxDataType: getAjaxDataType(),
+			ajaxOnLoad: true,
+			processingText: 'Loading...',
+			records: [],
+			perPageDefault: 20,
+			perPageOptions: [10,20,50,100],
+		},
+		params: {
+			records: 'data',
+		},
+		features: {
+			sort: false,
+			search: false,
+			pushState: false,
+			perPageSelect: true,
+			paginate: true,
+			recordCount: true,
+		},
+		writers: dynatable_writers,
+	} );
 }
 function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
+	$( '#table_owners' ).bind( 'dynatable:init', function( e, dynatable ) {
+		dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
+	} );
+	$( '#table_owners' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
+		onComplete();
+	} );
+	$( '#table_owners' ).dynatable( {
+		dataset: {
+			ajax: true,
+			ajaxUrl: getApiURL() + 'api/owners',
+			ajaxDataType: getAjaxDataType(),
+			ajaxOnLoad: true,
+			processingText: 'Loading...',
+			records: [],
+			perPageDefault: 20,
+			perPageOptions: [10,20,50,100],
+		},
+		params: {
+			records: 'data',
+		},
+		features: {
+			sort: true,
+			search: true,
+			pushState: false,
+			perPageSelect: true,
+			paginate: true,
+			recordCount: true,
+		},
+		writers: dynatable_writers,
+	} );
+	/*
 	$.ajax( {
 		url: getApiURL() + 'api/owners',
 		dataType: getAjaxDataType(),
@@ -1510,6 +1606,7 @@ function OwnersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			//console.log( data );
 		},
 	} );
+	*/
 }
 function OwnerTop30Ctrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
@@ -1785,6 +1882,34 @@ function ClansCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
+	$( '#table_clans' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
+		onComplete();
+	} );
+	$( '#table_clans' ).dynatable( {
+		dataset: {
+			ajax: true,
+			ajaxUrl: getApiURL() + 'api/clans',
+			ajaxDataType: getAjaxDataType(),
+			ajaxOnLoad: true,
+			processingText: 'Loading...',
+			records: [],
+			perPageDefault: 20,
+			perPageOptions: [10,20,50,100],
+		},
+		params: {
+			records: 'data',
+		},
+		features: {
+			sort: false,
+			search: false,
+			pushState: false,
+			perPageSelect: true,
+			paginate: true,
+			recordCount: true,
+		},
+		writers: dynatable_writers,
+	} );
+	/*
 	$.ajax( {
 		url: getApiURL() + 'api/clans',
 		dataType: getAjaxDataType(),
@@ -1807,6 +1932,7 @@ function ClansCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			onComplete( data );
 		},
 	} );
+	*/
 }
 function ClanCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
@@ -2532,9 +2658,39 @@ function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	setNavbarActive();
 	var t = $routeParams.tag;
 	$( '#current_url' ).html( printLocations() );
+	/*
 	$( '#table_games' ).bind( 'dynatable:init', function( e, dynatable ) {
 		dynatable.sorts.add( 'GAME_TIMESTAMP', -1 );
 	} );
+	*/
+	$( '#table_games' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
+		onComplete();
+	} );
+	$( '#table_games' ).dynatable( {
+		dataset: {
+			ajax: true,
+			ajaxUrl: getApiURL() + 'api/tags/' + t + '/games',
+			ajaxDataType: getAjaxDataType(),
+			ajaxOnLoad: true,
+			processingText: 'Loading...',
+			records: [],
+			perPageDefault: 20,
+			perPageOptions: [10,20,50,100],
+		},
+		params: {
+			records: 'data',
+		},
+		features: {
+			sort: false,
+			search: false,
+			pushState: false,
+			perPageSelect: true,
+			paginate: true,
+			recordCount: true,
+		},
+		writers: dynatable_writers,
+	} );
+	/*
 	$.ajax( {
 		url: getApiURL() + 'api/tags/' + t + '/games',
 		dataType: getAjaxDataType(),
@@ -2558,6 +2714,7 @@ function TagGamesCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 			//console.log( data );
 		},
 	} );
+	*/
 }
 function TagPlayersCtrl( $scope, theLiz, $routeParams, $location, $timeout ) {
 	onLoading();
