@@ -1424,8 +1424,8 @@ app.get( '/api/top/all/kills', function ( req, res ) {
 app.get( '/api/status/cache', function ( req, res ) {
 	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
 	var _cache = [];
-	var now = new Date().getTime();
-	res.jsonp( { now: now, cached: qlscache.cacheControl } );
+	var now = new Date();
+	res.jsonp( { now: now.getTime(), now_nice: now, cached: qlscache.listCaches() } );
 	res.end();
 } );
 

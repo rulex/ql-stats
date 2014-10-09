@@ -9,18 +9,22 @@ var url = require( 'url' );
 program
 	.version( '0.0.3' )
 	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
-	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.option( '-L, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
+	.option( '-i, --init', 'init qls cache' )
+	.option( '-l, --list', 'List cache' )
+	.option( '-t, --time', 'Show timestamp. Combined with List.' )
+	.option( '-h, --human', 'Human readable' )
 	.parse( process.argv );
 
+exports.qls_logger = log4js.getLogger( 'qlscache' );
+
 exports.init = function( ConfigFile, loglevel ) {
-	qls_logger = log4js.getLogger( 'qlscache' );
-	qls_logger.setLevel( loglevel || log4js.levels.DEBUG );
-	//exports.file = ConfigFile.api.cache.file || './qlscache.json';
-	exports.dir = program.config || ConfigFile.api.cache.dir || './cachedir/';
+	exports.qls_logger.setLevel( loglevel || log4js.levels.DEBUG );
+	exports.dir = program.config || './cachedir/';
 	exports.time = ConfigFile.api.cache.time || 60*60*1000;
 	exports.dbQueue = [];
 	exports.handleDbConn( ConfigFile );
-	qls_logger.debug( 'Cache init dir:' + exports.dir + ' time:' + exports.time );
+	exports.qls_logger.debug( 'Cache init dir:' + exports.dir + ' time:' + exports.time );
 }
 
 exports.handleDbConn = function( ConfigFile ) {
@@ -28,13 +32,13 @@ exports.handleDbConn = function( ConfigFile ) {
 	// the old one cannot be reused.
 	exports.dbconn.connect( function( err ) {              // The server is either down
 		if( err ) {                                     // or restarting (takes a while sometimes).
-			qls_logger.error( 'error when connecting to db:', err );
+			exports.qls_logger.error( 'error when connecting to db:', err );
 			setTimeout( handleDisconnect, 2000 ); // We introduce a delay before attempting to reconnect,
 		}                                     // to avoid a hot loop, and to allow our node script to
 	} );                                     // process asynchronous requests in the meantime.
 	// If you're also serving http, display a 503 error.
 	exports.dbconn.on( 'error', function( err ) {
-		qls_logger.error( 'db error', err );
+		exports.qls_logger.error( 'db error', err );
 		if( err.code === 'PROTOCOL_CONNECTION_LOST' ) { // Connection to the MySQL server is usually
 			handleDisconnect();                         // lost due to either server restart, or a
 		}
@@ -46,35 +50,58 @@ exports.handleDbConn = function( ConfigFile ) {
 
 exports.checkRoute = function( apiRoute ) {
 	var _filename = apiRoute.replace( /\//g, '' );
-	qls_logger.debug( 'check cache ' + _filename );
+	exports.qls_logger.debug( 'check cache ' + _filename );
 	// if file exists
 	if( fs.existsSync( exports.dir + _filename ) ) {
 		if( fs.statSync( exports.dir + _filename ).isFile() ) {
 			_now = new Date();
-			qls_logger.debug( _filename + ' is a file!' );
+			exports.qls_logger.debug( _filename + ' is a file!' );
 			stat = fs.statSync( exports.dir + _filename );
-			qls_logger.debug( _filename + ' atime: ' + stat.atime + ' ' + exports.timediff( _now.getTime() - stat.atime.getTime() ) );
-			qls_logger.debug( _filename + ' ctime: ' + stat.ctime + ' ' + exports.timediff( _now.getTime() - stat.ctime.getTime() ) );
-			qls_logger.debug( _filename + ' mtime: ' + stat.mtime + ' ' + exports.timediff( _now.getTime() - stat.mtime.getTime() ) );
+			exports.qls_logger.debug( _filename + ' atime: ' + stat.atime + ' ' + exports.timediff( _now.getTime() - stat.atime.getTime() ) );
+			exports.qls_logger.debug( _filename + ' ctime: ' + stat.ctime + ' ' + exports.timediff( _now.getTime() - stat.ctime.getTime() ) );
+			exports.qls_logger.debug( _filename + ' mtime: ' + stat.mtime + ' ' + exports.timediff( _now.getTime() - stat.mtime.getTime() ) );
 			return { size: stat.size, atime: stat.atime, ctime: stat.ctime, mtime: stat.mtime };
 		}
 		else {
-			qls_logger.debug( _filename + ' is a folder!' );
+			exports.qls_logger.debug( _filename + ' is a folder!' );
 			return false;
 		}
 	}
 	else {
-		qls_logger.debug( _filename + ' is missing!' );
+		exports.qls_logger.debug( _filename + ' is missing!' );
 		return false;
 	}
+}
+
+exports.readQueue = function() {
+	exports.qls_logger.debug( 'read queue', _filename );
+}
+
+exports.listCaches = function( options ) {
+	_start = new Date().getTime();
+	exports.qls_logger.debug( 'listCaches' );
+	dir = fs.readdirSync( exports.dir );
+	out = [];
+	for( var i in dir ) {
+		out.push( { cache: dir[i] } );
+	}
+	for( var i in out ) {
+		f = out[i];
+		_stat = fs.statSync( exports.dir + f.cache );
+		f.time = ( _start - _stat.atime.getTime() );
+		f.size = _stat.size;
+		f.time_nice = exports.timediff( new Date().getTime() - _stat.atime.getTime() );
+		f.size_nice = exports.size( _stat.size );
+	}
+	return out;
 }
 
 exports.readCache = function( apiRoute, queryObject, options ) {
 	_start = new Date().getTime();
 	var _filename = apiRoute.replace( /\//g, '' );
-	qls_logger.debug( 'read cache ', _filename );
+	exports.qls_logger.debug( 'read cache ', _filename );
 	_content = JSON.parse( fs.readFileSync( exports.dir + _filename ) );
-	qls_logger.debug( 'cache length: ', _content.length );
+	exports.qls_logger.debug( 'cache length: ', _content.length );
 	// paginate cached file
 	if( 'page' in queryObject ) {
 		// defaults
@@ -139,12 +166,12 @@ exports.readCache = function( apiRoute, queryObject, options ) {
 		delete dt.records;
 		dt.data = _finalArray;
 		dt.ms = new Date().getTime() - _start;
-		qls_logger.debug( 'sorted in', dt.ms, 'ms' );
-		qls_logger.info( apiRoute, 'fetched in', ( new Date().getTime() - _start ), 'ms' );
+		exports.qls_logger.debug( 'sorted in', dt.ms, 'ms' );
+		exports.qls_logger.info( apiRoute, 'fetched in', ( new Date().getTime() - _start ), 'ms' );
 		return dt;
 	}
 	else {
-		qls_logger.info( apiRoute, 'fetched in', ( new Date().getTime() - _start ), 'ms' );
+		exports.qls_logger.info( apiRoute, 'fetched in', ( new Date().getTime() - _start ), 'ms' );
 		return { data: _content };
 	}
 }
@@ -152,19 +179,19 @@ exports.readCache = function( apiRoute, queryObject, options ) {
 exports.writeCache = function( apiRoute, content ) {
 	var _filename = apiRoute.replace( /\//g, '' );
 	fs.writeFileSync( exports.dir + _filename, JSON.stringify( content ) );
-	qls_logger.debug( 'wrote: ' + _filename );
+	exports.qls_logger.debug( 'wrote: ' + _filename );
 }
 
 exports.query = function( sql, params, apiRoute ) {
 	var _filename = apiRoute.replace( /\//g, '' );
-	qls_logger.debug( _filename + ' query!' );
+	exports.qls_logger.debug( _filename + ' query!' );
 	_start = new Date().getTime();
-	qls_logger.debug( sql );
-	qls_logger.debug( params );
+	exports.qls_logger.debug( sql );
+	exports.qls_logger.debug( params );
 	exports.dbconn.query( sql, params, function( err, rows ) {
-		if( err ) { qls_logger.error( err ); }
+		if( err ) { exports.qls_logger.error( err ); }
 		_end = new Date().getTime();
-		qls_logger.info( _filename,  'updated', rows.length, 'rows in', ( _end - _start ) + 'ms' );
+		exports.qls_logger.info( _filename,  'updated', rows.length, 'rows in', ( _end - _start ) + 'ms' );
 		exports.writeCache( apiRoute, rows );
 	} );
 }
@@ -180,7 +207,7 @@ exports.doCache = function( req, sql, sqlParams, options ) {
 	chk = exports.checkRoute( apiRoute );
 	if( chk ) {
 		if( ( _now - chk.ctime ) > _time ) {
-			qls_logger.debug( _filename + ' is ' + ( (_now-chk.ctime)/1000 ) + 's old' );
+			exports.qls_logger.debug( _filename + ' is ' + ( (_now-chk.ctime)/1000 ) + 's old' );
 			// readCache
 			_data = exports.readCache( apiRoute, queryObject, options );
 			// query
@@ -192,7 +219,7 @@ exports.doCache = function( req, sql, sqlParams, options ) {
 		else {
 			// readCache
 			_data = exports.readCache( apiRoute, queryObject, options );
-			qls_logger.debug( _filename + ' is fresh' );
+			exports.qls_logger.debug( _filename + ' is fresh' );
 			_data.updated = chk.ctime.getTime();
 			_data.updated_nice = chk.ctime;
 			return _data;
@@ -240,5 +267,35 @@ exports.timediff = function( d1, d2 ) {
 	//return _d + "d " + _h + "h " + _m + "m " + _s + "s " + "ago";
 }
 
+exports.size = function( bytes, precision ) {
+	if( isNaN( parseFloat( bytes ) ) || !isFinite( bytes ) ) return '-';
+	if( typeof precision === 'undefined' ) precision = 2;
+	var units = [ 'b', 'kB', 'MB', 'GB', 'TB', 'PB' ];
+	var number = Math.floor( Math.log( bytes) / Math.log( 1024 ) );
+	return ( bytes / Math.pow( 1024, Math.floor( number ) ) ).toFixed( precision ) +  '' + units[number];
+}
 
+if( program.init ) {
+	_start = new Date().getTime();
+	// read cfg.json
+	var data = fs.readFileSync( program.config || __dirname + '/cfg.json' );
+	var cfg;
+	try {
+		cfg = JSON.parse( data );
+		exports.qls_logger.info( 'Parsed config file' );
+	}
+	catch( err ) {
+		exports.qls_logger.error( 'failed to parse cfg: ' + err );
+		process.exit();
+	}
+	loglvl = program.loglevel;
+	var qls = exports.init( cfg, loglvl );
+	if( program.list ) {
+		_caches = exports.listCaches();
+		exports.qls_logger.info( _caches );
+		exports.qls_logger.info( 'count', _caches.length );
+	}
+	exports.qls_logger.debug( 'exiting after', ( new Date().getTime() - _start ), 'ms' );
+	process.exit();
+}
 
