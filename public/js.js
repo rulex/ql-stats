@@ -401,14 +401,14 @@ angular.module( 'liz', ['lizzy'] )
 	//when( '/', { controller: EmptyCtrl, templateUrl: 'maintenance.html' } ).
 	//when( '/all', { controller: AllCtrl, templateUrl: 'all.html' } ).
 	when( '/overview', { controller: OverviewCtrl, templateUrl: 'overview.html' } ).
-	when( '/games', { controller: GamesCtrl, templateUrl: 'games2.html' } ).
+	when( '/games', { controller: GamesCtrl, templateUrl: 'games.html' } ).
 	when( '/games/:game', { controller: GameCtrl, templateUrl: 'game.html' } ).
 	when( '/players', { controller: PlayersCtrl, templateUrl: 'players.html' } ).
 	when( '/players/:player', { controller: PlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/owners', { controller: OwnersCtrl, templateUrl: 'owners.html' } ).
 	when( '/owners/:owner', { controller: OwnerCtrl, templateUrl: 'owner.html' } ).
 	when( '/owners/:owner/players', { controller: OwnerPlayersCtrl, templateUrl: 'players.html' } ).
-	when( '/owners/:owner/games', { controller: OwnerGamesCtrl, templateUrl: 'games2.html' } ).
+	when( '/owners/:owner/games', { controller: OwnerGamesCtrl, templateUrl: 'games.html' } ).
 	when( '/owners/:owner/players/:player', { controller: OwnerPlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/owners/:owner/top/last30days', { controller: OwnerTop30Ctrl, templateUrl: 'top.html' } ).
 	when( '/clans', { controller: ClansCtrl, templateUrl: 'clans.html' } ).
@@ -427,7 +427,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/gametypes/:gametype/top/all', { controller: GametypeTopAllCtrl, templateUrl: 'top.html' } ).
 	when( '/gametypes/:gametype/players/:player', { controller: PlayerCtrl, templateUrl: 'player.html' } ).
 	when( '/tags/:tag', { controller: TagCtrl, templateUrl: 'tag.html' } ).
-	when( '/tags/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games2.html' } ).
+	when( '/tags/:tag/games', { controller: TagGamesCtrl, templateUrl: 'games.html' } ).
 	when( '/tags/:tag/top/last30days', { controller: TagTop30daysCtrl, templateUrl: 'top.html' } ).
 	when( '/tags/:tag/top/all', { controller: TagTopAllCtrl, templateUrl: 'top.html' } ).
 	when( '/tags/:tag/players', { controller: TagPlayersCtrl, templateUrl: 'players.html' } ).
@@ -440,7 +440,7 @@ angular.module( 'liz', ['lizzy'] )
 	when( '/duelvs/:nicks', { controller: DuelVsCtrl, templateUrl: 'duelvs.html' } ).
 	when( '/duelvs/:nicks/:map', { controller: DuelVsCtrl, templateUrl: 'duelvs.html' } ).
 	when( '/settings', { controller: SettingsCtrl } ).
-	when( '/rulesets/:ruleset/games', { controller: RulesetGamesCtrl, templateUrl: 'games2.html' } ).
+	when( '/rulesets/:ruleset/games', { controller: RulesetGamesCtrl, templateUrl: 'games.html' } ).
 	when( '/rulesets/:ruleset', { controller: RulesetOverviewCtrl, templateUrl: 'overview.html' } ).
 	when( '/weapons', { controller: WeaponsCtrl, templateUrl: 'weapons.html' } ).
 	when( '/activity', { controller: ActivityCtrl, templateUrl: 'activity.html' } ).
