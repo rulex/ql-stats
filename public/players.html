@@ -1,85 +1,18 @@
 
 <div class="row-fluid">
-	<div class="col-sm-2"></div>
-	<div class="col-sm-8">
 
-		<div ng-show="showsearch" class="">
-			<form ng:submit="$emit('Search')">
-				<input placeholder="Search player" type="text" class="form-control" id="players_search" />
-			</form>
-		</div>
+	<div class="col-sm-8 ">
 
-		<br />
-		<table class="table table-condensed table-striped ">
+		<table id="table_players" class="table table-condensed table-bordered table-hover ">
 			<thead>
 				<tr>
-					<th><a href="" ng-click="ordercolumn='CLAN'; ordertype=!ordertype">CLAN</a></th>
-					<th><a href="" ng-click="ordercolumn='PLAYER'; ordertype=!ordertype">PLAYER</a></th>
+					<th data-dynatable-column="PLAYER">PLAYER<span class="pull-right"><small>CLAN</small></span></th>
 				</tr>
 			</thead>
 			<tbody>
-			  <tr ng-repeat="z in players.data | orderBy:ordercolumn:ordertype">
-					<td><a href="#/clans/{{ z.CLAN_ID }}">{{ z.CLAN }}</a></td>
-			    <td>
-			      <img ng-show="z.COUNTRY" src="http://cdn.quakelive.com/web/2013071601/images/flags/{{ z.COUNTRY | lower }}_v2013071601.0.gif" class="playerflag" title="{{ z.COUNTRY }}" />
-			      <a href="#/{{theurl}}players/{{z.PLAYER}}">{{ z.PLAYER }}</a>
-					<div class="pull-right hidden-xs">
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/duel/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/duel_v2014051402.0.png" title="duel" />
-							<span style="display: none;">duel</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/ca/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/ca_v2014051402.0.png" title="ca" />
-							<span style="display: none;">ca</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/tdm/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/tdm_v2014051402.0.png" title="tdm" />
-							<span style="display: none;">tdm</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/ctf/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/ctf_v2014051402.0.png" title="ctf" />
-							<span style="display: none;">ctf</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/ffa/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/ffa_v2014051402.0.png" title="ffa" />
-							<span style="display: none;">ffa</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/race/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/race_v2014051402.0.png" title="race" />
-							<span style="display: none;">race</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/dom/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/dom_v2014051402.0.png" title="dom" />
-							<span style="display: none;">dom</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/rr/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/rr_v2014051402.0.png" title="rr" />
-							<span style="display: none;">rr</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/ft/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/ft_v2014051402.0.png" title="ft" />
-							<span style="display: none;">ft</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/ad/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/ad_v2014051402.0.png" title="ad" />
-							<span style="display: none;">ad</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/harv/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/harvester_v2014051402.0.png" title="harvester" />
-							<span style="display: none;">harv</span>
-						</a>
-						<a style="margin-right: 2px;" class="btn btn-xs btn-default gametypebtn" href="#/gametypes/fctf/players/{{ z.PLAYER }}">
-							<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/fctf_v2014051402.0.png" title="fctf" />
-							<span style="display: none;">fctf</span>
-						</a>
-          </div>
-					</td>
-			  </tr>
 			</tbody>
 		</table>
+
 	</div>
 
-	<div class="col-sm-2"></div>
-
 </div>
-
