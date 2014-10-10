@@ -26,7 +26,7 @@
 				</div>
 				<div class="navbar-collapse collapse">
 					<ul class="nav navbar-nav">
-						<li><a id="overview" class="isnav" href="#"><span class="glyphicon glyphicon-home"></span> Overview</a></li>
+						<li><a id="overview" class="isnav" href="#/"><span class="glyphicon glyphicon-home"></span> Overview</a></li>
 						<li><a id="games" class="isnav" href="#/games">Games</a></li>
 						<li><a id="players" class="isnav" href="#/players">Players</a></li>
 						<li><a id="clans" class="isnav" href="#/clans">Clans</a></li>
@@ -66,8 +66,8 @@
 				-->
 				<span id="loading" class="col-sm-1 loading"></span>
 			</div>
-			<div class="row-fluid">
-				<div id="error" class="col-sm-12 "></div>
+			<div class="container">
+				<div id="message" class="col-sm-12 "></div>
 			</div>
 			<div id="admin_settings" style="display: none;" class="container">
 				<div class="row">
@@ -89,7 +89,7 @@
 				</div>
 				<hr />
 			</div>
-			<div ng-view id="theContent" class="container">
+			<div id="content" class="container">
 			</div>
 		</div>
 		<div id="footer" class="container">
@@ -97,9 +97,8 @@
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
 		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular-resource.min.js"></script>
 		<script src="jquery.dynatable.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/sammy.js/0.7.4/sammy.min.js"></script>
 		<script src="jquery.blockUI.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 		<script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
