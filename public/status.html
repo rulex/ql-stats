@@ -1,0 +1,53 @@
+
+<div class="row-fluid">
+	<div class="col-sm-12">
+		<div class="btn-group">
+			<a id="tab_btn_db_rows" class="btn btn-default" href="#/status?tab=db_rows">DB Rows</a>
+			<a id="tab_btn_cache" class="btn btn-default" href="#/status?tab=cache">Cache</a>
+		</div>
+	</div>
+</div>
+
+<div class="row-fluid">
+
+	<div id="db_rows" class="col-sm-12 tab" style="display: none;">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">DB Rows</div>
+			<div class="panel-body">
+				<table id="table_db_rows" class="table table-condensed table-hover table-bordered">
+					<thead>
+						<tr>
+							<th data-dynatable-column="TABLE_NAME">TABLE_NAME</th>
+							<th data-dynatable-column="TABLE_ROWS">TABLE_ROWS</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<div id="cache" class="col-sm-12 tab" style="display: none;">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Cache</div>
+			<div class="panel-body">
+				<table id="table_cache" class="table table-condensed table-hover table-bordered">
+					<thead>
+						<tr>
+							<th data-dynatable-column="cache">cache</th>
+							<th data-dynatable-column="time">updated (ms)</th>
+							<th data-dynatable-column="time_nice">updated</th>
+							<th data-dynatable-column="size_nice">size</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+

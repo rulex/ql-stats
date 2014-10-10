@@ -40,6 +40,8 @@ catch( err ) {
 	process.exit();
 }
 
+var Countries = require( './public/countries.json' );
+
 //multipleStatements: true,
 cfg.mysql_db.multipleStatements = true;
 cfg.mysql_db.waitForConnections = false;
@@ -825,7 +827,7 @@ app.get( '/api/owners/:owner', function ( req, res ) {
   + 'FROM Game g inner join Player o on o.ID=g.OWNER_ID where o.NAME=?';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { _logger.error( err ); }
-		conn.query( sql, [ req.params.owner], function( err2, rows ) {
+		conn.query( sql, [req.params.owner], function( err2, rows ) {
 			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: { owner: rows[0] } } );
@@ -835,12 +837,482 @@ app.get( '/api/owners/:owner', function ( req, res ) {
 	} );
 } );
 
-app.get( '/api/countries', function ( req, res ) {
+app.get( '/api/places/countries', function ( req, res ) {
 	sql = 'select COUNTRY, count(COUNTRY) as NUM_PLAYERS from Player group by COUNTRY';
 	_dt = qlscache.doCache( req, sql, [], {} );
 	res.jsonp( _dt );
 	res.end();
 } );
+
+app.get( '/api/places/countries/:country/activity/week/matches', function( req, res ) {
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'sum( IF( GAME_TYPE="duel", 1, 0 ) ) as duel,' );
+	sql.push( 'sum( IF( GAME_TYPE="ca", 1, 0 ) ) as ca,' );
+	sql.push( 'sum( IF( GAME_TYPE="ffa", 1, 0 ) ) as ffa,' );
+	sql.push( 'sum( IF( GAME_TYPE="tdm", 1, 0 ) ) as tdm,' );
+	sql.push( 'sum( IF( GAME_TYPE="ctf", 1, 0 ) ) as ctf,' );
+	sql.push( 'sum( IF( GAME_TYPE="race", 1, 0 ) ) as race,' );
+	sql.push( 'sum( IF( GAME_TYPE="rr", 1, 0 ) ) as rr,' );
+	sql.push( 'sum( IF( GAME_TYPE="ad", 1, 0 ) ) as ad,' );
+	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
+	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
+	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'sum( IF( PREMIUM=1, 1, 0 ) ) as premium,' );
+	sql.push( 'sum( IF( PREMIUM=0, 1, 0 ) ) as standard,' );
+	sql.push( 'sum( IF( RANKED=1, 1, 0 ) ) as ranked,' );
+	sql.push( 'sum( IF( RANKED=0, 1, 0 ) ) as unranked,' );
+	sql.push( 'sum( IF( RULESET=1, 1, 0 ) ) as classic,' );
+	sql.push( 'sum( IF( RULESET=2, 1, 0 ) ) as turbo,' );
+	sql.push( 'sum( IF( RULESET=3, 1, 0 ) ) as ql,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'and p.COUNTRY=?' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [req.params.country], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+app.get( '/api/places/countries/:country/activity/week/players', function( req, res ) {
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year,' );
+	sql.push( 'month,' );
+	sql.push( 'day,' );
+	sql.push( 'hour,' );
+	sql.push( 'sum( duel ) as duel,' );
+	sql.push( 'sum( ca ) as ca,' );
+	sql.push( 'sum( ffa ) as ffa,' );
+	sql.push( 'sum( tdm ) as tdm,' );
+	sql.push( 'sum( ctf ) as ctf,' );
+	sql.push( 'sum( race ) as race,' );
+	sql.push( 'sum( rr ) as rr,' );
+	sql.push( 'sum( ad ) as ad,' );
+	sql.push( 'sum( harv ) as harv,' );
+	sql.push( 'sum( ft ) as ft,' );
+	sql.push( 'sum( dom ) as dom,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from (' );
+	sql.push( 'select' );
+	sql.push( 'p.NAME,' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'sum( IF( GAME_TYPE="duel", 1, 0 ) ) as duel,' );
+	sql.push( 'sum( IF( GAME_TYPE="ca", 1, 0 ) ) as ca,' );
+	sql.push( 'sum( IF( GAME_TYPE="ffa", 1, 0 ) ) as ffa,' );
+	sql.push( 'sum( IF( GAME_TYPE="tdm", 1, 0 ) ) as tdm,' );
+	sql.push( 'sum( IF( GAME_TYPE="ctf", 1, 0 ) ) as ctf,' );
+	sql.push( 'sum( IF( GAME_TYPE="race", 1, 0 ) ) as race,' );
+	sql.push( 'sum( IF( GAME_TYPE="rr", 1, 0 ) ) as rr,' );
+	sql.push( 'sum( IF( GAME_TYPE="ad", 1, 0 ) ) as ad,' );
+	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
+	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
+	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'count(*)' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'and p.COUNTRY=?' );
+	sql.push( 'group by day, hour, p.NAME' );
+	sql.push( ') a' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [req.params.country], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+app.get( '/api/places/regions/:region/activity/week/matches', function( req, res ) {
+	regions = [];
+	r = req.params.region;
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.region == r ) {
+			regions.push( c.cca2 );
+		}
+	}
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'sum( IF( GAME_TYPE="duel", 1, 0 ) ) as duel,' );
+	sql.push( 'sum( IF( GAME_TYPE="ca", 1, 0 ) ) as ca,' );
+	sql.push( 'sum( IF( GAME_TYPE="ffa", 1, 0 ) ) as ffa,' );
+	sql.push( 'sum( IF( GAME_TYPE="tdm", 1, 0 ) ) as tdm,' );
+	sql.push( 'sum( IF( GAME_TYPE="ctf", 1, 0 ) ) as ctf,' );
+	sql.push( 'sum( IF( GAME_TYPE="race", 1, 0 ) ) as race,' );
+	sql.push( 'sum( IF( GAME_TYPE="rr", 1, 0 ) ) as rr,' );
+	sql.push( 'sum( IF( GAME_TYPE="ad", 1, 0 ) ) as ad,' );
+	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
+	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
+	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'sum( IF( PREMIUM=1, 1, 0 ) ) as premium,' );
+	sql.push( 'sum( IF( PREMIUM=0, 1, 0 ) ) as standard,' );
+	sql.push( 'sum( IF( RANKED=1, 1, 0 ) ) as ranked,' );
+	sql.push( 'sum( IF( RANKED=0, 1, 0 ) ) as unranked,' );
+	sql.push( 'sum( IF( RULESET=1, 1, 0 ) ) as classic,' );
+	sql.push( 'sum( IF( RULESET=2, 1, 0 ) ) as turbo,' );
+	sql.push( 'sum( IF( RULESET=3, 1, 0 ) ) as ql,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'and p.COUNTRY in ( "' + regions.join( '", "' ) + '" )' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+app.get( '/api/places/regions/:region/activity/week/players', function( req, res ) {
+	regions = [];
+	r = req.params.region;
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.region == r ) {
+			regions.push( c.cca2 );
+		}
+	}
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year,' );
+	sql.push( 'month,' );
+	sql.push( 'day,' );
+	sql.push( 'hour,' );
+	sql.push( 'sum( duel ) as duel,' );
+	sql.push( 'sum( ca ) as ca,' );
+	sql.push( 'sum( ffa ) as ffa,' );
+	sql.push( 'sum( tdm ) as tdm,' );
+	sql.push( 'sum( ctf ) as ctf,' );
+	sql.push( 'sum( race ) as race,' );
+	sql.push( 'sum( rr ) as rr,' );
+	sql.push( 'sum( ad ) as ad,' );
+	sql.push( 'sum( harv ) as harv,' );
+	sql.push( 'sum( ft ) as ft,' );
+	sql.push( 'sum( dom ) as dom,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from (' );
+	sql.push( 'select' );
+	sql.push( 'p.NAME,' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'sum( IF( GAME_TYPE="duel", 1, 0 ) ) as duel,' );
+	sql.push( 'sum( IF( GAME_TYPE="ca", 1, 0 ) ) as ca,' );
+	sql.push( 'sum( IF( GAME_TYPE="ffa", 1, 0 ) ) as ffa,' );
+	sql.push( 'sum( IF( GAME_TYPE="tdm", 1, 0 ) ) as tdm,' );
+	sql.push( 'sum( IF( GAME_TYPE="ctf", 1, 0 ) ) as ctf,' );
+	sql.push( 'sum( IF( GAME_TYPE="race", 1, 0 ) ) as race,' );
+	sql.push( 'sum( IF( GAME_TYPE="rr", 1, 0 ) ) as rr,' );
+	sql.push( 'sum( IF( GAME_TYPE="ad", 1, 0 ) ) as ad,' );
+	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
+	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
+	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'count(*)' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'and p.COUNTRY in ( "' + regions.join( '", "' ) + '" )' );
+	sql.push( 'group by day, hour, p.NAME' );
+	sql.push( ') a' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+app.get( '/api/places/subregions/:subregion/activity/week/matches', function( req, res ) {
+	subregions = [];
+	r = req.params.subregion.replace( '+', ' ' );
+	console.log( r );
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.subregion == r ) {
+			subregions.push( c.cca2 );
+		}
+	}
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'sum( IF( GAME_TYPE="duel", 1, 0 ) ) as duel,' );
+	sql.push( 'sum( IF( GAME_TYPE="ca", 1, 0 ) ) as ca,' );
+	sql.push( 'sum( IF( GAME_TYPE="ffa", 1, 0 ) ) as ffa,' );
+	sql.push( 'sum( IF( GAME_TYPE="tdm", 1, 0 ) ) as tdm,' );
+	sql.push( 'sum( IF( GAME_TYPE="ctf", 1, 0 ) ) as ctf,' );
+	sql.push( 'sum( IF( GAME_TYPE="race", 1, 0 ) ) as race,' );
+	sql.push( 'sum( IF( GAME_TYPE="rr", 1, 0 ) ) as rr,' );
+	sql.push( 'sum( IF( GAME_TYPE="ad", 1, 0 ) ) as ad,' );
+	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
+	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
+	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'sum( IF( PREMIUM=1, 1, 0 ) ) as premium,' );
+	sql.push( 'sum( IF( PREMIUM=0, 1, 0 ) ) as standard,' );
+	sql.push( 'sum( IF( RANKED=1, 1, 0 ) ) as ranked,' );
+	sql.push( 'sum( IF( RANKED=0, 1, 0 ) ) as unranked,' );
+	sql.push( 'sum( IF( RULESET=1, 1, 0 ) ) as classic,' );
+	sql.push( 'sum( IF( RULESET=2, 1, 0 ) ) as turbo,' );
+	sql.push( 'sum( IF( RULESET=3, 1, 0 ) ) as ql,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'and p.COUNTRY in ( "' + subregions.join( '", "' ) + '" )' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+app.get( '/api/places/subregions/:subregion/activity/week/players', function( req, res ) {
+	subregions = [];
+	r = req.params.subregion.replace( '+', ' ' );
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.subregion == r ) {
+			subregions.push( c.cca2 );
+		}
+	}
+	var sql = [];
+	sql.push( 'select' );
+	sql.push( 'year,' );
+	sql.push( 'month,' );
+	sql.push( 'day,' );
+	sql.push( 'hour,' );
+	sql.push( 'sum( duel ) as duel,' );
+	sql.push( 'sum( ca ) as ca,' );
+	sql.push( 'sum( ffa ) as ffa,' );
+	sql.push( 'sum( tdm ) as tdm,' );
+	sql.push( 'sum( ctf ) as ctf,' );
+	sql.push( 'sum( race ) as race,' );
+	sql.push( 'sum( rr ) as rr,' );
+	sql.push( 'sum( ad ) as ad,' );
+	sql.push( 'sum( harv ) as harv,' );
+	sql.push( 'sum( ft ) as ft,' );
+	sql.push( 'sum( dom ) as dom,' );
+	sql.push( 'count(*) as total' );
+	sql.push( 'from (' );
+	sql.push( 'select' );
+	sql.push( 'p.NAME,' );
+	sql.push( 'year( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as year,' );
+	sql.push( 'month( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as month,' );
+	sql.push( 'day( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as day,' );
+	sql.push( 'hour( FROM_UNIXTIME( GAME_TIMESTAMP ) ) as hour,' );
+	sql.push( 'sum( IF( GAME_TYPE="duel", 1, 0 ) ) as duel,' );
+	sql.push( 'sum( IF( GAME_TYPE="ca", 1, 0 ) ) as ca,' );
+	sql.push( 'sum( IF( GAME_TYPE="ffa", 1, 0 ) ) as ffa,' );
+	sql.push( 'sum( IF( GAME_TYPE="tdm", 1, 0 ) ) as tdm,' );
+	sql.push( 'sum( IF( GAME_TYPE="ctf", 1, 0 ) ) as ctf,' );
+	sql.push( 'sum( IF( GAME_TYPE="race", 1, 0 ) ) as race,' );
+	sql.push( 'sum( IF( GAME_TYPE="rr", 1, 0 ) ) as rr,' );
+	sql.push( 'sum( IF( GAME_TYPE="ad", 1, 0 ) ) as ad,' );
+	sql.push( 'sum( IF( GAME_TYPE="harv", 1, 0 ) ) as harv,' );
+	sql.push( 'sum( IF( GAME_TYPE="ft", 1, 0 ) ) as ft,' );
+	sql.push( 'sum( IF( GAME_TYPE="dom", 1, 0 ) ) as dom,' );
+	sql.push( 'count(*)' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 7 day ) )' );
+	sql.push( 'and p.COUNTRY in ( "' + subregions.join( '", "' ) + '" )' );
+	sql.push( 'group by day, hour, p.NAME' );
+	sql.push( ') a' );
+	sql.push( 'group by day, hour' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+
+/*
+app.get( '/api/places/countries/:country/overview', function ( req, res ) {
+	sql = [];
+	sql.push( 'select' );
+	sql.push( '	g.GAME_TYPE,' );
+	sql.push( '	count(1) as MATCHES_PLAYED,' );
+	sql.push( '	sum(GAME_LENGTH) as GAME_LENGTH,' );
+	sql.push( '	sum(TOTAL_KILLS) as TOTAL_KILLS' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where p.COUNTRY=?' );
+	sql.push( 'group by g.GAME_TYPE order by 1' );
+	sql.push( '' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [req.params.country], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+
+app.get( '/api/places/countries/:country/games/graphs/perweek', function( req, res ) {
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, week';
+	sql = [];
+	sql.push( 'select' );
+	sql.push( 'year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year,' );
+	sql.push( 'week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week,' );
+	sql.push( 'count(GAME_TIMESTAMP) as c' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where p.COUNTRY=?' );
+	sql.push( 'group by year, week' );
+	sql.push( '' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [req.params.country], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+
+app.get( '/api/places/regions/:region/overview', function ( req, res ) {
+	regions = [];
+	r = req.params.region;
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.region == r ) {
+			regions.push( c.cca2 );
+		}
+	}
+	sql = [];
+	sql.push( 'select' );
+	sql.push( '	g.GAME_TYPE,' );
+	sql.push( '	count(1) as MATCHES_PLAYED,' );
+	sql.push( '	sum(GAME_LENGTH) as GAME_LENGTH,' );
+	sql.push( '	sum(TOTAL_KILLS) as TOTAL_KILLS' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where p.COUNTRY in ( "' + regions.join( '", "' ) + '" )' );
+	sql.push( 'group by g.GAME_TYPE order by 1' );
+	sql.push( '' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+
+app.get( '/api/places/regions/:region/games/graphs/perweek', function( req, res ) {
+	regions = [];
+	r = req.params.region;
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.region == r ) {
+			regions.push( c.cca2 );
+		}
+	}
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, week';
+	sql = [];
+	sql.push( 'select' );
+	sql.push( 'year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year,' );
+	sql.push( 'week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week,' );
+	sql.push( 'count(GAME_TIMESTAMP) as c' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where p.COUNTRY in ( "' + regions.join( '", "' ) + '" )' );
+	sql.push( 'group by year, week' );
+	sql.push( '' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+
+app.get( '/api/places/subregions/:subregion/overview', function ( req, res ) {
+	subregions = [];
+	r = req.params.subregion;
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.subregion == r ) {
+			subregions.push( c.cca2 );
+		}
+	}
+	sql = [];
+	sql.push( 'select' );
+	sql.push( '	g.GAME_TYPE,' );
+	sql.push( '	count(1) as MATCHES_PLAYED,' );
+	sql.push( '	sum(GAME_LENGTH) as GAME_LENGTH,' );
+	sql.push( '	sum(TOTAL_KILLS) as TOTAL_KILLS' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where p.COUNTRY in ( "' + subregions.join( '", "' ) + '" )' );
+	sql.push( 'group by g.GAME_TYPE order by 1' );
+	sql.push( '' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+
+app.get( '/api/places/subregions/:subregion/games/graphs/perweek', function( req, res ) {
+	subregions = [];
+	r = req.params.subregion;
+	for( var i in Countries ) {
+		c = Countries[i];
+		if( c.subregion == r ) {
+			subregions.push( c.cca2 );
+		}
+	}
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game where GAME_TYPE=? group by year, week';
+	sql = [];
+	sql.push( 'select' );
+	sql.push( 'year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year,' );
+	sql.push( 'week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week,' );
+	sql.push( 'count(GAME_TIMESTAMP) as c' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'left join Player p' );
+	sql.push( 'on p.ID=gp.PLAYER_ID' );
+	sql.push( 'where p.COUNTRY in ( "' + subregions.join( '", "' ) + '" )' );
+	sql.push( 'group by year, week' );
+	sql.push( '' );
+	sql = sql.join( ' ' );
+	_dt = qlscache.doCache( req, sql, [], {} );
+	res.jsonp( _dt );
+	res.end();
+} );
+*/
 
 app.get( '/api/gametypes', function ( req, res ) {
 	var sql = 'SELECT GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH FROM Game group by GAME_TYPE order by 1';
@@ -1453,7 +1925,7 @@ app.get( '/status', function ( req, res ) {
 	}
 });
 
-app.get('/api/race', function (req, res) {
+app.get( '/api/race', function (req, res) {
   sql = "select m.NAME MAP, g.PUBLIC_ID, r.MODE, p.NAME PLAYER_NICK, p.NAME PLAYER, p.COUNTRY, r.SCORE, r.GAME_ID, r.GAME_TIMESTAMP from Race r inner join Map m on m.ID=r.MAP_ID inner join Player p on p.ID=r.PLAYER_ID left join Game g on g.ID=r.GAME_ID where RANK=1 order by 1";
   dbpool.getConnection(function (err, conn) {
 		if( err ) { _logger.error( err ); }
@@ -1479,7 +1951,7 @@ app.get('/api/race', function (req, res) {
   });
 });
 
-app.get('/api/race/maps/:map', function (req, res) {
+app.get( '/api/race/maps/:map', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
   var _mapName = req.params.map;
   var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
@@ -1503,7 +1975,7 @@ app.get('/api/race/maps/:map', function (req, res) {
   });
 });
 
-app.get('/api/race/players/:player', function (req, res) {
+app.get( '/api/race/players/:player', function (req, res) {
   var queryObject = url.parse(req.url, true).query;
   var _playerNick = req.params.player;
   var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
