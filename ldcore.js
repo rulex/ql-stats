@@ -78,7 +78,7 @@ function createSqlStatements() {
     vals += ",?";
   _sqlInsertGamePlayer = "INSERT INTO GamePlayer(" + cols + ") values (" + vals.substr(1) + ")";
 
-  _sqlUpdatePlayer = "UPDATE Player set CLAN_ID=?, COUNTRY=? where ID=?";
+  _sqlUpdatePlayer = "UPDATE LOW_PRIORITY Player set CLAN_ID=?, COUNTRY=? where ID=?";
 }
 
 function initCaches() {
