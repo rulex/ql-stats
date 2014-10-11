@@ -3382,14 +3382,9 @@ function onLoading() {
 	//$( '#loading' ).addClass( 'loading' );
 	//ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) } );
 	//ga( 'send', 'event', 'tab4', 'clicked' );
-	$( '#theContent' ).block( {
-		message: '<div><span class="loading"></span></div>',
-		css: { border: '3px solid #000', padding: '20px' }
-	} );
 }
 function onComplete( d ) {
 	console.log( 'onComplete()' );
-	$( '#theContent' ).unblock();
 	if( typeof d != 'undefined' && 'responseJSON' in d ) {
 		console.log( 'data' );
 		console.log( d.responseJSON );
@@ -3398,23 +3393,22 @@ function onComplete( d ) {
 	if( typeof d != 'undefined' && 'responseJSON' in d && 'error' in d.responseJSON && d.responseJSON.error !== null ) {
 		console.log( d );
 		txt = [];
-		txt.push( '<p class="alert alert-danger">' );
+		txt.push( '<div class="alert alert-danger">' );
 		txt.push( '<span class="glyphicon glyphicon-warning-sign"></span>' );
 		txt.push( d.responseJSON.error );
-		txt.push( '<span class="btn btn-danger" onclick="$(this).parent().remove();">x</span>' );
-		txt.push( '</p>' );
+		txt.push( '<span class="btn pull-right" onclick="$(this).parent().remove();">x</span>' );
+		txt.push( '</div>' );
 		txt.push( '' );
 		$( '#message' ).append( txt.join( ' ' ) );
 	}
 	// msg
 	if( typeof d != 'undefined' && 'responseJSON' in d && 'msg' in d.responseJSON ) {
-		$( '#message' ).append( '<p class="alert alert-info"><span class="glyphicon glyphicon-info-sign"></span> ' + d.responseJSON.msg + '</p>' );
 		txt = [];
-		txt.push( '<p class="alert alert-info">' );
+		txt.push( '<div class="alert alert-info">' );
 		txt.push( '<span class="glyphicon glyphicon-info-sign"></span>' );
 		txt.push( d.responseJSON.msg );
-		txt.push( '<span class="btn btn-danger" onclick="$(this).parent().remove();">x</span>' );
-		txt.push( '</p>' );
+		txt.push( '<span class="btn pull-right" onclick="$(this).parent().remove();">x</span>' );
+		txt.push( '</div>' );
 		txt.push( '' );
 		$( '#message' ).append( txt.join( ' ' ) );
 	}

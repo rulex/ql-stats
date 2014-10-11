@@ -5,13 +5,15 @@ var qlsmysql = require( 'mysql' );
 var Q = require( 'q' );
 var program = require( 'commander' );
 var url = require( 'url' );
+var touch = require( 'touch' );
 
 program
 	.version( '0.0.3' )
 	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
 	.option( '-L, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
 	.option( '-i, --init', 'init qls cache' )
-	.option( '-l, --list', 'List cache' )
+	.option( '-l, --list', 'List cached routes' )
+	.option( '-q, --queue', 'List queued cached routes' )
 	.parse( process.argv );
 
 exports.qls_logger = log4js.getLogger( 'qlscache' );
@@ -46,9 +48,121 @@ exports.handleDbConn = function( ConfigFile ) {
 	});
 }
 
-exports.checkRoute = function( apiRoute ) {
+exports.checkRoute = function( apiRoute, queryObject, options ) {
 	var _filename = exports.mkFilename( apiRoute );
+	var isQueued = false;
+	var queueStats;
+	_time = options.time || 15 * 60*1000;
 	exports.qls_logger.debug( 'check cache ' + _filename );
+	// if queue file exists
+	if( fs.existsSync( exports.dir + _filename + '.queue' ) ) {
+		queueStats = exports.checkQueue( apiRoute );
+		exports.qls_logger.debug( apiRoute, 'is queued' );
+		isQueued = true;
+	}
+	// if cache file exists
+	if( fs.existsSync( exports.dir + _filename ) ) {
+		if( fs.statSync( exports.dir + _filename ).isFile() ) {
+			_now = new Date();
+			// get file stat
+			stat = fs.statSync( exports.dir + _filename );
+			exports.qls_logger.debug( apiRoute, 'ctime:', stat.ctime, exports.timediff( _now.getTime() - stat.ctime.getTime() ) );
+			// if cache is old
+			if( ( _now - stat.ctime ) > _time ) {
+				exports.qls_logger.debug( apiRoute + ' is ' + ( (_now-stat.ctime)/1000 ) + 's old' );
+				// readCache
+				_data = exports.readCache( apiRoute, queryObject, options );
+				_data.updated = stat.ctime.getTime();
+				_data.updated_nice = stat.ctime;
+				_data.route = apiRoute;
+				// add to queue if its not
+				if( ! isQueued ) {
+					exports.addQueue( apiRoute, options );
+				}
+				if( queueStats ) {
+					_data.queued = queueStats.queued;
+					_data.queued_nice = queueStats.queued_nice;
+				}
+				//
+				return _data;
+			}
+			// if cache is fresh
+			else {
+				// readCache
+				_data = exports.readCache( apiRoute, queryObject, options );
+				exports.qls_logger.debug( apiRoute + ' is fresh' );
+				_data.updated = stat.ctime.getTime();
+				_data.updated_nice = stat.ctime;
+				_data.route = apiRoute;
+				return _data;
+			}
+		}
+		else {
+			exports.qls_logger.error( _filename + ' is a folder!' );
+			return { msg: 'Dat error! =)', data: [] };
+		}
+	}
+	else {
+		_data = { msg: 'The requested data is not available at the moment but is being fetched...', data: [] };
+		if( ! isQueued ) {
+			exports.addQueue( apiRoute, options );
+		}
+		if( queueStats ) {
+			_data.queued = queueStats.queued;
+			_data.queued_nice = queueStats.queued_nice;
+		}
+		exports.qls_logger.debug( _filename + ' is missing!' );
+		// add to queue
+		//
+		return ;
+	}
+}
+
+exports.rmQueue = function() {
+	_start = new Date().getTime();
+	fs.unlink( exports.dir + 'active.queue', function( err ) {
+		if( err ) { exports.qls_logger.error( err ) };
+	} );
+	// unset queue file lock
+}
+
+exports.addQueue = function( apiRoute, options ) {
+	_start = new Date().getTime();
+	var _filename = exports.mkFilename( apiRoute ) + '.queue';
+	fs.writeFileSync( exports.dir + _filename, JSON.stringify( options ) );
+	exports.qls_logger.debug( _filename, 'added to queue', ( new Date().getTime() - _start ), 'ms' );
+}
+
+exports.nextQueue = function() {
+	exports.qls_logger.debug( 'nextQueue()' );
+	// check if a query is currently active
+	if( fs.existsSync( exports.dir + 'active.queue' ) ) {
+		if( fs.statSync( exports.dir + 'active.queue' ).isFile() ) {
+			// do nothing
+			return null;
+		}
+	}
+	queue = exports.listQueue();
+	if( queue.length > 0 ) {
+		_route = queue[0];
+		// read queue file
+		_content = JSON.parse( fs.readFileSync( exports.dir + _route.cache + '.queue' ) );
+		// set a queue file lock
+		fs.renameSync( exports.dir + _route.cache + '.queue', exports.dir + 'active.queue' );
+		//
+		exports.qls_logger.debug( _content );
+		// query
+		exports.qls_logger.info( 'Doing', _route.cache, '(', queue.length-1, 'in queue )' );
+		exports.query( _content.sql, _content.sqlParams, _route.cache );
+	}
+	else {
+		exports.qls_logger.info( 'queue is empty' );
+	}
+}
+
+exports.checkQueue = function( apiRoute ) {
+	var _filename = exports.mkFilename( apiRoute ) + '.queue';
+	exports.qls_logger.debug( 'checkQueue()', _filename );
 	// if file exists
 	if( fs.existsSync( exports.dir + _filename ) ) {
 		if( fs.statSync( exports.dir + _filename ).isFile() ) {
@@ -56,7 +170,7 @@ exports.checkRoute = function( apiRoute ) {
 			exports.qls_logger.debug( _filename + ' is a file!' );
 			stat = fs.statSync( exports.dir + _filename );
 			exports.qls_logger.debug( _filename, 'ctime:', stat.ctime, exports.timediff( _now.getTime() - stat.ctime.getTime() ) );
-			return { size: stat.size, atime: stat.atime, ctime: stat.ctime, mtime: stat.mtime };
+			return { queued_nice: stat.ctime, queued: stat.ctime.getTime() };
 		}
 		else {
 			exports.qls_logger.debug( _filename + ' is a folder!' );
@@ -69,17 +183,36 @@ exports.checkRoute = function( apiRoute ) {
 	}
 }
 
-exports.readQueue = function() {
-	exports.qls_logger.debug( 'read queue', _filename );
+exports.listQueue = function() {
+	exports.qls_logger.debug( 'listQueue()' );
+	files = fs.readdirSync( exports.dir );
+	out = [];
+	for( var i in files ) {
+		if( /\.queue$/.test( files[i] ) ) {
+			out.push( { cache: files[i].replace( '.queue', '' ) } );
+		}
+	}
+	for( var i in out ) {
+		f = out[i];
+		_stat = fs.statSync( exports.dir + f.cache + '.queue' );
+		f.queued = ( _start - _stat.ctime.getTime() );
+		f.queued_nice = exports.timediff( new Date().getTime() - _stat.ctime.getTime() );
+	}
+	out.sort( function( a, b ) {
+		return a.time - b.time;
+	} );
+	return out;
 }
 
 exports.listCaches = function( options ) {
 	_start = new Date().getTime();
 	exports.qls_logger.debug( 'listCaches' );
-	dir = fs.readdirSync( exports.dir );
+	files = fs.readdirSync( exports.dir );
 	out = [];
-	for( var i in dir ) {
-		out.push( { cache: dir[i] } );
+	for( var i in files ) {
+		if( /^Api/.test( files[i] ) && ! /^Api.*\.queue$/.test( files[i] ) ) {
+			out.push( { cache: files[i] } );
+		}
 	}
 	totalSize = 0;
 	for( var i in out ) {
@@ -165,7 +298,6 @@ exports.readCache = function( apiRoute, queryObject, options ) {
 		delete dt.records;
 		dt.data = _finalArray;
 		dt.ms = new Date().getTime() - _start;
-		dt.apiroute = 'asdf';
 		exports.qls_logger.debug( 'sorted in', dt.ms, 'ms' );
 		exports.qls_logger.info( apiRoute, 'fetched & sorted in', ( new Date().getTime() - _start ), 'ms' );
 		return dt;
@@ -176,42 +308,42 @@ exports.readCache = function( apiRoute, queryObject, options ) {
 	}
 }
 
-exports.writeCache = function( apiRoute, content ) {
-	var _filename = exports.mkFilename( apiRoute );
+exports.writeCache = function( _filename, content ) {
+	exports.qls_logger.debug( 'writeCache()' );
 	fs.writeFileSync( exports.dir + _filename, JSON.stringify( content ) );
 	exports.qls_logger.debug( 'wrote: ' + _filename );
 }
 
-exports.query = function( sql, params, apiRoute ) {
-	var _filename = exports.mkFilename( apiRoute );
+exports.query = function( sql, sqlParams, _filename ) {
 	exports.qls_logger.debug( _filename + ' query!' );
 	_start = new Date().getTime();
 	exports.qls_logger.debug( sql );
-	exports.qls_logger.debug( params );
+	exports.qls_logger.debug( sqlParams );
 	//
 	exports.dbpool.getConnection( function( err, conn ) {
 		if( err ) { exports.qls_logger.error( err ); }
-		conn.query( sql, params, function( err, rows ) {
+		conn.query( sql, sqlParams, function( err, rows ) {
 			conn.release();
 			if( err ) { exports.qls_logger.error( err ); }
 			_end = new Date().getTime();
-			exports.qls_logger.info( _filename,  'updated', rows.length, 'rows in', ( _end - _start ) + 'ms' );
+			exports.qls_logger.info( _filename,  'updated', rows.length, 'rows in', ( _end - _start ), 'ms' );
 			if( rows.length > 0 ) {
-				exports.writeCache( apiRoute, rows );
+				// write new cache file
+				exports.writeCache( _filename, rows );
 			}
+			// remove from queue
+			exports.rmQueue();
+			// continue with queue after a delay
+			setTimeout( function() {
+				exports.nextQueue();
+			}, 1000 );
 		} );
 	} );
-	/*
-	exports.dbconn.query( sql, params, function( err, rows ) {
-		if( err ) { exports.qls_logger.error( err ); }
-		_end = new Date().getTime();
-		exports.qls_logger.info( _filename,  'updated', rows.length, 'rows in', ( _end - _start ) + 'ms' );
-		exports.writeCache( apiRoute, rows );
-	} );
-	*/
 }
 
 exports.doCache = function( req, sql, sqlParams, options ) {
+	options.sql = sql;
+	options.sqlParams = sqlParams;
 	__start = new Date().getTime();
 	var queryObject = url.parse( req.url, true ).query;
 	var apiRoute = req.url.split( '?' )[0];
@@ -219,34 +351,15 @@ exports.doCache = function( req, sql, sqlParams, options ) {
 	_time = options.time || ( 15 * 60*1000 );
 	_now = new Date().getTime();
 	// checkRoute
-	chk = exports.checkRoute( apiRoute );
-	if( chk ) {
-		if( ( _now - chk.ctime ) > _time ) {
-			exports.qls_logger.debug( _filename + ' is ' + ( (_now-chk.ctime)/1000 ) + 's old' );
-			// readCache
-			_data = exports.readCache( apiRoute, queryObject, options );
-			// query
-			exports.query( sql, sqlParams, apiRoute );
-			_data.updated = chk.ctime.getTime();
-			_data.updated_nice = chk.ctime;
-			_data.queued = true;
-			_data.route = apiRoute;
-			return _data;
-		}
-		else {
-			// readCache
-			_data = exports.readCache( apiRoute, queryObject, options );
-			exports.qls_logger.debug( _filename + ' is fresh' );
-			_data.updated = chk.ctime.getTime();
-			_data.updated_nice = chk.ctime;
-			_data.route = apiRoute;
-			return _data;
-		}
+	returnData = exports.checkRoute( apiRoute, queryObject, options );
+	// check queue
+	queue = exports.listQueue();
+	if( queue.length > 0 ) {
+		exports.qls_logger.debug( 'queue.length', queue.length );
+		exports.qls_logger.debug( queue );
 	}
-	else {
-		exports.query( sql, sqlParams, apiRoute );
-		return { msg: 'Fetching...', data: [] };
-	}
+	exports.nextQueue();
+	return returnData;
 }
 
 exports.timediff = function( d1, d2 ) {
@@ -319,6 +432,11 @@ if( program.init ) {
 	var qls = exports.init( cfg, loglvl );
 	if( program.list ) {
 		_caches = exports.listCaches();
+		exports.qls_logger.info( _caches );
+		exports.qls_logger.info( 'count', _caches.length );
+	}
+	if( program.queue ) {
+		_caches = exports.listQueue();
 		exports.qls_logger.info( _caches );
 		exports.qls_logger.info( 'count', _caches.length );
 	}
