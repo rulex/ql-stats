@@ -5,7 +5,6 @@ var qlsmysql = require( 'mysql' );
 var Q = require( 'q' );
 var program = require( 'commander' );
 var url = require( 'url' );
-var touch = require( 'touch' );
 
 program
 	.version( '0.0.3' )
