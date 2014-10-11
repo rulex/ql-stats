@@ -3405,7 +3405,7 @@ function onLoading() {
 	console.log( 'clearing footer' );
 	$( '#footer' ).empty();
 	//$( '#loading' ).addClass( 'loading' );
-	//ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) } );
+	ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) } );
 	//ga( 'send', 'event', 'tab4', 'clicked' );
 }
 function onComplete( d ) {
