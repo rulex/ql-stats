@@ -124,14 +124,14 @@ function loginToQuakeliveWebsite() {
 }
 
 function processGame(game) {
-  return insertGame(game)
-    .then(function (gameIdAndTimestamp) { return processGamePlayers(game, gameIdAndTimestamp[0], gameIdAndTimestamp[1]); })
-    .catch(function (err) {
-      if (err.toString().match(/uplicate/))
-        _coreLogger.debug("dupe: " + game.PUBLIC_ID);
-      else
-        _coreLogger.error(game.PUBLIC_ID + " - " + err.stack + getQueryErrorInfo());
-    });
+	return insertGame(game)
+		.then( function( gameIdAndTimestamp) { return processGamePlayers( game, gameIdAndTimestamp[0], gameIdAndTimestamp[1] ); } )
+		.catch( function( err ) {
+			if( err.toString().match( /uplicate/ ) )
+				_coreLogger.debug( "dupe: " + game.PUBLIC_ID );
+			else
+				_coreLogger.error( game.PUBLIC_ID + " - " + err.stack + getQueryErrorInfo() );
+		});
 }
 
 function insertGame(g) {
@@ -307,47 +307,45 @@ function getCachedPlayer(obj) {
 		.then( function( clan ) { return getCachedItem( "Player", { NAME: obj.PLAYER_NICK, CLAN_ID: clan.ID, COUNTRY: obj.PLAYER_COUNTRY } ); } );
 }
 
-function getCachedItem(table, objWithName) {
-  if( ! 'NAME' in objWithName )
-    return Q( { ID: null } );
-  var lower = objWithName.NAME.toLowerCase();
-  if (!_cache[table])
-    _cache[table] = {};
-  var entry = _cache[table][lower];
-  if (typeof entry !== "undefined")
-    return Q.isPromise(entry) ? entry : Q(entry); //  cached object or Promise
-
-  var fields = "";
-  var placeholders = "";
-  var values = [];
-  for (var key in objWithName) {
-    fields += "," + key;
-    placeholders += ",?";
-    values.push(objWithName[key]);
-  }
-  var clone = JSON.parse(JSON.stringify(objWithName));
-  var promise =
-    query("insert into " + table + " (" + fields.substr(1) + ") values (" + placeholders.substr(1) + ")", values)
-    .then(function (result) {
-      _coreLogger.debug("inserted " + table + " " + objWithName.NAME + ": " + result.insertId);
-      clone.ID = result.insertId;
-      _cache[table][lower] = clone;
-      return clone;
-    })
-    .fail(function (err) {
-      // if another loader runs in parallel, it might have already inserted the object
-      return query("select ID from " + table + " where NAME=?", [objWithName.NAME])
-        .then(function (result) {
-          if (result.length == 1) {
-            clone.ID = result[0].ID;
-            _cache[table][lower] = clone;
-            return clone;
-          }
-          throw err;
-        });
-    });
-  _cache[table][lower] = promise;
-  return promise;
+function getCachedItem( table, objWithName ) {
+	if( ! 'NAME' in objWithName )
+		return Q( { ID: null } );
+	var lower = objWithName.NAME.toLowerCase();
+	if( !_cache[table] )
+		_cache[table] = {};
+	var entry = _cache[table][lower];
+	if( typeof entry !== 'undefined' )
+		return Q.isPromise( entry ) ? entry : Q( entry ); //  cached object or Promise
+	var fields = "";
+	var placeholders = "";
+	var values = [];
+	for( var key in objWithName ) {
+		fields += "," + key;
+		placeholders += ",?";
+		values.push( objWithName[key] );
+	}
+	var clone = JSON.parse( JSON.stringify( objWithName ) );
+	var promise = query( 'insert into ' + table + ' (' + fields.substr(1) + ') values (' + placeholders.substr(1) + ')', values )
+			.then( function( result ) {
+				_coreLogger.debug( 'inserted ' + table + ' ' + objWithName.NAME + ': ' + result.insertId );
+				clone.ID = result.insertId;
+				_cache[table][lower] = clone;
+				return clone;
+			} )
+			.fail( function( err ) {
+				// if another loader runs in parallel, it might have already inserted the object
+				return query( 'select ID from ' + table + ' where NAME=?', [objWithName.NAME] )
+					.then( function( result ) {
+						if( result.length == 1 ) {
+							clone.ID = result[0].ID;
+							_cache[table][lower] = clone;
+							return clone;
+						}
+						throw err;
+					});
+			});
+	_cache[table][lower] = promise;
+	return promise;
 }
 
 function query( sql, params ) {
