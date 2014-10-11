@@ -418,7 +418,7 @@ var dynatable_writers = {
 		return '<a href="#/places/regions/' + obj.REGION + '/activity">' + obj.REGION + '</a>';
 	},
 	SUBREGION: function( obj ) {
-		return '<a href="#/places/subregions/' + obj.SUBREGION.replace( ' ', '+' ) + '/activity">' + obj.SUBREGION + '</a>';
+		return '<a href="#/places/subregions/' + obj.SUBREGION.replace( / /g, '+' ) + '/activity">' + obj.SUBREGION + '</a>';
 	},
 	COUNTRY: function( obj ) {
 		var c = '';
@@ -3418,7 +3418,16 @@ function onComplete( d ) {
 			$( '#footer' ).append( '<p><small class="text-muted">' + d.responseJSON.ms + '</small></p>' );
 		}
 		if( 'updated' in d.responseJSON ) {
-			$( '#footer' ).append( '<p><small class="text-muted">' + d.responseJSON.route + ' last updated: ' + d.responseJSON.updated_nice + ' ( ' + timediff( d.responseJSON.updated, new Date().getTime() ) + ' ago )</small></p>' );
+			out = [];
+			out.push( '<p>' );
+			out.push( '<small class="text-muted">' );
+			out.push( d.responseJSON.route  );
+			out.push( ' last updated: ' );
+			out.push( d.responseJSON.updated_nice  );
+			out.push( ' ( ' + timediff( d.responseJSON.updated, new Date().getTime() ) + ' ago )' );
+			out.push( '</small>' );
+			out.push( '</p>' );
+			$( '#footer' ).append( out.join( '' ) );
 		}
 	}
 	$( '#loading' ).removeClass( 'loading' );
