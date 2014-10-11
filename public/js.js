@@ -121,21 +121,28 @@ $( function() {
 		this.get( '#/tags/:tag', function( context ) {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
+				TagBaseCtrl( params );
 				TagCtrl( params );
 			} );
 		} );
 		this.get( '#/tags/:tag/games', function( context ) {
 			params = this.params;
-			context.render( 'games.html', {} ).replace( $( '#content' ) ).then( function() {
-				TagGamesCtrl( params );
+			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
+				TagBaseCtrl( params );
+				context.render( 'games.html' ).replace( $( '#tag_content' ) ).then( function() {
+					GamesCtrl( params );
+				} );
 			} );
 		} );
 		//this.get( '#/tags/:tag/top/last30days', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); TagTop30daysCtrl( this.params ) } );
 		//this.get( '#/tags/:tag/top/all', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); TagTopAllCtrl( this.params ); } );
 		this.get( '#/tags/:tag/players', function( context ) {
 			params = this.params;
-			context.render( 'players.html', {} ).replace( $( '#content' ) ).then( function() {
-				TagPlayersCtrl( params );
+			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
+				TagBaseCtrl( params );
+				context.render( 'players.html' ).replace( $( '#tag_content' ) ).then( function() {
+					PlayersCtrl( params );
+				} );
 			} );
 		} );
 		this.get( '#/tags/:tag/players/:player', function( context ) {
@@ -209,6 +216,7 @@ $( function() {
 					} );
 					$.ajax( {
 						url: getApiURL() + 'api/status/db/rows',
+						cache: false,
 						dataType: getAjaxDataType(),
 						success: function( data ) {
 							context.log( 'success' );
@@ -242,6 +250,7 @@ $( function() {
 					} );
 					$.ajax( {
 						url: getApiURL() + 'api/status/cache',
+						cache: false,
 						dataType: getAjaxDataType(),
 						success: function( data ) {
 							$( '#table_cache' ).dynatable( {
@@ -341,8 +350,9 @@ $( function() {
 	$( document ).on( {
 		mouseenter: function() {
 			var title = $( this ).html();
+			var placement = $( this ).attr( 'data-placement' ) || 'right';
 			var img = '<img src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + $(this).html() + '_v2014051402.0.jpg" />';
-			$(this).popover( { placement: 'right', title: title, content: img, html: true } );
+			$(this).popover( { placement: placement, title: title, content: img, html: true } );
 			$(this).popover( 'show' );
 		},
 		mouseleave: function() {
@@ -1235,7 +1245,8 @@ function GamesCtrl( params ) {
 	$( '#table_games' ).dynatable( {
 		dataset: {
 			ajax: true,
-			ajaxUrl: getApiURL() + 'api/games',
+			ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
+			ajaxCache: false,
 			ajaxDataType: getAjaxDataType(),
 			ajaxOnLoad: true,
 			processingText: 'Loading...',
@@ -1683,7 +1694,7 @@ function PlayersCtrl( params ) {
 	$( '#table_players' ).dynatable( {
 		dataset: {
 			ajax: true,
-			ajaxUrl: getApiURL() + 'api/players',
+			ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
 			ajaxDataType: getAjaxDataType(),
 			ajaxOnLoad: true,
 			processingText: 'Loading...',
@@ -2573,14 +2584,36 @@ function EloDuelCtrl( params ) {
 	$scope.ordercolumn = 'ELO';
 	$scope.ordertype = true;
 }
-function TagCtrl( params ) {
+function TagBaseCtrl( params ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	var t = params['tag'];
-	var lol = theLiz.tag( t );
-	$scope.tag = lol;
-	$scope.date = new Date().getTime();
+	// set tag name
+	$( '#tag_id' ).html( t );
+	// set button urls
+	$( '#tab_btn_info' ).attr( 'href', '#/tags/' + t );
+	$( '#tab_btn_games' ).attr( 'href', '#/tags/' + t + '/games' );
+	$( '#tab_btn_players' ).attr( 'href', '#/tags/' + t + '/players' );
+}
+function TagCtrl( params ) {
+	var t = params['tag'];
+	$.ajax( {
+		url: getApiURL() + 'api/tags/' + t,
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// set tag name
+			$( '#tag_name' ).html( data.data.NAME );
+			$( '#tag_descr' ).append( data.data.DESCR );
+		},
+		error: function( data ) {
+		},
+		complete: function( data ) {
+			onComplete( data );
+			//console.log( data );
+		},
+	} );
+	//
 	onComplete();
 }
 function TagsCtrl( params ) {
@@ -2764,81 +2797,11 @@ function TagTopAllCtrl( params ) {
 		},
 	} );
 }
-function TagGamesCtrl( params ) {
-	onLoading();
-	setNavbarActive();
-	var t = params['tag'];
-	$( '#current_url' ).html( printLocations() );
-	/*
-	$( '#table_games' ).bind( 'dynatable:init', function( e, dynatable ) {
-		dynatable.sorts.add( 'GAME_TIMESTAMP', -1 );
-	} );
-	*/
-	$( '#table_games' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
-		onComplete();
-	} );
-	$( '#table_games' ).dynatable( {
-		dataset: {
-			ajax: true,
-			ajaxUrl: getApiURL() + 'api/tags/' + t + '/games',
-			ajaxDataType: getAjaxDataType(),
-			ajaxOnLoad: true,
-			processingText: 'Loading...',
-			records: [],
-			perPageDefault: 20,
-			perPageOptions: [10,20,50,100],
-		},
-		params: {
-			records: 'data',
-		},
-		features: {
-			sort: false,
-			search: false,
-			pushState: false,
-			perPageSelect: true,
-			paginate: true,
-			recordCount: true,
-		},
-		writers: dynatable_writers,
-	} );
-	/*
-	$.ajax( {
-		url: getApiURL() + 'api/tags/' + t + '/games',
-		dataType: getAjaxDataType(),
-		success: function( data ) {
-			//console.log( data );
-			$( '#table_games' ).dynatable( {
-				features: dynatable_features,
-				writers: dynatable_writers,
-				dataset: {
-					perPageDefault: 50,
-					perPageOptions: [10,20,50,100,200],
-					records: data.data.sort( function ( a, b ) { return b.GAME_TIMESTAMP-a.GAME_TIMESTAMP } )
-				}
-			} );
-		},
-		error: function( data ) {
-		},
-		complete: function( data ) {
-			onComplete( data );
-			//console.log( data );
-		},
-	} );
-	*/
-}
 function TagPlayersCtrl( params ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
-	if( params['tag'] ) {
-		$scope.theurl = 'tags/' + params['tag'] + '/';
-	}
 	var t = params['tag'];
-	var lol = theLiz.tagplayers( t );
-	$scope.players = lol;
-	$scope.ordercolumn = 'GAME_TIMESTAMP';
-	$scope.ordertype = true;
-	$scope.date = new Date().getTime();
 }
 function TagPlayerCtrl( params ) {
 	onLoading();
@@ -2982,29 +2945,91 @@ function RaceCtrl( params ) {
 function RaceMapCtrl( params ) {
 	onLoading();
 	setNavbarActive();
-  $('#current_url').html(printLocations());
-  var m = params['map'];
-  var w = $location.search()["weapons"];
-  var r = $location.search()["ruleset"];
-  var lol = theLiz.racemap(m, r, w);
-  $scope.scores = lol;
-  $scope.map = m;
-  $scope.ordercolumn = 'RANK';
-  $scope.ordertype = false;
-	onComplete();
+	$( '#current_url' ).html( printLocations() );
+	var w = parseHashParams()['weapons'] || 'on';
+	var r = parseHashParams()['ruleset'] || 'pql';
+	var m = params['map'];
+	// map name
+	$( '#map_name' ).append( '<a data-placement="bottom" class="map-popup" href="#/race/maps/'+ m +'">' + m + '</a>' );
+	// set active tab button
+	$( '#btn_ruleset_' + r ).addClass( 'active' );
+	$( '#btn_weapons_' + w ).addClass( 'active' );
+	// set button urls
+	_url = {};
+	_url.weapons = w;
+	console.warn( mkURL( _url ) );
+	$( '#btn_ruleset_pql' ).attr( 'href', '#/race/maps/' + m + '?' + mkURL( _url ) + '&ruleset=pql' );
+	$( '#btn_ruleset_vql' ).attr( 'href', '#/race/maps/' + m + '?' + mkURL( _url ) + '&ruleset=vql' );
+	delete _url.weapons;
+	_url.ruleset = r;
+	console.warn( mkURL( _url ) );
+	$( '#btn_weapons_on' ).attr( 'href', '#/race/maps/' + m + '?' + mkURL( _url ) + '&weapons=on' );
+	$( '#btn_weapons_off' ).attr( 'href', '#/race/maps/' + m + '?' + mkURL( _url ) + '&weapons=off' );
+	$( '#race_maps' ).bind( 'dynatable:init', function( e, dynatable ) {
+		dynatable.sorts.add( 'RANK', 1 );
+	} );
+	$.ajax( {
+		url: getApiURL() + 'api/race/maps/' + m,
+		dataType: getAjaxDataType(),
+		data: {
+			weapons: w,
+			ruleset: r,
+		},
+		success: function( data ) {
+			// dynatable
+			$( '#race_maps' ).dynatable( {
+				features: {
+					sort: true,
+					perPageSelect: false,
+					paginate: true,
+					search: false,
+					recordCount: true,
+					pushState: false,
+				},
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 20,
+					records: data.data.scores
+				}
+			} );
+		},
+		error: function( data ) {
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
 }
 function RacePlayerCtrl( params ) {
 	onLoading();
 	setNavbarActive();
   $( '#current_url' ).html(printLocations());
   var p = params['player'];
-  $scope.player = p;
+	var w = parseHashParams()['weapons'] || 'on';
+	var r = parseHashParams()['ruleset'] || 'pql';
+	// set player link
+	$( '#player_link' ).html( p );
+	$( '#player_link' ).attr( 'href', '#/race/player/' + p );
+	// set active tab button
+	$( '#btn_ruleset_' + r ).addClass( 'active' );
+	$( '#btn_weapons_' + w ).addClass( 'active' );
+	// set button urls
+	_url = {};
+	_url.weapons = w;
+	console.warn( mkURL( _url ) );
+	$( '#btn_ruleset_pql' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&ruleset=pql' );
+	$( '#btn_ruleset_vql' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&ruleset=vql' );
+	delete _url.weapons;
+	_url.ruleset = r;
+	console.warn( mkURL( _url ) );
+	$( '#btn_weapons_on' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&weapons=on' );
+	$( '#btn_weapons_off' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&weapons=off' );
 	$.ajax( {
 		url: getApiURL() + 'api/race/players/' + p,
 		dataType: getAjaxDataType(),
 		data: {
-			weapons: $location.search()["weapons"],
-			ruleset: $location.search()["ruleset"],
+			weapons: w,
+			ruleset: r,
 		},
 		success: function( data ) {
 			// page stuff
@@ -3423,8 +3448,8 @@ function onComplete( d ) {
 			out.push( '<small class="text-muted">' );
 			out.push( d.responseJSON.route  );
 			out.push( ' last updated: ' );
-			out.push( d.responseJSON.updated_nice  );
-			out.push( ' ( ' + timediff( d.responseJSON.updated, new Date().getTime() ) + ' ago )' );
+			//out.push( d.responseJSON.updated_nice  );
+			out.push( '' + timediff( d.responseJSON.updated, new Date().getTime() ) + ' ago ' );
 			out.push( '</small>' );
 			out.push( '</p>' );
 			$( '#footer' ).append( out.join( '' ) );
@@ -3553,5 +3578,12 @@ function adminSettings() {
 		'eventAction': 'click',
 		'eventLabel': 'admin button',
 	} );
+}
+function mkURL( obj ) {
+	params = [];
+	for( var i in obj ) {
+		params.push(  i + '=' + obj[i] );
+	}
+	return params.join( '&' );
 }
 

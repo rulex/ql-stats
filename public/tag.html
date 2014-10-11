@@ -1,25 +1,22 @@
 
-<div class="row-fluid">
+<div class="row">
 
-	<div class="col-sm-6 ">
-		<h3> {{ tag.data.name }}</h3>
-		<table class="table table-condensed table-bordered">
-			<tr>
-				<td>ID</td>
-				<td>{{ tag.data.ID }}</td>
-			</tr>
-				<td>Name</td>
-				<td>{{ tag.data.NAME }}</td>
-			<tr>
-				<td>Description</td>
-				<td>{{ tag.data.DESCR }}</td>
-			</tr>
-		</table>
-	</div>
+	<div class="col-sm-12">
 
-	<div class="col-sm-6 ">
-		<a class="btn btn-primary" href="#/tags/{{ tag.data.ID }}/games">Games</a>
-		<a class="btn btn-primary" href="#/tags/{{ tag.data.ID }}/players">Players</a>
+		<h4><span class="glyphicon glyphicon-tag"></span> <span id="tag_id"></span></h4>
+		<div id="subMenu">
+			<a id="tab_btn_info" class="btn btn-xs btn-default" href="">Info</a>
+			<a id="tab_btn_games" class="btn btn-xs btn-default" href="">Games</a>
+			<a id="tab_btn_players" class="btn btn-xs btn-default" href="">Players</a>
+		</div>
+		<br>
+		<div id="tag_content" class="col-sm-12">
+			<h4>Name: <span id="tag_name"></span></h4>
+			<h4>Description:</h4>
+			<pre id="tag_descr">
+			</pre>
+		</div>
+
 	</div>
 
 </div>

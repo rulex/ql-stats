@@ -321,8 +321,6 @@ exports.writeCache = function( _filename, content ) {
 exports.query = function( sql, sqlParams, _filename ) {
 	exports.qls_logger.debug( _filename + ' query!' );
 	_start = new Date().getTime();
-	exports.qls_logger.debug( sql );
-	exports.qls_logger.debug( sqlParams );
 	//
 	exports.dbpool.getConnection( function( err, conn ) {
 		if( err ) { exports.qls_logger.error( err ); }

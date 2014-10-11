@@ -3,25 +3,17 @@
 <div class="row-fluid">
 	Ruleset
 	<div class="btn-group">
-		<a class="btn btn-default pql" id="pql" href="#/race/players/{{ player }}">TURBO</a>
-		<a class="btn btn-default vql" id="vql" href="#/race/players/{{ player }}">CLASSIC</a>
+		<a class="btn btn-default pql" id="btn_ruleset_pql" href="">TURBO</a>
+		<a class="btn btn-default vql" id="btn_ruleset_vql" href="">CLASSIC</a>
 	</div>
 	Weapons
 	<div class="btn-group">
-		<a class="btn btn-default won" id="won" href="#/race/players/{{ player }}">ON</a>
-		<a class="btn btn-default woff" id="woff" href="#/race/players/{{ player }}">OFF</a>
+		<a class="btn btn-default won" id="btn_weapons_on" href="">ON</a>
+		<a class="btn btn-default woff" id="btn_weapons_off" href="">OFF</a>
 	</div>
-	<!--
-	<div class="btn-group">
-		<a class="btn btn-default" href="#/race/players/{{ player }}?ruleset=pql&weapons=on">PQL weapons</a>
-		<a class="btn btn-default" href="#/race/players/{{ player }}?ruleset=pql&weapons=off">PQL strafe</a>
-		<a class="btn btn-default" href="#/race/players/{{ player }}?ruleset=vql&weapons=on">VQL weapons</a>
-		<a class="btn btn-default" href="#/race/players/{{ player }}?ruleset=vql&weapons=off">VQL strafe</a>
-	</div>
-	-->
 	<p></p>
 	<p>
-		<b><a href="#/race/players/{{ player }}">{{ player }}</a></b>
+		<b><a id="player_link" href="#/race/players/"></a></b>
 	</p>
 </div>
 

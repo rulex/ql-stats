@@ -1,31 +1,39 @@
 
+<div class="row">
+	Ruleset
+	<div class="btn-group">
+		<a class="btn btn-default pql" id="btn_ruleset_pql" href="">TURBO</a>
+		<a class="btn btn-default vql" id="btn_ruleset_vql" href="">CLASSIC</a>
+	</div>
+	Weapons
+	<div class="btn-group">
+		<a class="btn btn-default won" id="btn_weapons_on" href="">ON</a>
+		<a class="btn btn-default woff" id="btn_weapons_off" href="">OFF</a>
+	</div>
+	<p id="map_name"></p>
+</div>
 
-<div class="row-fluid">
-  <img src="http://cdn.quakelive.com/web/2011071903/images/levelshots/md/{{ map }}_v2011071903.0.jpg" alt="{{ map }}" title="{{ map }}" style="height:42px;width:56px;border-width:0px;">
 
-  <a href="#/race/maps/{{ map }}?ruleset=pql&weapons=on">PQL weapons</a> |
-  <a href="#/race/maps/{{ map }}?ruleset=pql&weapons=off">PQL strafe</a> |
-  <a href="#/race/maps/{{ map }}?ruleset=vql&weapons=on">VQL weapons</a> |
-  <a href="#/race/maps/{{ map }}?ruleset=vql&weapons=off">VQL strafe</a>
-  <p></p>
-  <p><b>{{ map }} {{ scores.data.ruleset | uppercase }} weapons {{ scores.data.weapons | uppercase }}</b></p>
-  <div class="span12 well">
-    <table class="table table-condensed table-striped table-hover">
+<div class="row">
+  <div class="col-sm-12">
+    <table id="race_maps" class="table table-condensed table-striped table-hover">
       <thead>
         <tr>
-          <th><a href="" ng-click="ordercolumn='RANK'; ordertype=!ordertype">RANK</a></th>
-          <th><a href="" ng-click="ordercolumn='PLAYER_NICK'; ordertype=!ordertype">PLAYER_NICK</a></th>
-          <th><a href="" ng-click="ordercolumn='SCORE'; ordertype=!ordertype">SCORE</a></th>
-          <th><a href="" ng-click="ordercolumn='GAME_TIMESTAMP'; ordertype=!ordertype">DATE</a></th>
+					<th data-dynatable-column="RANK">RANK</th>
+					<th data-dynatable-column="PLAYER">PLAYER</th>
+					<th data-dynatable-column="SCORE">SCORE</th>
+					<th data-dynatable-column="GAME_TIMESTAMP">DATE</th>
         </tr>
       </thead>
       <tbody>
+				<!--
         <tr ng-repeat="z in scores.data.scores | orderBy:ordercolumn:ordertype">
           <td>{{ z.RANK | number }}</td>
           <td><a href="#/race/players/{{ z.PLAYER_NICK }}">{{ z.PLAYER_NICK }}</a></td>
           <td>{{ z.SCORE | number }}</td>
           <td>{{ z.GAME_TIMESTAMP | date:'yyyy-MM-dd HH:mm' }}</td>
         </tr>
+				-->
       </tbody>
     </table>
   </div>
