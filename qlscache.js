@@ -55,7 +55,7 @@ exports.checkRoute = function( apiRoute ) {
 			_now = new Date();
 			exports.qls_logger.debug( _filename + ' is a file!' );
 			stat = fs.statSync( exports.dir + _filename );
-			exports.qls_logger.debug( _filename, 'atime:', stat.atime, exports.timediff( _now.getTime() - stat.atime.getTime() ) );
+			exports.qls_logger.debug( _filename, 'ctime:', stat.ctime, exports.timediff( _now.getTime() - stat.ctime.getTime() ) );
 			return { size: stat.size, atime: stat.atime, ctime: stat.ctime, mtime: stat.mtime };
 		}
 		else {
@@ -85,10 +85,10 @@ exports.listCaches = function( options ) {
 	for( var i in out ) {
 		f = out[i];
 		_stat = fs.statSync( exports.dir + f.cache );
-		f.time = ( _start - _stat.atime.getTime() );
+		f.time = ( _start - _stat.ctime.getTime() );
 		f.size = _stat.size;
 		totalSize += _stat.size;
-		f.time_nice = exports.timediff( new Date().getTime() - _stat.atime.getTime() );
+		f.time_nice = exports.timediff( new Date().getTime() - _stat.ctime.getTime() );
 		f.size_nice = exports.size( _stat.size );
 	}
 	exports.qls_logger.debug( 'total', exports.size( totalSize ), 'length', out.length );
@@ -221,14 +221,14 @@ exports.doCache = function( req, sql, sqlParams, options ) {
 	// checkRoute
 	chk = exports.checkRoute( apiRoute );
 	if( chk ) {
-		if( ( _now - chk.atime ) > _time ) {
-			exports.qls_logger.debug( _filename + ' is ' + ( (_now-chk.atime)/1000 ) + 's old' );
+		if( ( _now - chk.ctime ) > _time ) {
+			exports.qls_logger.debug( _filename + ' is ' + ( (_now-chk.ctime)/1000 ) + 's old' );
 			// readCache
 			_data = exports.readCache( apiRoute, queryObject, options );
 			// query
 			exports.query( sql, sqlParams, apiRoute );
-			_data.updated = chk.atime.getTime();
-			_data.updated_nice = chk.atime;
+			_data.updated = chk.ctime.getTime();
+			_data.updated_nice = chk.ctime;
 			_data.queued = true;
 			_data.route = apiRoute;
 			return _data;
@@ -237,8 +237,8 @@ exports.doCache = function( req, sql, sqlParams, options ) {
 			// readCache
 			_data = exports.readCache( apiRoute, queryObject, options );
 			exports.qls_logger.debug( _filename + ' is fresh' );
-			_data.updated = chk.atime.getTime();
-			_data.updated_nice = chk.atime;
+			_data.updated = chk.ctime.getTime();
+			_data.updated_nice = chk.ctime;
 			_data.route = apiRoute;
 			return _data;
 		}
