@@ -60,7 +60,7 @@ function createSqlStatements() {
   var vals = "";
   for (var i = 0, c = cols.split(",").length; i < c; i++)
     vals += ",?";
-  _sqlInsertGame = 'INSERT INTO Game(' + cols + ") values (" + vals.substr(1) + ")";
+  _sqlInsertGame = 'INSERT LOW_PRIORITY INTO Game(' + cols + ") values (" + vals.substr(1) + ")";
 
   cols =
     'GAME_ID, PLAYER_ID, CLAN_ID, RANK, ' +
@@ -76,7 +76,7 @@ function createSqlStatements() {
   vals = "";
   for (i = 0, c = cols.split(",").length; i < c; i++)
     vals += ",?";
-  _sqlInsertGamePlayer = "INSERT INTO GamePlayer(" + cols + ") values (" + vals.substr(1) + ")";
+  _sqlInsertGamePlayer = "INSERT LOW_PRIORITY INTO GamePlayer(" + cols + ") values (" + vals.substr(1) + ")";
 
   _sqlUpdatePlayer = "UPDATE LOW_PRIORITY Player set CLAN_ID=?, COUNTRY=? where ID=?";
 }
@@ -325,7 +325,7 @@ function getCachedItem( table, objWithName ) {
 		values.push( objWithName[key] );
 	}
 	var clone = JSON.parse( JSON.stringify( objWithName ) );
-	var promise = query( 'insert into ' + table + ' (' + fields.substr(1) + ') values (' + placeholders.substr(1) + ')', values )
+	var promise = query( 'insert LOW_PRIORITY into ' + table + ' (' + fields.substr(1) + ') values (' + placeholders.substr(1) + ')', values )
 			.then( function( result ) {
 				_coreLogger.debug( 'inserted ' + table + ' ' + objWithName.NAME + ': ' + result.insertId );
 				clone.ID = result.insertId;
