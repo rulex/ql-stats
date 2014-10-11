@@ -1240,7 +1240,7 @@ app.get( '/api/places/regions/:region/activity/month/players', function( req, re
 } );
 app.get( '/api/places/subregions/:subregion/activity/week/matches', function( req, res ) {
 	subregions = [];
-	r = req.params.subregion.replace( '+', ' ' );
+	r = req.params.subregion.replace( /\+/g, ' ' );
 	console.log( r );
 	for( var i in Countries ) {
 		c = Countries[i];
@@ -1288,7 +1288,7 @@ app.get( '/api/places/subregions/:subregion/activity/week/matches', function( re
 } );
 app.get( '/api/places/subregions/:subregion/activity/week/players', function( req, res ) {
 	subregions = [];
-	r = req.params.subregion.replace( '+', ' ' );
+	r = req.params.subregion.replace( /\+/g, ' ' );
 	for( var i in Countries ) {
 		c = Countries[i];
 		if( c.subregion == r ) {
@@ -1349,7 +1349,7 @@ app.get( '/api/places/subregions/:subregion/activity/week/players', function( re
 } );
 app.get( '/api/places/subregions/:subregion/activity/month/matches', function( req, res ) {
 	subregions = [];
-	r = req.params.subregion.replace( '+', ' ' );
+	r = req.params.subregion.replace( /\+/g, ' ' );
 	console.log( r );
 	for( var i in Countries ) {
 		c = Countries[i];
@@ -1396,7 +1396,7 @@ app.get( '/api/places/subregions/:subregion/activity/month/matches', function( r
 } );
 app.get( '/api/places/subregions/:subregion/activity/month/players', function( req, res ) {
 	subregions = [];
-	r = req.params.subregion.replace( '+', ' ' );
+	r = req.params.subregion.replace( /\+/g, ' ' );
 	for( var i in Countries ) {
 		c = Countries[i];
 		if( c.subregion == r ) {
