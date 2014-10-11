@@ -114,7 +114,7 @@ exports.checkRoute = function( apiRoute, queryObject, options ) {
 		exports.qls_logger.debug( _filename + ' is missing!' );
 		// add to queue
 		//
-		return ;
+		return _data;
 	}
 }
 
@@ -138,6 +138,11 @@ exports.nextQueue = function() {
 	// check if a query is currently active
 	if( fs.existsSync( exports.dir + 'active.queue' ) ) {
 		if( fs.statSync( exports.dir + 'active.queue' ).isFile() ) {
+			stat = fs.statSync( exports.dir + 'active.queue' );
+			// if active query is older than 15min
+			if( ( new Date().getTime() - stat.ctime.getTime() ) > ( 15 * 60*1000 ) ) {
+				exports.rmQueue();
+			}
 			// do nothing
 			return null;
 		}
