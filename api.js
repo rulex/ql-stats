@@ -118,7 +118,7 @@ app.get( '/api', function ( req, res ) {
 } );
 
 app.get( '/api/search/players/:search_str', function ( req, res ) {
-	var sql = 'select p.NAME as PLAYER, p.COUNTRY, c.NAME as CLAN, c.ID as CLAN_ID from Player p left join Clan c on c.ID=p.CLAN_ID WHERE p.NAME like ? ORDER BY NULL LIMIT 200';
+	var sql = 'select p.NAME as PLAYER, p.ID as PLAYER_ID, p.COUNTRY, c.NAME as CLAN, c.ID as CLAN_ID from Player p left join Clan c on c.ID=p.CLAN_ID WHERE p.NAME like ? ORDER BY NULL LIMIT 200';
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) throw err;
 		conn.query( sql, [ req.params.search_str + "%" ], function( err, rows ) {
