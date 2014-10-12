@@ -125,6 +125,15 @@ $( function() {
 				TagCtrl( params );
 			} );
 		} );
+		this.get( '#/tags/:tag/overview', function( context ) {
+			params = this.params;
+			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
+				TagBaseCtrl( params );
+				context.render( 'overview.html' ).replace( $( '#tag_content' ) ).then( function() {
+					OverviewCtrl( params );
+				} );
+			} );
+		} );
 		this.get( '#/tags/:tag/games', function( context ) {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
@@ -142,6 +151,33 @@ $( function() {
 				TagBaseCtrl( params );
 				context.render( 'players.html' ).replace( $( '#tag_content' ) ).then( function() {
 					PlayersCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/tags/:tag/owners', function( context ) {
+			params = this.params;
+			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
+				TagBaseCtrl( params );
+				context.render( 'owners.html' ).replace( $( '#tag_content' ) ).then( function() {
+					OwnersCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/tags/:tag/maps', function( context ) {
+			params = this.params;
+			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
+				TagBaseCtrl( params );
+				context.render( 'maps.html' ).replace( $( '#tag_content' ) ).then( function() {
+					MapsCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/tags/:tag/places', function( context ) {
+			params = this.params;
+			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
+				TagBaseCtrl( params );
+				context.render( 'places.html' ).replace( $( '#tag_content' ) ).then( function() {
+					PlacesCtrl( params );
 				} );
 			} );
 		} );
@@ -703,8 +739,14 @@ function OverviewCtrl( params ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
+	_url = parseHash();
+	if( _url.indexOf( 'overview' ) != -1 ) {
+		_index = _url.indexOf( 'overview' );
+		_url.splice( _index, 1 );
+		_url = '/' + _url.join( '/' )
+	}
 	$.ajax( {
-		url: getApiURL() + 'api/games/graphs/perweek',
+		url: getApiURL() + 'api' + _url + '/games/graphs/perweek',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// matches
@@ -732,7 +774,7 @@ function OverviewCtrl( params ) {
 		},
 	} );
 	$.ajax( {
-		url: getApiURL() + 'api/overview',
+		url: getApiURL() + 'api' + _url + '/overview',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// morris
@@ -1729,7 +1771,7 @@ function OwnersCtrl( params ) {
 	$( '#table_owners' ).dynatable( {
 		dataset: {
 			ajax: true,
-			ajaxUrl: getApiURL() + 'api/owners',
+			ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
 			ajaxDataType: getAjaxDataType(),
 			ajaxOnLoad: true,
 			processingText: 'Loading...',
@@ -2104,7 +2146,7 @@ function MapsCtrl( params ) {
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
-		url: getApiURL() + 'api/maps',
+		url: getApiURL() + 'api/' + parseHash().join( '/' ),
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			$( '#table_maps' ).bind( 'dynatable:init', function( e, dynatable ) {
@@ -2119,6 +2161,13 @@ function MapsCtrl( params ) {
 					perPageOptions: [10,20,50,100,200],
 					records: data.data
 				}
+			} );
+			Morris.Bar( {
+				element: 'chart_maps',
+				data: data.data.sort( function( a, b ) { return b.MATCHES_PLAYED - a.MATCHES_PLAYED } ),
+				xkey: 'MAP',
+				ykeys: [ 'MATCHES_PLAYED' ],
+				labels: [ 'Matches played' ]
 			} );
 		},
 		error: function( data ) {
@@ -2417,7 +2466,7 @@ function PlacesCtrl( params ) {
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
-		url: getApiURL() + 'api/places/countries',
+		url: getApiURL() + 'api/' + parseHash().join( '/' ) + '/countries',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// Initiate the chart
@@ -2523,8 +2572,8 @@ function PlacesCtrl( params ) {
 					}
 				},
 				colorAxis: {
-					min: 500,
-					max: 100000,
+					//min: 500,
+					//max: 100000,
 					type: 'logarithmic'
 				},
 				/*
@@ -2593,8 +2642,12 @@ function TagBaseCtrl( params ) {
 	$( '#tag_id' ).html( t );
 	// set button urls
 	$( '#tab_btn_info' ).attr( 'href', '#/tags/' + t );
+	$( '#tab_btn_overview' ).attr( 'href', '#/tags/' + t + '/overview' );
 	$( '#tab_btn_games' ).attr( 'href', '#/tags/' + t + '/games' );
 	$( '#tab_btn_players' ).attr( 'href', '#/tags/' + t + '/players' );
+	$( '#tab_btn_owners' ).attr( 'href', '#/tags/' + t + '/owners' );
+	$( '#tab_btn_maps' ).attr( 'href', '#/tags/' + t + '/maps' );
+	$( '#tab_btn_places' ).attr( 'href', '#/tags/' + t + '/places' );
 }
 function TagCtrl( params ) {
 	var t = params['tag'];

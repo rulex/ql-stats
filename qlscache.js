@@ -329,10 +329,8 @@ exports.query = function( sql, sqlParams, _filename ) {
 			if( err ) { exports.qls_logger.error( err ); }
 			_end = new Date().getTime();
 			exports.qls_logger.info( _filename,  'updated', rows.length, 'rows in', ( _end - _start ), 'ms' );
-			if( rows.length > 0 ) {
-				// write new cache file
-				exports.writeCache( _filename, rows );
-			}
+			// write new cache file
+			exports.writeCache( _filename, rows );
 			// remove from queue
 			exports.rmQueue();
 			// continue with queue after a delay
