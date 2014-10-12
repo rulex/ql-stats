@@ -1978,6 +1978,7 @@ app.get( '/api/tags/:tag/owners', function ( req, res ) {
 	sql.push( 'left join GameTag gt' );
 	sql.push( 'on gt.PUBLIC_ID=g.PUBLIC_ID' );
 	sql.push( 'WHERE TAG_ID=?' );
+	sql.push( 'group by g.OWNER_ID' );
 	sql = sql.join( ' ' );
 	_dt = qlscache.doCache( req, sql, [req.params.tag], { searchColumns: ['OWNER'], time: 7*24*60*60*1000 } );
 	res.jsonp( _dt );
