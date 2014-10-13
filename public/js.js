@@ -782,6 +782,7 @@ function OverviewCtrl( params ) {
 			}
 			new Morris.Line( {
 				element: 'matchesline',
+				pointSize: 2,
 				data: dt,
 				xkey: 'date',
 				ykeys: [ 'c' ],
@@ -3089,7 +3090,7 @@ function RacePlayerCtrl( params ) {
 	var r = parseHashParams()['ruleset'] || 'pql';
 	// set player link
 	$( '#player_link' ).html( p );
-	$( '#player_link' ).attr( 'href', '#/race/player/' + p );
+	$( '#player_link' ).attr( 'href', '#/race/players/' + p );
 	// set active tab button
 	$( '#btn_ruleset_' + r ).addClass( 'active' );
 	$( '#btn_weapons_' + w ).addClass( 'active' );
