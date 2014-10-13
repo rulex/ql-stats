@@ -284,12 +284,37 @@ $( function() {
 					$( '#table_cache' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
 						onComplete();
 					} );
+					// cache
 					$.ajax( {
 						url: getApiURL() + 'api/status/cache',
 						cache: false,
 						dataType: getAjaxDataType(),
 						success: function( data ) {
 							$( '#table_cache' ).dynatable( {
+								features: dynatable_features,
+								writers: dynatable_writers,
+								table: dynatable_table,
+								dataset: {
+									perPageDefault: 10,
+									perPageOptions: [10,20,50,100],
+									records: data.cached
+								}
+							} );
+						},
+						error: function( data ) {
+						},
+						complete: function( data ) {
+							onComplete( data );
+							//context.log( data );
+						},
+					} );
+					// cache queue
+					$.ajax( {
+						url: getApiURL() + 'api/status/cache/queue',
+						cache: false,
+						dataType: getAjaxDataType(),
+						success: function( data ) {
+							$( '#table_cache_queue' ).dynatable( {
 								features: dynatable_features,
 								writers: dynatable_writers,
 								table: dynatable_table,
@@ -356,12 +381,6 @@ $( function() {
 				dataType: getAjaxDataType(),
 				success: function( data ) {
 					response( $.map( data.data, function( item ) {
-						ga( 'send', {
-							'hitType': 'event',
-							'eventCategory': 'button',
-							'eventAction': 'click',
-							'eventLabel': 'player-search-nav',
-						} );
 						return { label: item.PLAYER, value: item.PLAYER }
 					} ) );
 				}
@@ -370,6 +389,12 @@ $( function() {
 		minLength: 2,
 		select: function( event, ui ) {
 			window.location = document.URL.split( '#' )[0] + '#/players/' + ui.item.value;
+			ga( 'send', {
+				'hitType': 'event',
+				'eventCategory': 'button',
+				'eventAction': 'click',
+				'eventLabel': 'player-search-nav-click',
+			} );
 			$(this).val( '' ); return false;
 		}
 	} );
@@ -724,7 +749,7 @@ function WeaponsCtrl( params ) {
 		success: function( data ) {
 			Morris.Donut( {
 				element: 'chart',
-				data: data.data,
+				data: data.data.sort( function( a, b ) { return b.value - a.value } ),
 				//formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_kills*100 ).toFixed(1) + '%)'; },
 			} );
 		},
@@ -801,12 +826,12 @@ function OverviewCtrl( params ) {
 			// gametypes matches
 			Morris.Donut( {
 				element: 'chart',
-				data: _kills,
+				data: _kills.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_kills*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'chart2',
-				data: _gametypes,
+				data: _gametypes.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_matches*100 ).toFixed(1) + '%)'; },
 			} );
 			// dynatable
@@ -900,12 +925,12 @@ function RulesetOverviewCtrl( params ) {
 			// gametypes matches
 			Morris.Donut( {
 				element: 'chart',
-				data: _kills,
+				data: _kills.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_kills*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'chart2',
-				data: _gametypes,
+				data: _gametypes.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_matches*100 ).toFixed(1) + '%)'; },
 			} );
 			// dynatable
@@ -1363,7 +1388,7 @@ function GameCtrl( params ) {
 				}
 				Morris.Bar( {
 					element: 'red',
-					data: red,
+					data: red.sort( function( a, b) { return b.dmg - a.dmg } ),
 					xkey: 'PLAYER',
 					ykeys: [ 'dmg' ],
 					labels: [ 'Damage dealt' ],
@@ -1374,7 +1399,7 @@ function GameCtrl( params ) {
 				} );
 				Morris.Bar( {
 					element: 'blue',
-					data: blue,
+					data: blue.sort( function( a, b) { return b.dmg - a.dmg } ),
 					xkey: 'PLAYER',
 					ykeys: [ 'dmg' ],
 					labels: [ 'Damage dealt' ],
@@ -1395,7 +1420,7 @@ function GameCtrl( params ) {
 			}
 			Morris.Donut( {
 				element: 'score',
-				data: score,
+				data: score.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ''; },
 			} );
 			// accuracy
@@ -1406,7 +1431,7 @@ function GameCtrl( params ) {
 			}
 			Morris.Donut( {
 				element: 'acc',
-				data: acc,
+				data: acc.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			// KILLS IMPRESSIVE EXCELLENT HUMILIATION
@@ -1422,22 +1447,22 @@ function GameCtrl( params ) {
 			}
 			Morris.Donut( {
 				element: 'kills',
-				data: kills,
+				data: kills.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ''; },
 			} );
 			Morris.Donut( {
 				element: 'imp',
-				data: _imp,
+				data: _imp.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ''; },
 			} );
 			Morris.Donut( {
 				element: 'exc',
-				data: _exc,
+				data: _exc.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ''; },
 			} );
 			Morris.Donut( {
 				element: 'hum',
-				data: _hum,
+				data: _hum.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ''; },
 			} );
 			// weapons
@@ -1483,57 +1508,57 @@ function GameCtrl( params ) {
 			}
 			Morris.Donut( {
 				element: 'rl',
-				data: RL_A,
+				data: RL_A.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
 				element: 'rlk',
-				data: RL_K,
+				data: RL_K.sort( function( a, b ) { return b.value - a.value } ),
 			} );
 			Morris.Donut( {
 				element: 'rg',
-				data: RG_A,
+				data: RG_A.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
 				element: 'rgk',
-				data: RG_K,
+				data: RG_K.sort( function( a, b ) { return b.value - a.value } ),
 			} );
 			Morris.Donut( {
 				element: 'lg',
-				data: LG_A,
+				data: LG_A.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
 				element: 'lgk',
-				data: LG_K,
+				data: LG_K.sort( function( a, b ) { return b.value - a.value } ),
 			} );
 			Morris.Donut( {
 				element: 'pg',
-				data: PG_A,
+				data: PG_A.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
 				element: 'pgk',
-				data: PG_K,
+				data: PG_K.sort( function( a, b ) { return b.value - a.value } ),
 			} );
 			Morris.Donut( {
 				element: 'gl',
-				data: GL_A,
+				data: GL_A.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
 				element: 'glk',
-				data: GL_K,
+				data: GL_K.sort( function( a, b ) { return b.value - a.value } ),
 			} );
 			Morris.Donut( {
 				element: 'sg',
-				data: SG_A,
+				data: SG_A.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			Morris.Donut( {
 				element: 'sgk',
-				data: SG_K,
+				data: SG_K.sort( function( a, b ) { return b.value - a.value } ),
 			} );
 			// dynatable
 			$( '#players_table' ).bind( 'dynatable:init', function( e, dynatable ) {
@@ -1689,19 +1714,19 @@ function PlayerCtrl( params ) {
 			// maps
 			Morris.Donut( {
 				element: 'mapsgraph',
-				data: maps,
+				data: maps.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			// gametypes
 			Morris.Donut( {
 				element: 'gametypes',
-				data: gametypes,
+				data: gametypes.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			// rulesets
 			Morris.Donut( {
 				element: 'rulesets',
-				data: rulesets,
+				data: rulesets.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			// dynatable
@@ -1936,13 +1961,13 @@ function OwnerCtrl( params ) {
 			// top10 most acc
 			Morris.Donut( {
 				element: 'mostacc',
-				data: mostAcc,
+				data: mostAcc.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/total*100 ).toFixed(2) + '%)'; },
 			} );
 			// top10 most dmg
 			Morris.Donut( {
 				element: 'mostdmg',
-				data: mostDmgD,
+				data: mostDmgD.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/total*100 ).toFixed(2) + '%)'; },
 			} );
 			// matches
@@ -1957,13 +1982,13 @@ function OwnerCtrl( params ) {
 			// maps
 			Morris.Donut( {
 				element: 'mapsgraph',
-				data: maps,
+				data: maps.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/total*100 ).toFixed(2) + '%)'; },
 			} );
 			// gametypes
 			Morris.Donut( {
 				element: 'gametypes',
-				data: gametypes,
+				data: gametypes.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/total*100 ).toFixed(2) + '%)'; },
 			} );
 			//console.log( data );
@@ -2244,7 +2269,7 @@ function MapCtrl( params ) {
 			// gametypes
 			Morris.Donut( {
 				element: 'chart2',
-				data: _data,
+				data: _data.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + '%'; },
 			} );
 			// dynatable
@@ -2328,12 +2353,12 @@ function GametypeOverviewCtrl( params ) {
 			// gametypes matches
 			Morris.Donut( {
 				element: 'chart',
-				data: _kills,
+				data: _kills.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_kills*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'chart2',
-				data: _gametypes,
+				data: _gametypes.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_matches*100 ).toFixed(1) + '%)'; },
 			} );
 			// dynatable
@@ -2479,8 +2504,10 @@ function PlacesCtrl( params ) {
 			var _subregions = {};
 			var subregions = [];
 			var _countries = [];
+			totalPlayers = 0;
 			for( var i in data.data ) {
 				c = data.data[i];
+				totalPlayers += c.NUM_PLAYERS;
 				_countries.push( { COUNTRY: c.COUNTRY, NUM_PLAYERS: c.NUM_PLAYERS, NUM_PLAYERS_KM: c.NUM_PLAYERS_KM } );
 				if( data.data[i].NUM_PLAYERS > 0 ) {
 					ob = { name: c.COUNTRY, code: c.COUNTRY, value: c.NUM_PLAYERS };
@@ -2952,22 +2979,22 @@ function RaceCtrl( params ) {
 			for( var i in _vs ) { vs.push( { label: i, value: _vs[i] } ); }
 			Morris.Donut( {
 				element: 'pw',
-				data: pw.sort(),
+				data: pw.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'ps',
-				data: ps.sort(),
+				data: ps.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'vw',
-				data: vw.sort(),
+				data: vw.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			Morris.Donut( {
 				element: 'vs',
-				data: vs.sort(),
+				data: vs.sort( function( a, b ) { return b.value - a.value } ),
 				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			// dynatable
@@ -3205,12 +3232,14 @@ function ActivityCtrl( params, context ) {
 	// set urls
 	$( '#tab_btn_week' ).attr( 'href', '#/' + parseHash().join( '/' ) + '?tab=week' );
 	$( '#tab_btn_month' ).attr( 'href', '#/' + parseHash().join( '/' ) + '?tab=month' );
+	var matchesData = [];
+	var playersData = [];
+	var _gametypes = [ 'duel', 'ffa', 'ca', 'tdm', 'ctf', 'dom', 'ft', 'race', 'rr', 'ad', 'harv' ];
 	$.ajax( {
 		url: getApiURL() + 'api/' + parseHash().join( '/' ) + '/' + activeTab + '/matches',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// matches
-			dt = [];
 			for( var i in data.data ) {
 				d = data.data[i];
 				if( activeTab == 'week' ) {
@@ -3220,56 +3249,131 @@ function ActivityCtrl( params, context ) {
 					_date = d.year + '-' + d.month + '-' + d.day;
 				}
 				d.date = _date;
-				dt.push( d );
+				matchesData.push( d );
 			}
-			_gametypes = [ 'duel', 'ffa', 'ca', 'tdm', 'ctf', 'dom', 'ft', 'race', 'rr', 'ad', 'harv', 'fctf' ];
-			console.log( dt );
 			// matches
 			new Morris.Line( {
 				element: 'activity_matches',
-				data: dt,
+				data: matchesData,
 				pointSize: 2,
 				xkey: 'date',
 				ykeys: ['total'],
 				labels: ['Matches played'],
 				hideHover: 'auto',
+				hoverCallback: function( index, options, content, row ) {
+					out = [];
+					out.push( '<div class="morris-hover-row-label">' );
+					out.push( row.date );
+					out.push( '</div>' );
+					out.push( '<div class="morris-hover-point" style="color: #0b62a4">' );
+					out.push( 'Matches played: ' + row.total );
+					out.push( '</div>' );
+					return out.join( '' );;
+				},
 					//events: [ '2014-09-17 21:00' ],
 					//eventLabels: [ 'Steam release' ],
 			} );
 			// matches/gametype
 			new Morris.Line( {
 				element: 'chart3',
-				data: dt,
+				data: matchesData,
 				lineWidth: 1,
 				pointSize: 2,
 				xkey: 'date',
 				ykeys: _gametypes,
 				labels: _gametypes,
 				hideHover: 'auto',
+				hoverCallback: function( index, options, content, row ) {
+					out = [];
+					out.push( '<div class="morris-hover-row-label">' );
+					out.push( row.date );
+					out.push( '</div>' );
+					//
+					out.push( '<div class="morris-hover-point" style="color: #000">' );
+					out.push( 'Total matches played: ' + row.total );
+					out.push( '</div>' );
+					k = 0;
+					for( var j in this.ykeys ) {
+						i = this.ykeys[j];
+						out.push( '<div class="morris-hover-point" style="color: ' + this.lineColors[k%this.lineColors.length] + '">' );
+						out.push( i + ': ' + thousandSeparator( row[i] ) + '  (' + ( row[i]/row.total*100 ).toFixed(1) + '%)' );
+						out.push( '</div>' );
+						k++;
+					}
+					return out.join( '' );;
+				},
 					//events: [ '2014-09-17 21:00' ],
 					//eventLabels: [ 'Steam release' ],
 			} );
 			// matches/ruleset
 			new Morris.Line( {
 				element: 'chart4',
-				data: dt,
+				data: matchesData,
 				pointSize: 2,
 				xkey: 'date',
-				ykeys: [ 'classic', 'turbo', 'ql' ],
-				labels: [ 'classic', 'turbo', 'ql' ],
+				ykeys: [ 'ql', 'classic', 'turbo' ],
+				labels: [ 'ql', 'classic', 'turbo' ],
 				hideHover: 'auto',
+				hoverCallback: function( index, options, content, row ) {
+					out = [];
+					out.push( '<div class="morris-hover-row-label">' );
+					out.push( row.date );
+					out.push( '</div>' );
+					//
+					_tot = 0;
+					for( var j in this.ykeys ) {
+						i = this.ykeys[j];
+						_tot += row[i];
+					}
+					out.push( '<div class="morris-hover-point" style="color: #000">' );
+					out.push( 'Total unique players: ' + row.total + ' ' );
+					out.push( '</div>' );
+					k = 0;
+					for( var j in this.ykeys ) {
+						i = this.ykeys[j];
+						out.push( '<div class="morris-hover-point" style="color: ' + this.lineColors[k%this.lineColors.length] + '">' );
+						out.push( i + ': ' + row[i] + '  (' + ( row[i]/row.total*100 ).toFixed(1) + '%)' );
+						out.push( '</div>' );
+						k++;
+					}
+					return out.join( '' );;
+				},
 					//events: [ '2014-09-17 21:00' ],
 					//eventLabels: [ 'Steam release' ],
 			} );
 			// premium/standard ranked/unranked
 			new Morris.Line( {
 				element: 'chart5',
-				data: dt,
+				data: matchesData,
 				pointSize: 2,
 				xkey: 'date',
 				ykeys: [ 'premium', 'standard', 'ranked', 'unranked' ],
 				labels: [ 'premium', 'standard', 'ranked', 'unranked' ],
 				hideHover: 'auto',
+				hoverCallback: function( index, options, content, row ) {
+					out = [];
+					out.push( '<div class="morris-hover-row-label">' );
+					out.push( row.date );
+					out.push( '</div>' );
+					//
+					_tot = 0;
+					for( var j in this.ykeys ) {
+						i = this.ykeys[j];
+						_tot += row[i];
+					}
+					out.push( '<div class="morris-hover-point" style="color: #000">' );
+					out.push( 'Total unique players: ' + row.total + ' ' );
+					out.push( '</div>' );
+					k = 0;
+					for( var j in this.ykeys ) {
+						i = this.ykeys[j];
+						out.push( '<div class="morris-hover-point" style="color: ' + this.lineColors[k%this.lineColors.length] + '">' );
+						out.push( i + ': ' + row[i] + '  (' + ( row[i]/row.total*100 ).toFixed(1) + '%)' );
+						out.push( '</div>' );
+						k++;
+					}
+					return out.join( '' );;
+				},
 					//events: [ '2014-09-17 21:00' ],
 					//eventLabels: [ 'Steam release' ],
 			} );
@@ -3285,7 +3389,6 @@ function ActivityCtrl( params, context ) {
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// matches
-			dt = [];
 			for( var i in data.data ) {
 				d = data.data[i];
 				if( activeTab == 'week' ) {
@@ -3295,30 +3398,64 @@ function ActivityCtrl( params, context ) {
 					_date = d.year + '-' + d.month + '-' + d.day;
 				}
 				d.date = _date;
-				dt.push( d );
+				playersData.push( d );
 			}
-			console.log( dt );
+			// unique players
 			new Morris.Line( {
 				element: 'chart2',
-				data: dt,
+				data: playersData,
 				pointSize: 2,
 				xkey: 'date',
 				ykeys: [ 'total' ],
 				labels: [ 'Unique players' ],
 				hideHover: 'auto',
+				hoverCallback: function( index, options, content, row ) {
+					out = [];
+					out.push( '<div class="morris-hover-row-label">' );
+					out.push( row.date );
+					out.push( '</div>' );
+					out.push( '<div class="morris-hover-point" style="color: #0b62a4">' );
+					out.push( 'Unique players: ' + row.total );
+					out.push( '</div>' );
+					return out.join( '' );;
+				},
 					//events: [ '2014-09-17 21:00' ],
 					//eventLabels: [ 'Steam release' ],
 			} );
-			_gametypes = [ 'duel', 'ffa', 'ca', 'tdm', 'ctf', 'dom', 'ft', 'race', 'rr', 'ad', 'harv', 'fctf' ];
+			// unique players/gamemodes
 			new Morris.Line( {
 				element: 'chart6',
 				lineWidth: 1,
-				data: dt,
+				data: playersData,
 				pointSize: 2,
 				xkey: 'date',
 				ykeys: _gametypes,
 				labels: _gametypes,
 				hideHover: 'auto',
+				hoverCallback: function( index, options, content, row ) {
+					out = [];
+					out.push( '<div class="morris-hover-row-label">' );
+					out.push( row.date );
+					out.push( '</div>' );
+					//
+					_tot = 0;
+					for( var j in this.ykeys ) {
+						i = this.ykeys[j];
+						_tot += row[i];
+					}
+					out.push( '<div class="morris-hover-point" style="color: #000">' );
+					out.push( 'Total unique players: ' + row.total + ' ' );
+					out.push( '</div>' );
+					k = 0;
+					for( var j in this.ykeys ) {
+						i = this.ykeys[j];
+						out.push( '<div class="morris-hover-point" style="color: ' + this.lineColors[k%this.lineColors.length] + '">' );
+						out.push( i + ': ' + thousandSeparator( row[i] ) + '  (' + ( row[i]/_tot*100 ).toFixed(1) + '%)' );
+						out.push( '</div>' );
+						k++;
+					}
+					return out.join( '' );;
+				},
 					//events: [ '2014-09-17 21:00' ],
 					//eventLabels: [ 'Steam release' ],
 			} );
@@ -3458,7 +3595,7 @@ function onLoading() {
 	console.log( 'clearing footer' );
 	$( '#footer' ).empty();
 	//$( '#loading' ).addClass( 'loading' );
-	ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) } );
+	ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) + '?' + mkURL( parseHashParams() ) } );
 	//ga( 'send', 'event', 'tab4', 'clicked' );
 }
 function onComplete( d ) {

@@ -1836,12 +1836,14 @@ app.post( '/api/tags', function( req, res ) {
 } );
 
 app.get( '/api/tags/:tag', function ( req, res ) {
-	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'SELECT * FROM Tag WHERE ID=' + tag + '';
+	var sql = 'SELECT * FROM Tag WHERE ID=?';
 	dbpool.getConnection( function( err, conn ) {
-		conn.query( sql, function( err, rows, fields ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.tag], function( err, rows, fields ) {
+			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows[0] } );
+			out = ( rows.length > 0 ) ? rows[0] : {};
+			res.jsonp( { data: out } );
 			res.end();
 			conn.release();
 		} );
@@ -2499,6 +2501,13 @@ app.get( '/api/status/cache', function ( req, res ) {
 	var _cache = [];
 	var now = new Date();
 	res.jsonp( { now: now.getTime(), now_nice: now, cached: qlscache.listCaches() } );
+	res.end();
+} );
+app.get( '/api/status/cache/queue', function ( req, res ) {
+	res.set( 'Cache-Control', 'public, max-age=' + maxAge_api );
+	var _cache = [];
+	var now = new Date();
+	res.jsonp( { now: now.getTime(), now_nice: now, cached: qlscache.listQueue() } );
 	res.end();
 } );
 
