@@ -483,7 +483,7 @@ var morris_eventLabels = [
 ];
 
 var dynatable_table = {
-	headRowClass: 'well well-sm',
+	//headRowClass: 'well well-sm',
 	copyHeaderClass: true,
 }
 var dynatable_writers = {
@@ -548,10 +548,13 @@ var dynatable_writers = {
 	},
 	TEAM: function( obj ) {
 		if( obj.TEAM == 1 ) {
-			return '<span class="btn btn-xs btn-danger">Red</span>';
+			return '<span data-toggle="tooltip" class="btn btn-xs btn-danger popthis" data-placement="left" data-content="Red team">R</span>';
+		}
+		else if( obj.TEAM == 2 ) {
+			return '<span data-toggle="tooltip" class="btn btn-xs btn-primary popthis" data-placement="left" data-content="Blue team">B</span>';
 		}
 		else {
-			return '<span class="btn btn-xs btn-primary">Blue</span>';
+			return 'Total';
 		}
 	},
 	RANK: function( obj ) {
@@ -580,7 +583,8 @@ var dynatable_writers = {
 		return thousandSeparator( obj.TOTAL_KILLS );
 	},
 	KILLS: function( obj ) {
-		return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.KILLS/obj.MATCHES_PLAYED).toFixed(2) +' kills/game with a ratio of '+ (obj.KILLS/obj.DEATHS).toFixed(2) +' on average">'+ obj.KILLS +'</span>';
+		//return '<span data-toggle="tooltip" data-placement="left" title="'+ (obj.KILLS/obj.MATCHES_PLAYED).toFixed(2) +' kills/game with a ratio of '+ (obj.KILLS/obj.DEATHS).toFixed(2) +' on average">'+ obj.KILLS +'</span>';
+		return obj.KILLS;
 	},
 	IMPRESSIVE: function( obj ) {
 		val = ( obj.IMPRESSIVE > 0 ) ? obj.IMPRESSIVE : '-';
@@ -622,6 +626,9 @@ var dynatable_writers = {
 	},
 	PLAY_TIME: function( obj ) {
 		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ obj.PLAY_TIME +' sec"><i>'+ timediff( obj.PLAY_TIME * 1000 ) +'</i></div></span>';
+	},
+	PLAY_TIME_SUM: function( obj ) {
+		return '<span rel="popover"><div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ obj.PLAY_TIME_SUM +' sec"><i>'+ timediff( obj.PLAY_TIME_SUM * 1000 ) +'</i></div></span>';
 	},
 	GAME_TYPE: function( obj ) {
 		return mkGameType( obj );
@@ -669,6 +676,8 @@ var dynatable_writers = {
 		// this->
 		if( 'HITS' in obj && 'SHOTS' in obj )
 			return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ obj.HITS + ' hits of ' + obj.SHOTS + ' shots"><i>'+ ( obj.HITS / obj.SHOTS * 100 ).toFixed(1) +'%</i></span>';
+		else if( 'HITS_SUM' in obj && 'SHOTS_SUM' in obj )
+			return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ obj.HITS_SUM + ' hits of ' + obj.SHOTS_SUM + ' shots"><i>'+ ( obj.HITS_SUM / obj.SHOTS_SUM * 100 ).toFixed(1) +'%</i></span>';
 		else if( 'ACC' in obj )
 			return '<span><i>'+ obj.ACC +'%</i></span>';
 	},
@@ -1354,6 +1363,20 @@ function GameCtrl( params ) {
 			$( '.wshots' ).hide();
 			var g = data.data.game;
 			var p = data.data.players;
+			var t = data.data.teams;
+			// team rounds
+			for( var i in t ) {
+				if( t[i].TEAM == 1 ) {
+					t[i].TEAMSCORE = g.TSCORE0;
+				}
+				else if( t[i].TEAM == 2 ) {
+					t[i].TEAMSCORE = g.TSCORE1;
+				}
+				else {
+					t[i].TEAMSCORE = g.TSCORE1 + g.TSCORE0;
+				}
+			}
+			// gametype panel
 			var ranked = '<div class="btn btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
 			var ruleset = '<div class="btn btn-info popthis" data-container="body" data-html="true" data-placement="left" data-content="Classic Ruleset">C</div>';
 			var premium = '<div class="btn btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
@@ -1566,7 +1589,7 @@ function GameCtrl( params ) {
 				element: 'sgk',
 				data: SG_K.sort( function( a, b ) { return b.value - a.value } ),
 			} );
-			// dynatable
+			// dynatable players
 			$( '#players_table' ).bind( 'dynatable:init', function( e, dynatable ) {
 				dynatable.sorts.add( 'RANK', 1 );
 			} );
@@ -1585,6 +1608,27 @@ function GameCtrl( params ) {
 					perPageDefault: 100,
 					perPageOptions: [10,20,50,100,200],
 					records: data.data.players
+				}
+			} );
+			// dynatable teams
+			$( '#teams_table' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'TEAMSCORE', -1 );
+			} );
+			$( '#teams_table' ).dynatable( {
+				features: {
+					sort: true,
+					perPageSelect: false,
+					paginate: false,
+					search: false,
+					recordCount: false,
+					pushState: false,
+				},
+				table: dynatable_table,
+				writers: dynatable_writers,
+				dataset: {
+					perPageDefault: 100,
+					perPageOptions: [10,20,50,100,200],
+					records: data.data.teams
 				}
 			} );
 		},
@@ -3332,7 +3376,7 @@ function ActivityCtrl( params, context ) {
 						_tot += row[i];
 					}
 					out.push( '<div class="morris-hover-point" style="color: #000">' );
-					out.push( 'Total unique players: ' + row.total + ' ' );
+					out.push( 'Matches: ' + row.total + ' ' );
 					out.push( '</div>' );
 					k = 0;
 					for( var j in this.ykeys ) {
@@ -3368,7 +3412,7 @@ function ActivityCtrl( params, context ) {
 						_tot += row[i];
 					}
 					out.push( '<div class="morris-hover-point" style="color: #000">' );
-					out.push( 'Total unique players: ' + row.total + ' ' );
+					out.push( 'Matches: ' + row.total + ' ' );
 					out.push( '</div>' );
 					k = 0;
 					for( var j in this.ykeys ) {
@@ -3741,11 +3785,11 @@ function mkGameType( obj ) {
 	if( 'RANKED' in obj && 'RULESET' in obj && 'PREMIUM' in obj ) {
 		ranked = '<div class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Unranked match">U</div>';
 		ruleset = '<a class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Classic Ruleset" href="#/rulesets/' + obj.RULESET + '">C</a>';
-		premium = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
+		premium = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Standard server">S</div>';
 		if( obj.RANKED == 1 ) { ranked = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Ranked match">R</div>'; }
 		if( obj.RULESET == 2 ) { ruleset = '<a class="btn btn-xs btn-danger popthis" data-container="body" data-html="true" data-placement="bottom" data-content="Turbo Ruleset" href="#/rulesets/' + obj.RULESET + '">T</a>'; }
 		if( obj.RULESET == 3 ) { ruleset = '<a class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="bottom" data-content="QL Ruleset" href="#/rulesets/' + obj.RULESET + '">Q</a>'; }
-		if( obj.PREMIUM == 1 ) { premium = '<div class="btn btn-xs btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
+		if( obj.PREMIUM == 1 ) { premium = '<div class="btn btn-xs btn-info popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
 	}
 	else {
 	}

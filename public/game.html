@@ -61,7 +61,7 @@
 
 </div>
 
-<div class="row-fluid admin" style="display: none;">
+<div class="row admin" style="display: none;">
 	<div class="col-sm-1">
 		<button onclick="$( '#admin_gametags' ).slideToggle();" class="btn btn-xs btn-default">
 			<span class="glyphicon glyphicon-tag"></span> Add tag
@@ -71,92 +71,152 @@
 	</div>
 </div>
 
-<div class="row-fluid" style="clear: both;">
-	<div class="pull-right">
-		<label>Weapon</label>
-		<div class="btn-group btn-group-sm">
-			<div class="btn btn-default active" onclick="Weaponsz($(this));">Kills</div>
-			<div class="btn btn-default " onclick="Weaponsz($(this));">Shots</div>
-			<div class="btn btn-default " onclick="Weaponsz($(this));">Hits</div>
-			<div class="btn btn-default " onclick="Weaponsz($(this));">Accuracy</div>
+<!-- Teams -->
+<div class="row teamgame" style="clear: both;">
+
+	<div class="col-sm-12">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Teams
+				<div class="pull-right">
+					<label>Statistics</label>
+					<div class="btn-group btn-group-xs">
+						<div class="btn teambtn btn-default active" onclick="$( '.teamsum' ).show(); $( '.teamavg' ).hide(); $( '.teambtn' ).removeClass( 'active' ); $(this).addClass( 'active' );">Total</div>
+						<div class="btn teambtn btn-default " onclick="$( '.teamsum' ).hide(); $( '.teamavg' ).show(); $( '.teambtn' ).removeClass( 'active' ); $(this).addClass( 'active' );">Average</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-body" style="padding: 5px;">
+				<div class="row" style="clear: both;">
+				</div>
+
+				<table id="teams_table" class="table table-condensed table-hover table-bordered">
+					<thead>
+						<tr>
+							<th data-dynatable-column="TEAM" title="TEAM">T</th>
+							<th data-dynatable-column="PLAYERS" title="PLAYERS">P</th>
+							<th data-dynatable-column="TEAMSCORE" title="TEAMSCORE">TS</th>
+							<th class="teamsum" data-dynatable-column="PLAY_TIME_SUM" title="PLAY_TIME_SUM">TIME</th>
+							<th class="teamsum" data-dynatable-column="SCORE_SUM" title="SCORE_SUM">S</th>
+							<th class="teamsum" data-dynatable-column="KILLS_SUM" title="KILLS_SUM">K</th>
+							<th class="teamsum" data-dynatable-column="DEATHS_SUM" title="DEATHS_SUM">D</th>
+							<th class="teamsum" data-dynatable-column="DAMAGE_DEALT_SUM" title="DAMAGE_DEALT_SUM">DD</th>
+							<th class="teamsum" data-dynatable-column="DAMAGE_TAKEN_SUM" title="DAMAGE_TAKEN_SUM">DT</th>
+							<th class="teamsum" data-dynatable-column="IMPRESSIVE_SUM" title="IMPRESSIVE_SUM">I</th>
+							<th class="teamsum" data-dynatable-column="EXCELLENT_SUM" title="EXCELLENT_SUM">E</th>
+							<th class="teamsum" data-dynatable-column="ACC" title="ACC">ACC</th>
+
+							<th class="teamavg" style="display: none;" data-dynatable-column="PLAY_TIME_AVG" title="PLAY_TIME_AVG">TIME</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="SCORE_AVG" title="SCORE_AVG">S</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="KILLS_AVG" title="KILLS_AVG">K</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="DEATHS_AVG" title="DEATHS_AVG">D</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="DAMAGE_DEALT_AVG" title="DAMAGE_DEALT_AVG">DD</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="DAMAGE_TAKEN_AVG" title="DAMAGE_TAKEN_AVG">DT</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="IMPRESSIVE_AVG" title="IMPRESSIVE_AVG">I</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="EXCELLENT_AVG" title="EXCELLENT_AVG">E</th>
+							<th class="teamavg" style="display: none;" data-dynatable-column="ACC" title="ACC">ACC</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
 		</div>
 	</div>
-</div>
-
-<div class="row-fluid" style="clear: both;">
-
-	<table id="players_table" class="table table-condensed table-hover table-bordered">
-		<thead>
-			<tr>
-				<th data-dynatable-column="PLAYER">PLAYER<span class="pull-right"><small>CLAN</small></span></th>
-				<th data-dynatable-column="RANK" title="RANK">R</th>
-				<th class="teamgame" data-dynatable-column="TEAM_RANK" title="TEAM_RANK">TR</th>
-				<th class="teamgame" data-dynatable-column="TEAM">TEAM</th>
-				<th data-dynatable-column="PLAY_TIME">PLAY TIME</th>
-				<th data-dynatable-column="SCORE" title="SCORE">S</th>
-				<th class="antirace" data-dynatable-column="KILLS" title="KILLS">K</th>
-				<th data-dynatable-column="DEATHS" title="DEATHS">D</th>
-				<th class="antirace" data-dynatable-column="DAMAGE_DEALT" title="DAMAGE_DEALT">DD</th>
-				<th class="antirace" data-dynatable-column="DAMAGE_TAKEN" title="DAMAGE_TAKEN">DT</th>
-				<th class="antirace" data-dynatable-column="IMPRESSIVE" title="IMPRESSIVE">I</th>
-				<th class="antirace" data-dynatable-column="EXCELLENT" title="EXCELLENT">E</th>
-				<th class="antirace" data-dynatable-column="G_K" title="HUMILIATION">H</th>
-				<th class="antirace" data-dynatable-column="ACC">ACC</th>
-				<!--
-				<th class="antirace" data-dynatable-column="RL" title="ROCKET LAUNCHER">RL</th>
-				<th class="antirace" data-dynatable-column="RG" title="RAIL GUN">RG</th>
-				<th class="antirace" data-dynatable-column="LG" title="LIGHTNING GUN">LG</th>
-				-->
-				<!-- weapon kills -->
-				<th class="antirace wKills" data-dynatable-column="G_K" title="Gauntlet">G</th>
-				<th class="antirace wKills" data-dynatable-column="RL_K" title="ROCKET LAUNCHER">RL</th>
-				<th class="antirace wKills" data-dynatable-column="RG_K" title="Rail">RG</th>
-				<th class="antirace wKills" data-dynatable-column="LG_K" title="Lightning gun">LG</th>
-				<th class="antirace wKills" data-dynatable-column="SG_K" title="Shotgun">SG</th>
-				<th class="antirace wKills" data-dynatable-column="GL_K" title="Grenade launcher">GL</th>
-				<th class="antirace wKills" data-dynatable-column="PG_K" title="Plasma gun">PG</th>
-				<th class="antirace wKills" data-dynatable-column="HMG_K" title="HMG">HMG</th>
-				<th class="antirace wKills" data-dynatable-column="MG_K" title="Machine gun">MG</th>
-				<th class="antirace wKills" data-dynatable-column="BFG_K" title="BFG">BFG</th>
-				<!-- weapon shots -->
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="RL_S" title="ROCKET LAUNCHER Shots">RLs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="RG_S" title="Rail Shots">RGs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="LG_S" title="Lightning gun Shots">LGs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="SG_S" title="Shotgun Shots">SGs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="GL_S" title="Grenade launcher Shots">GLs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="PG_S" title="Plasma gun Shots">PGs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="HMG_S" title="HMG Shots">HMGs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="MG_S" title="Machine gun Shots">MGs</th>
-				<th class="antirace wShots" style="display: none;" data-dynatable-column="BFG_S" title="BFG Shots">BFGs</th>
-				<!-- weapon hits -->
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="RL_H" title="ROCKET LAUNCHER Hits">RLh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="RG_H" title="Rail Hits">RGh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="LG_H" title="Lightning gun Hits">LGh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="SG_H" title="Shotgun Hits">SGh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="GL_H" title="Grenade launcher Hits">GLh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="PG_H" title="Plasma gun Hits">PGh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="HMG_H" title="HMG Hits">HMGh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="MG_H" title="Machine gun Hits">MGh</th>
-				<th class="antirace wHits" style="display: none;" data-dynatable-column="BFG_H" title="BFG Hits">BFGh</th>
-				<!-- weapon acc -->
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="RL_A" title="ROCKET LAUNCHER Accuracy">RLa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="RG_A" title="Rail Accuracy">RGa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="LG_A" title="Lightning gun Accuracy">LGa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="SG_A" title="Shotgun Accuracy">SGa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="GL_A" title="Grenade launcher Accuracy">GLa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="PG_A" title="Plasma gun Accuracy">PGa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="HMG_A" title="HMG Accuracy">HMGa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="MG_A" title="Machine gun Accuracy">MGa</th>
-				<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="BFG_A" title="BFG Accuracy">BFGa</th>
-			</tr>
-		</thead>
-		<tbody>
-		</tbody>
-	</table>
 
 </div>
 
-<div class="row-fluid ">
+<!-- Players -->
+<div class="row" style="clear: both;">
+
+	<div class="col-sm-12">
+		<div class="panel panel-sm panel-default">
+			<div class="panel-heading">Players
+				<div class="pull-right">
+					<label>Weapon</label>
+					<div class="btn-group btn-group-xs">
+						<div class="btn btn-default active" onclick="Weaponsz($(this));">Kills</div>
+						<div class="btn btn-default " onclick="Weaponsz($(this));">Shots</div>
+						<div class="btn btn-default " onclick="Weaponsz($(this));">Hits</div>
+						<div class="btn btn-default " onclick="Weaponsz($(this));">Accuracy</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-body" style="padding: 5px;">
+				<table id="players_table" class="table table-condensed table-hover table-bordered">
+					<thead>
+						<tr>
+							<th data-dynatable-column="PLAYER">PLAYER<span class="pull-right"><small>CLAN</small></span></th>
+							<th data-dynatable-column="RANK" title="RANK">R</th>
+							<th class="teamgame" data-dynatable-column="TEAM_RANK" title="TEAM_RANK">TR</th>
+							<th class="teamgame" data-dynatable-column="TEAM" title="TEAM">T</th>
+							<th data-dynatable-column="PLAY_TIME" title="PLAY_TIME">TIME</th>
+							<th data-dynatable-column="SCORE" title="SCORE">S</th>
+							<th class="antirace" data-dynatable-column="KILLS" title="KILLS">K</th>
+							<th data-dynatable-column="DEATHS" title="DEATHS">D</th>
+							<th class="antirace" data-dynatable-column="DAMAGE_DEALT" title="DAMAGE_DEALT">DD</th>
+							<th class="antirace" data-dynatable-column="DAMAGE_TAKEN" title="DAMAGE_TAKEN">DT</th>
+							<th class="antirace" data-dynatable-column="IMPRESSIVE" title="IMPRESSIVE">I</th>
+							<th class="antirace" data-dynatable-column="EXCELLENT" title="EXCELLENT">E</th>
+							<th class="antirace" data-dynatable-column="G_K" title="HUMILIATION">H</th>
+							<th class="antirace" data-dynatable-column="ACC">ACC</th>
+							<!--
+							<th class="antirace" data-dynatable-column="RL" title="ROCKET LAUNCHER">RL</th>
+							<th class="antirace" data-dynatable-column="RG" title="RAIL GUN">RG</th>
+							<th class="antirace" data-dynatable-column="LG" title="LIGHTNING GUN">LG</th>
+							-->
+							<!-- weapon kills -->
+							<th class="antirace wKills" data-dynatable-column="G_K" title="Gauntlet">G</th>
+							<th class="antirace wKills" data-dynatable-column="RL_K" title="ROCKET LAUNCHER">RL</th>
+							<th class="antirace wKills" data-dynatable-column="RG_K" title="Rail">RG</th>
+							<th class="antirace wKills" data-dynatable-column="LG_K" title="Lightning gun">LG</th>
+							<th class="antirace wKills" data-dynatable-column="SG_K" title="Shotgun">SG</th>
+							<th class="antirace wKills" data-dynatable-column="GL_K" title="Grenade launcher">GL</th>
+							<th class="antirace wKills" data-dynatable-column="PG_K" title="Plasma gun">PG</th>
+							<th class="antirace wKills" data-dynatable-column="HMG_K" title="HMG">HMG</th>
+							<th class="antirace wKills" data-dynatable-column="MG_K" title="Machine gun">MG</th>
+							<th class="antirace wKills" data-dynatable-column="BFG_K" title="BFG">BFG</th>
+							<!-- weapon shots -->
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="RL_S" title="ROCKET LAUNCHER Shots">RLs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="RG_S" title="Rail Shots">RGs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="LG_S" title="Lightning gun Shots">LGs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="SG_S" title="Shotgun Shots">SGs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="GL_S" title="Grenade launcher Shots">GLs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="PG_S" title="Plasma gun Shots">PGs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="HMG_S" title="HMG Shots">HMGs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="MG_S" title="Machine gun Shots">MGs</th>
+							<th class="antirace wShots" style="display: none;" data-dynatable-column="BFG_S" title="BFG Shots">BFGs</th>
+							<!-- weapon hits -->
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="RL_H" title="ROCKET LAUNCHER Hits">RLh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="RG_H" title="Rail Hits">RGh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="LG_H" title="Lightning gun Hits">LGh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="SG_H" title="Shotgun Hits">SGh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="GL_H" title="Grenade launcher Hits">GLh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="PG_H" title="Plasma gun Hits">PGh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="HMG_H" title="HMG Hits">HMGh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="MG_H" title="Machine gun Hits">MGh</th>
+							<th class="antirace wHits" style="display: none;" data-dynatable-column="BFG_H" title="BFG Hits">BFGh</th>
+							<!-- weapon acc -->
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="RL_A" title="ROCKET LAUNCHER Accuracy">RLa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="RG_A" title="Rail Accuracy">RGa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="LG_A" title="Lightning gun Accuracy">LGa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="SG_A" title="Shotgun Accuracy">SGa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="GL_A" title="Grenade launcher Accuracy">GLa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="PG_A" title="Plasma gun Accuracy">PGa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="HMG_A" title="HMG Accuracy">HMGa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="MG_A" title="Machine gun Accuracy">MGa</th>
+							<th class="antirace wAccuracy" style="display: none;" data-dynatable-column="BFG_A" title="BFG Accuracy">BFGa</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<div class="row">
 
 	<div class="col-sm-4 antirace">
 		<div class="panel panel-sm panel-default">
@@ -187,7 +247,7 @@
 
 </div>
 
-<div class="row-fluid ">
+<div class="row">
 
 	<div class="col-sm-4 antirace">
 		<div class="panel panel-sm panel-default">
@@ -239,7 +299,7 @@
 
 </div>
 
-<div class="row-fluid ">
+<div class="row">
 
 	<div class="col-sm-4 antirace">
 		<div class="panel panel-sm panel-default">
