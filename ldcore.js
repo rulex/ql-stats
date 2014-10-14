@@ -52,7 +52,7 @@ function init(conn, options) {
 function createSqlStatements() {
   var cols =
       'PUBLIC_ID, OWNER_ID, MAP_ID, NUM_PLAYERS, AVG_ACC, ' +
-      'PREMIUM, RANKED, RESTARTED, RULESET, TIER, ' +
+      'PREMIUM, RANKED, RULESET, ' +
       'TOTAL_KILLS, TOTAL_ROUNDS, WINNING_TEAM, TSCORE0, TSCORE1, ' +
       'FIRST_SCORER_ID, LAST_SCORER_ID, GAME_LENGTH, GAME_TYPE, GAME_TIMESTAMP, ' +
       'DMG_DELIVERED_ID, DMG_DELIVERED_NUM, DMG_TAKEN_ID, DMG_TAKEN_NUM, LEAST_DEATHS_ID, ' +
@@ -183,7 +183,7 @@ function insertGame(g) {
       var values = getPromisedValues(promises);
       var data = [
         g.PUBLIC_ID, values[5].ID, values[8].ID, g.NUM_PLAYERS, AVG_ACC,
-        parseInt(g.PREMIUM), parseInt(g.RANKED), parseInt(g.RESTARTED), parseInt(g.RULESET), parseInt(g.TIER),
+        parseInt(g.PREMIUM), parseInt(g.RANKED), parseInt(g.RULESET),
         g.TOTAL_KILLS, TOTAL_ROUNDS, WINNING_TEAM, g.TSCORE0, g.TSCORE1,
         values[6].ID, values[7].ID, g.GAME_LENGTH, GAME_TYPE, GAME_TIMESTAMP,
         values[0].ID, playerStatsNum[0], values[1].ID, playerStatsNum[1], values[2].ID, playerStatsNum[2],

@@ -22,11 +22,6 @@ $( function() {
 				OverviewCtrl();
 			} );
 		} );
-		this.get( '#/overview', function( context ) {
-			context.render( 'overview.html', {} ).replace( $( '#content' ) ).then( function() {
-				OverviewCtrl();
-			} );
-		} );
 		this.get( '#/games', function( context ) {
 			context.render( 'games.html', {} ).replace( $( '#content' ) ).then( function() {
 				GamesCtrl();
@@ -107,7 +102,7 @@ $( function() {
 		this.get( '#/gametypes/:gametype', function( context ) {
 			params = this.params;
 			context.render( 'overview.html', {} ).replace( $( '#content' ) ).then( function() {
-				GametypeOverviewCtrl( params );
+				OverviewCtrl( params );
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/maps', function( context ) {
@@ -778,21 +773,35 @@ function OverviewCtrl( params ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
-	_url = parseHash();
-	if( _url.indexOf( 'overview' ) != -1 ) {
-		_index = _url.indexOf( 'overview' );
-		_url.splice( _index, 1 );
-		_url = '/' + _url.join( '/' )
+	var activeTab = parseHashParams()['tab'] || 'week';
+	// api url
+	_url = parseHash().join( '/' );
+	if( _url == '' ) {}
+	else {
+		_url = '/' + _url.replace( '/overview', '' );
 	}
+	// button urls
+	$( '.tab-btn' ).each( function( b ) {
+		$(this).attr( 'href', '#/' + parseHash().join( '/' ) + '?tab=' + $(this).data( 'tab' ) );
+	} );
+	// active button
+	$( '*[data-tab=' + activeTab + ']' ).addClass( 'active' );
 	$.ajax( {
-		url: getApiURL() + 'api' + _url + '/games/graphs/perweek',
+		url: getApiURL() + 'api' + _url + '/games/graphs/per' + activeTab,
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// matches
 			dt = [];
 			for( var i in data.data ) {
 				d = data.data[i];
-				dt.push( { date: d.year + ' W' + d.week, c: d.c } );
+				// date format
+				if( activeTab == 'day' )
+					_date = d.year + '-' + d.month + '-' + d.day;
+				if( activeTab == 'week' )
+					_date = d.year + ' W' + d.week;
+				if( activeTab == 'month' )
+					_date = d.year + '-' + d.month;
+				dt.push( { date: _date, c: d.c } );
 			}
 			new Morris.Line( {
 				element: 'matchesline',
@@ -3518,7 +3527,7 @@ function ActivityCtrl( params, context ) {
 	} );
 }
 
-function parseHash() {
+function parseHash( array ) {
 	var url_params = location.hash.substring(2).split( '/' );
 	for( var i in url_params ) {
 		url = url_params[i];
@@ -3644,7 +3653,7 @@ function onLoading() {
 	console.log( parseHashParams() );
 	console.log( 'clearing footer' );
 	$( '#footer' ).empty();
-	//$( '#loading' ).addClass( 'loading' );
+	$( '#loading' ).addClass( 'loading' );
 	ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) + '?' + mkURL( parseHashParams() ) } );
 	//ga( 'send', 'event', 'tab4', 'clicked' );
 }
