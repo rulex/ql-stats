@@ -42,7 +42,6 @@ CREATE TABLE Game(
 	AVG_ACC tinyint,
 	PREMIUM tinyint(1),
 	RANKED tinyint(1) NOT NULL,
-	RESTARTED tinyint(1),
 	RULESET tinyint,
 	TOTAL_KILLS smallint,
 	TOTAL_ROUNDS tinyint,
