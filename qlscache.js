@@ -432,8 +432,12 @@ if( program.init ) {
 	var qls = exports.init( cfg, loglvl );
 	if( program.list ) {
 		_caches = exports.listCaches();
-		exports.qls_logger.info( _caches );
-		exports.qls_logger.info( 'count', _caches.length );
+		totalSize = 0;
+		for( var i in _caches ) {
+			totalSize += _caches[i].size;
+			exports.qls_logger.info( _caches[i] );
+		}
+		exports.qls_logger.info( 'count', _caches.length, 'size', exports.size( totalSize ) );
 	}
 	if( program.queue ) {
 		_caches = exports.listQueue();
