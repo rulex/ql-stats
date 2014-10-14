@@ -16,6 +16,7 @@ var allow_update = false;
 var bodyParser = require( 'body-parser' );
 var program = require( 'commander' );
 var compress = require( 'compression' );
+var os = require( 'os' );
 var logger = require ( 'morgan' );
 
 program
@@ -538,7 +539,7 @@ app.get('/api/games/:game', function (req, res) {
   sql[2] = 'select gp.TEAM, count(1) as PLAYERS, sum(gp.SCORE) as SCORE_SUM, avg(PLAY_TIME) as PLAY_TIME_AVG, sum(PLAY_TIME) as PLAY_TIME_SUM, '
   + ' avg(gp.SCORE) as SCORE_AVG, sum(gp.KILLS) as KILLS_SUM, avg(KILLS) as KILLS_AVG, avg(gp.DEATHS) as DEATHS_AVG, sum(gp.DEATHS) as DEATHS_SUM, '
   + 'sum(gp.SHOTS) as SHOTS_SUM, avg(SHOTS) as SHOTS_AVG, sum(gp.HITS) as HITS_SUM, avg(HITS) as HITS_AVG, avg(gp.DAMAGE_DEALT) as DAMAGE_DEALT_AVG, '
-  + 'sum(gp.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(gp.DAMAGE_DEALT)/sum(gp.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(gp.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, '
+  + 'sum(gp.DAMAGE_DEALT) as DAMAGE_DEALT_SUM, sum(gp.DAMAGE_DEALT)/sum(gp.PLAY_TIME) as DAMAGE_DEALT_PER_SEC_AVG, sum(gp.DAMAGE_TAKEN) as DAMAGE_TAKEN_SUM, avg(gp.DAMAGE_TAKEN) as DAMAGE_TAKEN_AVG, '
   + 'sum(IMPRESSIVE) as IMPRESSIVE_SUM, avg(IMPRESSIVE) as IMPRESSIVE_AVG, sum(EXCELLENT) as EXCELLENT_SUM, avg(EXCELLENT) as EXCELLENT_AVG, sum(G_K) as HUMILIATION_SUM, '
   + 'avg(G_K) as HUMILIATION_AVG, sum(RL_K) as RL_K_SUM, avg(RL_K) as RL_K_AVG, avg(RL_H) as RL_H_AVG, sum(RL_H) as RL_H_SUM, avg(RL_S) as RL_S_AVG, sum(RL_S) as RL_S_SUM, '
   + 'sum(LG_K) as LG_K_SUM, avg(LG_K) as LG_K_AVG, avg(LG_H) as LG_H_AVG, sum(LG_H) as LG_H_SUM, avg(LG_S) as LG_S_AVG, sum(LG_S) as LG_S_SUM, sum(RG_K) as RG_K_SUM, avg(RG_K) as RG_K_AVG, '
@@ -1904,7 +1905,6 @@ app.get( '/api/tags/:tag/games', function ( req, res ) {
 	_offset = queryObject.offset || 0;
 	var sql = [];
 	sql.push( 'select' );
-	sql.push( 'SQL_CALC_FOUND_ROWS' );
 	sql.push( 'g.*,' );
 	sql.push( 'gt.*,' );
 	sql.push( 'p.NAME as OWNER,' );
@@ -1917,18 +1917,16 @@ app.get( '/api/tags/:tag/games', function ( req, res ) {
 	sql.push( 'left join Player p' );
 	sql.push( 'on p.ID=g.OWNER_ID' );
 	sql.push( 'where gt.TAG_ID=' + tag + '' );
-	sql.push( 'order by g.GAME_TIMESTAMP desc' );
 	sql.push( 'limit ' + _offset + ', ' + _perPage + '' );
-	sql1 = 'select FOUND_ROWS() as queryRecordCount';
-	sql2 = 'select count(TAG_ID) as totalRecordCount from GameTag where TAG_ID=' + tag;
+	sql1 = 'select count(*) as totalRecordCount from GameTag where TAG_ID=' + tag + '';
 	sql = sql.join( ' ' );
 	dbpool.getConnection( function( err, conn ) {
 		if( err ) { _logger.error( err ); }
-		conn.query( sql + ';' + sql1 + ';' + sql2, function( err, resulty ) {
+		conn.query( sql + ';' + sql1, function( err, resulty ) {
 			if( err ) { _logger.error( err ); }
 			conn.release();
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: resulty[0], queryRecordCount: resulty[1][0].queryRecordCount, totalRecordCount: resulty[2][0].totalRecordCount, ms: ( new Date().getTime() - _start ) } );
+			res.jsonp( { data: resulty[0], queryRecordCount: resulty[1][0].totalRecordCount, totalRecordCount: resulty[1][0].totalRecordCount, ms: ( new Date().getTime() - _start ) } );
 			res.end();
 		} );
 	} );
@@ -2523,7 +2521,10 @@ app.get( '/api/status/db/rows', function ( req, res ) {
 		} );
 	} );
 } );
-
+app.get( '/api/status/loadavg', function ( req, res ) {
+	res.jsonp( { data: os.loadavg() } );
+	res.end();
+} );
 app.get( '/status', function ( req, res ) {
 	var queryObject = url.parse( req.url, true ).query;
 	res.jsonp( { requests_counter_total: requests_counter_total, requests_counter: requests_counter, requests_counter_api: requests_counter_api, requests_counter_pub: requests_counter_pub, process_uptime: process.uptime() } );
