@@ -112,7 +112,12 @@ $( function() {
 			} );
 		} );
 		//this.get( '#/gametypes/:gametype/top/all', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); GametypeTopAllCtrl( this.params ); } );
-		//this.get( '#/gametypes/:gametype/players/:player', function( context ) { context.render( 'player.html', {} ).replace( $( '#content' ) ); PlayerCtrl( this.params ); } );
+		this.get( '#/gametypes/:gametype/players/:player', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {;
+				PlayerCtrl( params );
+			} );
+		} );
 		this.get( '#/tags/:tag', function( context ) {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
