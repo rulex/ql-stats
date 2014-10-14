@@ -369,6 +369,34 @@ app.get('/api/players/:player', function (req, res) {
   });
 });
 
+app.get( '/api/players/:player/lastgame', function( req, res ) {
+	var nick = mysql_real_escape_string( req.params.player );
+	sql = [];
+	//SELECT  player.NAME,  game.PUBLIC_ID,  game.GAME_TYPE,  game.GAME_TIMESTAMP FROM qlstats.player  INNER JOIN qlstats.gameplayer ON player.ID = gameplayer.PLAYER_ID
+	//INNER JOIN qlstats.game    ON game.ID = gameplayer.ID WHERE AND player.NAME = ? ORDER BY game.GAME_TIMESTAMP DESC LIMIT 1
+	sql.push( 'select' );
+	sql.push( 'g.PUBLIC_ID,' );
+	sql.push( 'g.GAME_TIMESTAMP' );
+	sql.push( 'from Game g' );
+	sql.push( 'left join GamePlayer gp' );
+	sql.push( 'on gp.GAME_ID=g.ID' );
+	sql.push( 'where PLAYER_ID=( select ID from Player where NAME=? )' );
+	sql.push( 'order by g.GAME_TIMESTAMP' );
+	sql = sql.join( ' ' );
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [nick], function( err, rows ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			out = rows[0];
+			out.PLAYER = nick;
+			res.jsonp( { data: out } );
+			res.end();
+			conn.release();
+		});
+	});
+} );
+
 app.get( '/api/players/:player/games', function (req, res) {
 	var sql = 'select PUBLIC_ID, GAME_TIMESTAMP, m.NAME as MAP, GAME_TYPE, o.NAME as OWNER, ( case when ( GAME_TYPE in ("ca","ctf","tdm","ad","harv","fctf","rr","ft","dom") and g.WINNING_TEAM = gp.TEAM and gp.RANK > 0 ) or ( ( RANK = 1 and GAME_TYPE = "ffa" ) or ( RANK = 1 and GAME_TYPE = "race" ) or ( RANK = 1 and GAME_TYPE = "duel" ) ) then 1 else 0 end ) as WIN, RANK, RULESET, RANKED, PREMIUM, p.NAME as PLAYER, p.ID as PLAYER_ID'
   + ' from GamePlayer gp inner join Player p on p.ID=gp.PLAYER_ID inner join Game g on g.ID=gp.GAME_ID inner join Map m on m.ID=g.MAP_ID left join Player o on o.ID=g.OWNER_ID '
@@ -525,7 +553,14 @@ app.get( '/api/games/graphs/permonth', function ( req, res ) {
 } );
 
 app.get( '/api/games/graphs/perweek', function ( req, res ) {
-  var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, count(GAME_TIMESTAMP) as c from Game group by year, week ;';
+  var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP)) as week, count(GAME_TIMESTAMP) as c from Game group by year, week ;';
+	_dt = qlscache.doCache( req, sql, [], { time: 24*60*60*1000 } );
+	res.jsonp( _dt );
+	res.end();
+} );
+
+app.get( '/api/games/graphs/perday', function ( req, res ) {
+  var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, month(FROM_UNIXTIME(GAME_TIMESTAMP)) as month, day(FROM_UNIXTIME(GAME_TIMESTAMP)) as day, count(GAME_TIMESTAMP) as c from Game group by year, month, day ;';
 	_dt = qlscache.doCache( req, sql, [], { time: 24*60*60*1000 } );
 	res.jsonp( _dt );
 	res.end();
