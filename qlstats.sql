@@ -44,7 +44,6 @@ CREATE TABLE Game(
 	RANKED tinyint(1) NOT NULL,
 	RESTARTED tinyint(1),
 	RULESET tinyint,
-	TIER tinyint,
 	TOTAL_KILLS smallint,
 	TOTAL_ROUNDS tinyint,
 	WINNING_TEAM tinyint,
