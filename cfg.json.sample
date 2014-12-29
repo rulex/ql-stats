@@ -13,7 +13,7 @@
 			"dir": "./cachedir/",
 			"time": 3600000
 		}
-	}
+	},
   "loader": {
     "saveDownloadedJson": true,
     "importDownloadedJson": true,
