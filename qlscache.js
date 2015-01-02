@@ -188,6 +188,7 @@ exports.checkQueue = function( apiRoute ) {
 }
 
 exports.listQueue = function() {
+	_start = new Date().getTime();
 	exports.qls_logger.debug( 'listQueue()' );
 	files = fs.readdirSync( exports.dir );
 	out = [];
