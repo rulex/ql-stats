@@ -42,6 +42,16 @@ $( function() {
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerCtrl( params );
+				PlayerBaseCtrl( params );
+			} );
+		} );
+		this.get( '#/players/:player/games', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'games.html' ).replace( $( '#tab_content' ) ).then( function() {
+					GamesCtrl( params );
+				} );
 			} );
 		} );
 		this.get( '#/owners', function( context ) {
@@ -64,7 +74,12 @@ $( function() {
 				ClansCtrl();
 			} );
 		} );
-		//this.get( '#/clans/:clan', function( context ) { context.render( 'clan.html', {} ).replace( $( '#content' ) ); ClanCtrl( this.params ); } );
+		this.get( '#/clans/:clan', function( context ) {
+			params = this.params;
+			context.render( 'players.html', {} ).replace( $( '#content' ) ).then( function() {
+				ClanCtrl( params );
+			} );
+		} );
 		this.get( '#/maps', function( context ) {
 			context.render( 'maps.html', {} ).replace( $( '#content' ) ).then( function() {
 				MapsCtrl();
@@ -108,7 +123,7 @@ $( function() {
 		this.get( '#/gametypes/:gametype/maps', function( context ) {
 			params = this.params;
 			context.render( 'maps.html', {} ).replace( $( '#content' ) ).then( function() {
-				GametypeMapsCtrl( params );
+				MapsCtrl( params );
 			} );
 		} );
 		//this.get( '#/gametypes/:gametype/top/all', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); GametypeTopAllCtrl( this.params ); } );
@@ -121,15 +136,15 @@ $( function() {
 		this.get( '#/tags/:tag', function( context ) {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
-				TagBaseCtrl( params );
 				TagCtrl( params );
+				TagBaseCtrl( params );
 			} );
 		} );
 		this.get( '#/tags/:tag/overview', function( context ) {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
-				context.render( 'overview.html' ).replace( $( '#tag_content' ) ).then( function() {
+				context.render( 'overview.html' ).replace( $( '#tab_content' ) ).then( function() {
 					OverviewCtrl( params );
 				} );
 			} );
@@ -138,7 +153,7 @@ $( function() {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
-				context.render( 'games.html' ).replace( $( '#tag_content' ) ).then( function() {
+				context.render( 'games.html' ).replace( $( '#tab_content' ) ).then( function() {
 					GamesCtrl( params );
 				} );
 			} );
@@ -149,7 +164,7 @@ $( function() {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
-				context.render( 'players.html' ).replace( $( '#tag_content' ) ).then( function() {
+				context.render( 'players.html' ).replace( $( '#tab_content' ) ).then( function() {
 					PlayersCtrl( params );
 				} );
 			} );
@@ -158,7 +173,7 @@ $( function() {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
-				context.render( 'owners.html' ).replace( $( '#tag_content' ) ).then( function() {
+				context.render( 'owners.html' ).replace( $( '#tab_content' ) ).then( function() {
 					OwnersCtrl( params );
 				} );
 			} );
@@ -167,7 +182,7 @@ $( function() {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
-				context.render( 'maps.html' ).replace( $( '#tag_content' ) ).then( function() {
+				context.render( 'maps.html' ).replace( $( '#tab_content' ) ).then( function() {
 					MapsCtrl( params );
 				} );
 			} );
@@ -176,7 +191,7 @@ $( function() {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
-				context.render( 'places.html' ).replace( $( '#tag_content' ) ).then( function() {
+				context.render( 'places.html' ).replace( $( '#tab_content' ) ).then( function() {
 					PlacesCtrl( params );
 				} );
 			} );
@@ -346,7 +361,18 @@ $( function() {
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-  ga('create', 'UA-54810866-1', 'auto' );
+  ga( 'create', 'UA-54810866-1', 'auto' );
+	//
+	$( document ).on( {
+		click: function() {
+			ga( 'send', {
+				'hitType': 'event',
+				'eventCategory': 'button',
+				'eventAction': 'click',
+				'eventLabel': 'dynatable-page-link',
+			} );
+		}
+	}, '.dynatable-page-link' );
 	// Morris.js inject name-drawing
 	var originalDrawEvent = Morris.Grid.prototype.drawEvent;
 	Morris.Grid.prototype.gridDefaults.eventTextSize = 12;
@@ -1396,7 +1422,7 @@ function GameCtrl( params ) {
 			if( g.RULESET == 2 ) { ruleset = '<div class="btn btn-danger popthis" data-container="body" data-html="true" data-placement="left" data-content="Turbo Ruleset">T</div>'; }
 			if( g.RULESET == 3 ) { ruleset = '<div class="btn btn-success popthis" data-container="body" data-html="true" data-placement="left" data-content="QL Ruleset">Q</div>'; }
 			if( g.PREMIUM == 1 ) { premium = '<div class="btn btn-success popthis" data-container="body" data-html="true" data-placement="right" data-content="Premium server">P</div>'; }
-			var img = '<a style="color: #000;" href="#/maps/' + g.MAP + '"><div class=""><img title="' + g.MAP + '" alt="' + g.MAP + '" class="img-thumbnail dumbnail" src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + g.MAP + '_v2014051402.0.jpg/50%" /><div class="wrapper"><div class="map-name">' + g.MAP + '</div></div></div></a>';
+			var img = '<a style="color: #000;" href="#/maps/' + g.MAP + '"><div class=""><img title="' + g.MAP + '" alt="' + g.MAP + '" class="img-thumbnail dumbnail" src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + g.MAP + '_v2014051402.0.jpg" /><div class="wrapper"><div class="map-name">' + g.MAP + '</div></div></div></a>';
 			$( '#info' ).append( '<div class="gametype btn-group btn-group-xs">' + ruleset + ranked + premium + '</div>' );
 			$( '#info' ).append( img );
 			$( '#info_title' ).append( '<img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + GT[g.GAME_TYPE] + '' );
@@ -1667,6 +1693,8 @@ function GameCtrl( params ) {
 	}
 }
 function PlayerCtrl( params ) {
+	// ---------
+	/*
 	setNavbarActive();
 	onLoading();
 	$( '#current_url' ).html( printLocations() );
@@ -1807,6 +1835,38 @@ function PlayerCtrl( params ) {
 		},
 		complete: function( data ) {
 			onComplete( data );
+		},
+	} );
+	*/
+}
+function PlayerBaseCtrl( params ) {
+	onLoading();
+	setNavbarActive();
+	$( '#current_url' ).html( printLocations() );
+	var t = params['player'];
+	// set tag name
+	$( '#tag_id' ).html( t );
+	// set button urls
+	$( '#tab_btn_info' ).attr( 'href', '#/players/' + t );
+	$( '#tab_btn_overview' ).attr( 'href', '#/players/' + t + '/overview' );
+	$( '#tab_btn_games' ).attr( 'href', '#/players/' + t + '/games' );
+	$( '#tab_btn_players' ).attr( 'href', '#/players/' + t + '/players' );
+	$( '#tab_btn_owners' ).attr( 'href', '#/players/' + t + '/owners' );
+	$( '#tab_btn_maps' ).attr( 'href', '#/players/' + t + '/maps' );
+	$( '#tab_btn_places' ).attr( 'href', '#/players/' + t + '/places' );
+	$.ajax( {
+		url: getApiURL() + 'api/players/' + t,
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// set
+			console.log( data );
+			$( '#player' ).append( mkPlayerButton( data.data, 'PLAYER', 'COUNTRY' ) );
+		},
+		error: function( data ) {
+		},
+		complete: function( data ) {
+			onComplete( data );
+			//console.log( data );
 		},
 	} );
 }
@@ -2205,10 +2265,10 @@ function ClanCtrl( params ) {
 	var c = params['clan'];
 	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
-		url: getApiURL() + 'api/clans/' + c,
+		url: getApiURL() + 'api/clans/' + c + '/players',
 		dataType: getAjaxDataType(),
 		success: function( data ) {
-			$( '#clan_table' ).dynatable( {
+			$( '#table_players' ).dynatable( {
 				features: dynatable_features,
 				writers: dynatable_writers,
 				dataset: {
@@ -2437,36 +2497,6 @@ function GametypeOverviewCtrl( params ) {
 				writers: dynatable_writers,
 				dataset: {
 					perPageDefault: 50,
-					perPageOptions: [10,20,50,100,200],
-					records: data.data
-				}
-			} );
-		},
-		error: function( data ) {
-		},
-		complete: function( data ) {
-			onComplete( data );
-		},
-	} );
-}
-function GametypeMapsCtrl( params ) {
-	var gt = params['gametype'];
-	onLoading();
-	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
-	$.ajax( {
-		url: getApiURL() + 'api/gametypes/' + gt + '/maps',
-		dataType: getAjaxDataType(),
-		success: function( data ) {
-			$( '#table_maps' ).bind( 'dynatable:init', function( e, dynatable ) {
-				dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
-			} );
-			$( '#table_maps' ).dynatable( {
-				features: dynatable_features,
-				writers: dynatable_writers,
-				table: dynatable_table,
-				dataset: {
-					perPageDefault: 200,
 					perPageOptions: [10,20,50,100,200],
 					records: data.data
 				}
@@ -2738,7 +2768,7 @@ function TagBaseCtrl( params ) {
 function TagCtrl( params ) {
 	var t = params['tag'];
 	$.ajax( {
-		url: getApiURL() + 'api/tags/' + t,
+		url: getApiURL() + 'api/tags/' + params['tag'],
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			// set tag name
@@ -2752,8 +2782,7 @@ function TagCtrl( params ) {
 			//console.log( data );
 		},
 	} );
-	//
-	onComplete();
+	// onComplete();
 }
 function TagsCtrl( params ) {
 	onLoading();
@@ -3107,37 +3136,32 @@ function RaceMapCtrl( params ) {
 	$( '#race_maps' ).bind( 'dynatable:init', function( e, dynatable ) {
 		dynatable.sorts.add( 'RANK', 1 );
 	} );
-	$.ajax( {
-		url: getApiURL() + 'api/race/maps/' + m,
-		dataType: getAjaxDataType(),
-		data: {
-			weapons: w,
-			ruleset: r,
+	$( '#race_maps' ).dynatable( {
+		dataset: {
+			ajax: true,
+			ajaxUrl: getApiURL() + 'api/race/maps2/' + m + '?' + mkURL( { weapons: w, ruleset: r } ),
+			ajaxCache: false,
+			ajaxDataType: getAjaxDataType(),
+			ajaxOnLoad: true,
+			processingText: 'Loading...',
+			records: [],
+			perPageDefault: 20,
+			perPageOptions: [10,20,50,100],
 		},
-		success: function( data ) {
-			// dynatable
-			$( '#race_maps' ).dynatable( {
-				features: {
-					sort: true,
-					perPageSelect: false,
-					paginate: true,
-					search: false,
-					recordCount: true,
-					pushState: false,
-				},
-				writers: dynatable_writers,
-				dataset: {
-					perPageDefault: 20,
-					records: data.data.scores
-				}
-			} );
+		params: {
+			records: 'data',
 		},
-		error: function( data ) {
+		features: {
+			sort: false,
+			search: false,
+			pushState: false,
+			perPageSelect: true,
+			paginate: true,
+			recordCount: true,
 		},
-		complete: function( data ) {
-			onComplete( data );
-		},
+		writers: dynatable_writers,
 	} );
+	onComplete();
 }
 function RacePlayerCtrl( params ) {
 	onLoading();
@@ -3730,9 +3754,18 @@ function getCountry( c ) {
 	return {};
 }
 function thousandSeparator( num ) {
-	return num.toString().replace( /\B(?=(\d{3})+(?!\d))/g, "," );
+	if( num )
+		return num.toString().replace( /\B(?=(\d{3})+(?!\d))/g, "," );
+	else
+		return '';
 }
 function Weaponsz( self ) {
+	ga( 'send', {
+		'hitType': 'event',
+		'eventCategory': 'button',
+		'eventAction': 'click',
+		'eventLabel': 'game-players-weapons',
+	} );
 	// buttons
 	self.parent().children().removeClass( 'active' );
 	item = self.html();
@@ -3747,7 +3780,7 @@ function Weaponsz( self ) {
 function mkPlayerButton( obj, nickProperty, countryProperty ) {
 	countryBtn = mkCountryButton( obj[countryProperty] );
 	nickname = obj[nickProperty];
-	if( nickname == '' )
+	if( !nickname || nickname == '' )
 		return '';
 	var out = [];
 	out.push( '<div class="btn-group btn-group-xs">' );
@@ -3772,7 +3805,9 @@ function mkCountryButton( c ) {
 		var countryobj = getCountry( c );
 		country = c.toLowerCase();
 		countrylink.push( '<div class="btn btn-default playerflag popthis" data-html="true" data-placement="left" data-container="body" data-content="' + countryobj.name + '" >' );
+		countrylink.push( '<a href="#/places/countries/' + country + '/activity">' );
 		countrylink.push( '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ country +'_v2013071601.0.gif" alt="'+ country.toUpperCase() +'" />' );
+		countrylink.push( '</a>' );
 		countrylink.push( '</div>' );
 		return countrylink.join( '' );
 	}
