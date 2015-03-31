@@ -19,7 +19,7 @@ exports.qls_logger = log4js.getLogger( 'qlscache' );
 
 exports.init = function( ConfigFile, loglevel ) {
 	exports.qls_logger.setLevel( loglevel || log4js.levels.DEBUG );
-	exports.dir = program.config || './cachedir/';
+	exports.dir = ConfigFile.api.cache.dir || program.config || './cachedir/';
 	exports.dbQueue = [];
 	//exports.handleDbConn( ConfigFile );
 	exports.dbpool = qlsmysql.createPool( ConfigFile.mysql_db );
@@ -337,7 +337,7 @@ exports.query = function( sql, sqlParams, _filename ) {
 			// continue with queue after a delay
 			setTimeout( function() {
 				exports.nextQueue();
-			}, 1000 );
+			}, 15000 );
 		} );
 	} );
 }
