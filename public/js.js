@@ -54,6 +54,60 @@ $( function() {
 				} );
 			} );
 		} );
+		this.get( '#/players/:player/clans', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'clans.html' ).replace( $( '#tab_content' ) ).then( function() {
+					ClansCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/players/:player/weapons', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'weapons.html' ).replace( $( '#tab_content' ) ).then( function() {
+					WeaponsCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/players/:player/maps', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'maps.html' ).replace( $( '#tab_content' ) ).then( function() {
+					MapsCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/players/:player/race', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'raceplayer.html' ).replace( $( '#tab_content' ) ).then( function() {
+					RacePlayerCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/players/:player/overview', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'overview.html' ).replace( $( '#tab_content' ) ).then( function() {
+					OverviewCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/players/:player/hostedgames', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'games.html' ).replace( $( '#tab_content' ) ).then( function() {
+					GamesCtrl( params );
+				} );
+			} );
+		} );
 		this.get( '#/owners', function( context ) {
 			context.render( 'owners.html', {} ).replace( $( '#content' ) ).then( function() {
 				OwnersCtrl();
@@ -102,6 +156,12 @@ $( function() {
 				ActivityCtrl( params, context );
 			} );
 		} );
+		this.get( '#/places/countries/:country/players', function( context ) {
+			params = this.params;
+			context.render( 'players.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayersCtrl( params );
+			} );
+		} );
 		this.get( '#/places/regions/:region/activity', function( context ) {
 			params = this.params;
 			context.render( 'activity.html', {} ).replace( $( '#content' ) ).then( function() {
@@ -118,6 +178,12 @@ $( function() {
 			params = this.params;
 			context.render( 'overview.html', {} ).replace( $( '#content' ) ).then( function() {
 				OverviewCtrl( params );
+			} );
+		} );
+		this.get( '#/gametypes/:gametype/games', function( context ) {
+			params = this.params;
+			context.render( 'games.html', {} ).replace( $( '#content' ) ).then( function() {
+				GamesCtrl();
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/maps', function( context ) {
@@ -239,7 +305,6 @@ $( function() {
 				RulesetOverviewCtrl( params );
 			} );
 		} );
-		//this.get( '#/weapons', function( context ) { context.render( 'weapons.html', {} ).replace( $( '#content' ) ); WeaponsCtrl( this.params ); } );
 		this.get( '#/activity', function( context ) {
 			params = this.params;
 			context.render( 'activity.html', {} ).replace( $( '#content' ) ).then( function() {
@@ -286,7 +351,6 @@ $( function() {
 						},
 						complete: function( data ) {
 							onComplete( data );
-							//context.log( data );
 						},
 					} );
 				}
@@ -320,7 +384,6 @@ $( function() {
 						},
 						complete: function( data ) {
 							onComplete( data );
-							//context.log( data );
 						},
 					} );
 					// cache queue
@@ -344,7 +407,6 @@ $( function() {
 						},
 						complete: function( data ) {
 							onComplete( data );
-							//context.log( data );
 						},
 					} );
 				}
@@ -463,6 +525,22 @@ var GUNS = {
 	CG: 'Chaingun',
 	G: 'Gauntlet',
 }
+
+var GUNSql = {
+	RL: 'ROCKET',
+	RG: 'RAILGUN',
+	LG: 'LIGHTNING',
+	GL: 'GRENADE',
+	PG: 'PLASMA',
+	MG: 'MACHINEGUN',
+	HMG: 'HMG',
+	SG: 'SHOTGUN',
+	BFG: 'BFG',
+	NG: 'NAILGUN',
+	CG: 'CHAINGUN',
+	G: 'GAUNTLET',
+}
+
 var RULESETS = {
 	1: 'Classic',
 	2: 'Turbo',
@@ -634,7 +712,7 @@ var dynatable_writers = {
 		return '<a href="#/players/'+ obj.PLAYER_NICK +'">' + obj.PLAYER_NICK + '</a>';
 	},
 	LEADER_NICK: function( obj ) {
-		return '<a href="#/race/players/'+ obj.LEADER_NICK +'">' + obj.LEADER_NICK + '</a>';
+		return '<a href="#/players/'+ obj.LEADER_NICK +'/race">' + obj.LEADER_NICK + '</a>';
 	},
 	GAME_TIMESTAMP: function( obj ) {
 		if( parseHash().indexOf( 'race' ) > -1 ) {
@@ -669,22 +747,22 @@ var dynatable_writers = {
 	PQL_weapons: function( obj ) {
 		// GAME_ID: ' + obj.LEADERS[0].GAME_ID + '
 		if( obj.LEADERS[0] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[0].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[0].PLAYER + '">' + obj.LEADERS[0].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[0].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[0].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[0].SCORE ) + ' </span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[0].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/players/' + obj.LEADERS[0].PLAYER + '/race">' + obj.LEADERS[0].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[0].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[0].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[0].SCORE ) + ' </span>';
 		else return '';
 	},
 	PQL_strafe: function( obj ) {
 		if( obj.LEADERS[1] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[1].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[1].PLAYER + '?ruleset=pql&weapons=off">' + obj.LEADERS[1].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[1].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[1].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[1].SCORE ) + ' </span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[1].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/players/' + obj.LEADERS[1].PLAYER + '/race?ruleset=pql&weapons=off">' + obj.LEADERS[1].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[1].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[1].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[1].SCORE ) + ' </span>';
 		else return '';
 	},
 	VQL_weapons: function( obj ) {
 		if( obj.LEADERS[2] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[2].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[2].PLAYER + '?ruleset=vql&weapons=on">' + obj.LEADERS[2].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[2].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[2].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[2].SCORE ) + ' </span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[2].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/players/' + obj.LEADERS[2].PLAYER + '/race?ruleset=vql&weapons=on">' + obj.LEADERS[2].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[2].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[2].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[2].SCORE ) + ' </span>';
 		else return '';
 	},
 	VQL_strafe: function( obj ) {
 		if( obj.LEADERS[3] != null )
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[3].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/race/players/' + obj.LEADERS[3].PLAYER + '?ruleset=vql&weapons=off">' + obj.LEADERS[3].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[3].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[3].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[3].SCORE ) + ' </span>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ obj.LEADERS[3].COUNTRY.toLowerCase() +'_v2013071601.0.gif" class="playerflag" /> <a href="#/players/' + obj.LEADERS[3].PLAYER + '/race?ruleset=vql&weapons=off">' + obj.LEADERS[3].PLAYER + '</a> <a href="#/games/' + obj.LEADERS[3].PUBLIC_ID + '"><div rel="popover" data-html="true" data-placement="bottom" data-content="<br>Set <b>' + timediff( obj.LEADERS[3].GAME_TIMESTAMP*1000, new Date().getTime() ) + '</b> ago<br>" data-original-title="" class="btn btn-xs popthis pull-right"><span class="glyphicon glyphicon-info-sign "></span></div></a> <span class="pull-right">' + thousandSeparator( obj.LEADERS[3].SCORE ) + ' </span>';
 		else return '';
 	},
 	GAME_LENGTH_SUM: function( obj ) {
@@ -768,6 +846,7 @@ var dynatable_features = {
 function EmptyCtrl( params ) {
 	setNavbarActive();
 }
+
 function SettingsCtrl( params ) {
 	//$( '#loading' ).addClass( 'loading' );
 	setNavbarActive();
@@ -775,26 +854,7 @@ function SettingsCtrl( params ) {
 	adminPassword = $( 'admin_password' ).val();
 	$( '#admin_settings' ).slideToggle();
 }
-function WeaponsCtrl( params ) {
-	onLoading();
-	setNavbarActive();
-	$.ajax( {
-		url: getApiURL() + 'api/weapons',
-		dataType: getAjaxDataType(),
-		success: function( data ) {
-			Morris.Donut( {
-				element: 'chart',
-				data: data.data.sort( function( a, b ) { return b.value - a.value } ),
-				//formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/total_kills*100 ).toFixed(1) + '%)'; },
-			} );
-		},
-		error: function( data ) {
-		},
-		complete: function( data ) {
-			onComplete( data );
-		},
-	} );
-}
+
 function OverviewCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -913,6 +973,7 @@ function OverviewCtrl( params ) {
 		},
 	} );
 }
+
 function RulesetOverviewCtrl( params ) {
 	var g = params['game'];
 	var ruleset = params['ruleset'];
@@ -1012,6 +1073,7 @@ function RulesetOverviewCtrl( params ) {
 		},
 	} );
 }
+
 function AllCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -1144,6 +1206,7 @@ function inDuelVsAfter() {
 		}
 	} );
 }
+
 function inDuelVs( nr, d ) {
 	_inDuelVs++;
 	console.log( 'inDuelVs: ' + nr );
@@ -1284,6 +1347,7 @@ function inDuelVs( nr, d ) {
 		_inDuelVs = 0;
 	}
 }
+
 function DuelVsCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -1321,6 +1385,7 @@ function DuelVsCtrl( params ) {
 		},
 	} );
 }
+
 function RulesetGamesCtrl( params ) {
 	var ruleset = params['ruleset'];
 	onLoading();
@@ -1352,6 +1417,7 @@ function RulesetGamesCtrl( params ) {
 		},
 	} );
 }
+
 function GamesCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -1385,6 +1451,7 @@ function GamesCtrl( params ) {
 		writers: dynatable_writers,
 	} );
 }
+
 function GameCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -1429,7 +1496,7 @@ function GameCtrl( params ) {
 			//$( '#info' ).append( ' ' + timediff( g.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago ' );
 			$( '#info' ).append( 'Game Length: ' + timediff( g.GAME_LENGTH * 1000 ) );
 			if( g.OWNER_ID !== null && g.OWNER_ID != 269750 ) {
-				$( '#info' ).append( ' hosted by <a href="#/owners/'+ g.OWNER +'">' + g.OWNER + '</a> ' );
+				$( '#info' ).append( ' hosted by <a href="#/players/'+ g.OWNER +'/hostedgames">' + g.OWNER + '</a> ' );
 			}
 			// tags
 			if( data.data.tags.length > 0 ) {
@@ -1692,6 +1759,7 @@ function GameCtrl( params ) {
 		} );
 	}
 }
+
 function PlayerCtrl( params ) {
 	// ---------
 	/*
@@ -1701,10 +1769,6 @@ function PlayerCtrl( params ) {
 	var gt = params['gametype'];
 	var p = params['player'];
 	var t = params['tag'];
-	// player nick top of page
-	// '<div class="btn-group btn-group-xs">' + countrylink + '<a class="btn btn-default" href="#/players/'+ obj.PLAYER +'">' + obj.PLAYER + '</a><div class="btn-group btn-group-xs"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/players/' + obj.PLAYER + '">Player profile</a></li><li><a href="#/race/players/' + obj.PLAYER + '">Race profile</a></li><li><a href="#/owners/' + obj.PLAYER + '">Owner profile</a></li></ul></div></a></div> ' + clanlink;
-	$( '#player' ).html( '<div class="btn-group btn-group-lg"><a class="btn btn-default" href="#/players/'+ p +'">' + p + '</a><div class="btn-group btn-group-lg"><a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a><ul class="dropdown-menu" ><li><a href="#/players/' + p + '">Player profile</a></li><li><a href="#/race/players/' + p + '">Race profile</a></li><li><a href="#/owners/' + p + '">Owner profile</a></li></ul></div></a></div>' );
-	// player nick append to gametype buttons href
 	$( 'a.gametypebuttons' ).each( function() {
 		var _href = $(this).attr( "href" );
 		$( this ).attr( "href", _href + p );
@@ -1839,7 +1903,10 @@ function PlayerCtrl( params ) {
 	} );
 	*/
 }
+
 function PlayerBaseCtrl( params ) {
+	console.debug( 'PlayerBaseCtrl' );
+	console.debug( params );
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
@@ -1849,11 +1916,20 @@ function PlayerBaseCtrl( params ) {
 	// set button urls
 	$( '#tab_btn_info' ).attr( 'href', '#/players/' + t );
 	$( '#tab_btn_overview' ).attr( 'href', '#/players/' + t + '/overview' );
+	$( '#tab_btn_gametypes' ).attr( 'href', '#/players/' + t + '/gametypes' );
 	$( '#tab_btn_games' ).attr( 'href', '#/players/' + t + '/games' );
+	$( '#tab_btn_clans' ).attr( 'href', '#/players/' + t + '/clans' );
+	$( '#tab_btn_hostedgames' ).attr( 'href', '#/players/' + t + '/hostedgames' );
+	$( '#tab_btn_weapons' ).attr( 'href', '#/players/' + t + '/weapons' );
 	$( '#tab_btn_players' ).attr( 'href', '#/players/' + t + '/players' );
 	$( '#tab_btn_owners' ).attr( 'href', '#/players/' + t + '/owners' );
 	$( '#tab_btn_maps' ).attr( 'href', '#/players/' + t + '/maps' );
 	$( '#tab_btn_places' ).attr( 'href', '#/players/' + t + '/places' );
+	$( '#tab_btn_race' ).attr( 'href', '#/players/' + t + '/race' );
+	//ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
+	// set active submenu button
+	$( '#tab_btn_' + parseHash().pop() ).addClass( 'active' );
+	// player
 	$.ajax( {
 		url: getApiURL() + 'api/players/' + t,
 		dataType: getAjaxDataType(),
@@ -1869,7 +1945,51 @@ function PlayerBaseCtrl( params ) {
 			//console.log( data );
 		},
 	} );
+	$.ajax( {
+		url: getApiURL() + 'api/players/' + t + '/currentgame',
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// set
+			console.log( data );
+			if( 'public_id' in data ) {
+				out = [];
+				out.push( '<span>' );
+				out.push( '<img src="favicon.ico" title="Currently Ingame!" />' );
+				out.push( ' Playing <b>' + data.game_type_title );
+				out.push( '</b> on ' );
+				out.push( '<a class="map-popup" href="#/maps/'+ data.map +'">' + data.map + '</a>' );
+				playerTable = '<h5 class=\'info info-success\'>' + data.g_gamestate + '</h5>';
+				playerTable += '<table class=\'table table-condensed\'>';
+				playerTable += '<tr>';
+				playerTable += '<th>Player</th>';
+				playerTable += '<th>Clan</th>';
+				playerTable += '<th>Score</th>';
+				playerTable += '</tr>';
+				for( var i in data.players ) {
+					playerTable += '<tr>';
+					playerTable += '<td><span class=\'btn btn-xs btn-default\'>' + data.players[i].name + '</span></td>';
+					playerTable += '<td>' + data.players[i].clan.replace( /\^[0-9]/g, '' ) + '</td>';
+					playerTable += '<td>' + data.players[i].score + '</td>';
+					playerTable += '<td>' + getTeam( data.players[i].team ) + '</td>';
+					playerTable += '</tr>';
+				}
+				playerTable += '</table>';
+				out.push( ' ( <span rel="popover" data-html="true" data-placement="bottom" data-content="' + playerTable + '" class="popthis">' + data.host_name + '</div> ) ' );
+				out.push( '<a href="http://www.quakelive.com/#!join/' + data.public_id + '">JOIN</a>' );
+				out.push( '</span>' );
+				out = out.join( ' ' );
+				$( '#currentgame' ).append( out );
+			}
+		},
+		error: function( data ) {
+		},
+		complete: function( data ) {
+			onComplete( data );
+			//console.log( data );
+		},
+	} );
 }
+
 function PlayersCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -1902,6 +2022,7 @@ function PlayersCtrl( params ) {
 		writers: dynatable_writers,
 	} );
 }
+
 function OwnersCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -1937,6 +2058,7 @@ function OwnersCtrl( params ) {
 		writers: dynatable_writers,
 	} );
 }
+
 function OwnerTop30Ctrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2004,6 +2126,7 @@ function OwnerTop30Ctrl( params ) {
 		},
 	} );
 }
+
 function OwnerCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2132,6 +2255,7 @@ function OwnerCtrl( params ) {
 		},
 	} );
 }
+
 function OwnerPlayerCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2147,6 +2271,7 @@ function OwnerPlayerCtrl( params ) {
 	//$scope.thegames = theLiz.owner_games( o );
 	$scope.date = new Date().getTime();
 }
+
 function OwnerPlayersCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2161,6 +2286,7 @@ function OwnerPlayersCtrl( params ) {
 	$scope.ordertype = true;
 	$scope.date = new Date().getTime();
 }
+
 function OwnerGamesCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2203,6 +2329,7 @@ function OwnerGamesCtrl( params ) {
 	$scope.date = new Date().getTime();
 	*/
 }
+
 function ClansCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2213,7 +2340,7 @@ function ClansCtrl( params ) {
 	$( '#table_clans' ).dynatable( {
 		dataset: {
 			ajax: true,
-			ajaxUrl: getApiURL() + 'api/clans',
+			ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
 			ajaxDataType: getAjaxDataType(),
 			ajaxOnLoad: true,
 			processingText: 'Loading...',
@@ -2234,30 +2361,8 @@ function ClansCtrl( params ) {
 		},
 		writers: dynatable_writers,
 	} );
-	/*
-	$.ajax( {
-		url: getApiURL() + 'api/clans',
-		dataType: getAjaxDataType(),
-		success: function( data ) {
-			$( '#table_clans' ).dynatable( {
-				features: dynatable_features,
-				writers: dynatable_writers,
-				table: dynatable_table,
-				dataset: {
-					perPageDefault: 20,
-					perPageOptions: [10,20,50,100,200],
-					records: data.data
-				}
-			} );
-		},
-		error: function( data ) {
-		},
-		complete: function( data ) {
-			onComplete( data );
-		},
-	} );
-	*/
 }
+
 function ClanCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2285,6 +2390,7 @@ function ClanCtrl( params ) {
 		},
 	} );
 }
+
 function MapsCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2321,6 +2427,7 @@ function MapsCtrl( params ) {
 		},
 	} );
 }
+
 function MapCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2411,6 +2518,7 @@ function MapCtrl( params ) {
 		},
 	} );
 }
+
 function GametypeOverviewCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2509,6 +2617,7 @@ function GametypeOverviewCtrl( params ) {
 		},
 	} );
 }
+
 function GametypeTopAllCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2575,6 +2684,7 @@ function GametypeTopAllCtrl( params ) {
 		},
 	} );
 }
+
 function PlacesCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2740,6 +2850,7 @@ function PlacesCtrl( params ) {
 		},
 	} );
 }
+
 function EloDuelCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2749,6 +2860,7 @@ function EloDuelCtrl( params ) {
 	$scope.ordercolumn = 'ELO';
 	$scope.ordertype = true;
 }
+
 function TagBaseCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2765,6 +2877,7 @@ function TagBaseCtrl( params ) {
 	$( '#tab_btn_maps' ).attr( 'href', '#/tags/' + t + '/maps' );
 	$( '#tab_btn_places' ).attr( 'href', '#/tags/' + t + '/places' );
 }
+
 function TagCtrl( params ) {
 	var t = params['tag'];
 	$.ajax( {
@@ -2779,11 +2892,11 @@ function TagCtrl( params ) {
 		},
 		complete: function( data ) {
 			onComplete( data );
-			//console.log( data );
 		},
 	} );
 	// onComplete();
 }
+
 function TagsCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2833,6 +2946,7 @@ function TagsCtrl( params ) {
 		} );
 	} );
 }
+
 function TagTop30daysCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2899,6 +3013,7 @@ function TagTop30daysCtrl( params ) {
 		},
 	} );
 }
+
 function TagTopAllCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2965,12 +3080,14 @@ function TagTopAllCtrl( params ) {
 		},
 	} );
 }
+
 function TagPlayersCtrl( params ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
 	var t = params['tag'];
 }
+
 function TagPlayerCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2979,13 +3096,9 @@ function TagPlayerCtrl( params ) {
 	var p = params['player'];
 	var lol = theLiz.tagplayer( t, p );
 	$scope.player = lol;
-	//$scope.games = theLiz.ownerplayergames( t, p );
-	//$scope.ordercolumn = 'GAME_TIMESTAMP';
-	//$scope.ordertype = true;
-	//$scope.theplayers = theLiz.owner_players( o );
-	//$scope.thegames = theLiz.owner_games( o );
 	$scope.date = new Date().getTime();
 }
+
 function RaceCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -3003,10 +3116,10 @@ function RaceCtrl( params ) {
 			var _ps = {};
 			var _vw = {};
 			var _vs = {};
-			var ipw = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ) }, min: { ts: ( new Date().getTime()/1000 ) } };
-			var ips = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ) }, min: { ts: ( new Date().getTime()/1000 ) } };
-			var ivw = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ) }, min: { ts: ( new Date().getTime()/1000 ) } };
-			var ivs = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ) }, min: { ts: ( new Date().getTime()/1000 ) } };
+			var ipw = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ), ifo: {} }, min: { ts: ( new Date().getTime()/1000 ), ifo: {} } };
+			var ips = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ), ifo: {} }, min: { ts: ( new Date().getTime()/1000 ), ifo: {} } };
+			var ivw = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ), ifo: {} }, min: { ts: ( new Date().getTime()/1000 ), ifo: {} } };
+			var ivs = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ), ifo: {} }, min: { ts: ( new Date().getTime()/1000 ), ifo: {} } };
 			for( var i in data.data.maps ) {
 				d = data.data.maps[i];
 				if( d.LEADERS[0] !== null && typeof d.LEADERS[0] != 'undefined' &&
@@ -3014,14 +3127,14 @@ function RaceCtrl( params ) {
 						d.LEADERS[2] !== null && typeof d.LEADERS[2] != 'undefined' &&
 						d.LEADERS[3] !== null && typeof d.LEADERS[3] != 'undefined'
 					) {
-					if( ipw.max.ts < d.LEADERS[0].GAME_TIMESTAMP ) { ipw.max.ts = d.LEADERS[0].GAME_TIMESTAMP; ipw.max.ifo = d.LEADERS[0]; ipw.max.map = d.MAP; }
-					if( ipw.min.ts > d.LEADERS[0].GAME_TIMESTAMP ) { ipw.min.ts = d.LEADERS[0].GAME_TIMESTAMP; ipw.min.ifo = d.LEADERS[0]; ipw.min.map = d.MAP; }
-					if( ips.max.ts < d.LEADERS[1].GAME_TIMESTAMP ) { ips.max.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.max.ifo = d.LEADERS[1]; ips.max.map = d.MAP; }
-					if( ips.min.ts > d.LEADERS[1].GAME_TIMESTAMP ) { ips.min.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.min.ifo = d.LEADERS[1]; ips.min.map = d.MAP; }
-					if( ivw.max.ts < d.LEADERS[2].GAME_TIMESTAMP ) { ivw.max.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.max.ifo = d.LEADERS[2]; ivw.max.map = d.MAP; }
-					if( ivw.min.ts > d.LEADERS[2].GAME_TIMESTAMP ) { ivw.min.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.min.ifo = d.LEADERS[2]; ivw.min.map = d.MAP; }
-					if( ivs.max.ts < d.LEADERS[3].GAME_TIMESTAMP ) { ivs.max.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.max.ifo = d.LEADERS[3]; ivs.max.map = d.MAP; }
-					if( ivs.min.ts > d.LEADERS[3].GAME_TIMESTAMP ) { ivs.min.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.min.ifo = d.LEADERS[3]; ivs.min.map = d.MAP; }
+					if( ipw.max.ts < d.LEADERS[0].GAME_TIMESTAMP && d.LEADERS[0] ) { ipw.max.ts = d.LEADERS[0].GAME_TIMESTAMP; ipw.max.ifo = d.LEADERS[0]; ipw.max.map = d.MAP; }
+					if( ipw.min.ts > d.LEADERS[0].GAME_TIMESTAMP && d.LEADERS[0] ) { ipw.min.ts = d.LEADERS[0].GAME_TIMESTAMP; ipw.min.ifo = d.LEADERS[0]; ipw.min.map = d.MAP; }
+					if( ips.max.ts < d.LEADERS[1].GAME_TIMESTAMP && d.LEADERS[1] ) { ips.max.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.max.ifo = d.LEADERS[1]; ips.max.map = d.MAP; }
+					if( ips.min.ts > d.LEADERS[1].GAME_TIMESTAMP && d.LEADERS[1] ) { ips.min.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.min.ifo = d.LEADERS[1]; ips.min.map = d.MAP; }
+					if( ivw.max.ts < d.LEADERS[2].GAME_TIMESTAMP && d.LEADERS[2] ) { ivw.max.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.max.ifo = d.LEADERS[2]; ivw.max.map = d.MAP; }
+					if( ivw.min.ts > d.LEADERS[2].GAME_TIMESTAMP && d.LEADERS[2] ) { ivw.min.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.min.ifo = d.LEADERS[2]; ivw.min.map = d.MAP; }
+					if( ivs.max.ts < d.LEADERS[3].GAME_TIMESTAMP && d.LEADERS[3] ) { ivs.max.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.max.ifo = d.LEADERS[3]; ivs.max.map = d.MAP; }
+					if( ivs.min.ts > d.LEADERS[3].GAME_TIMESTAMP && d.LEADERS[3] ) { ivs.min.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.min.ifo = d.LEADERS[3]; ivs.min.map = d.MAP; }
 					n = d.LEADERS[0].PLAYER;
 					if( n in _pw ) { _pw[n]++ }
 					else { _pw[n] = 1; }
@@ -3043,23 +3156,21 @@ function RaceCtrl( params ) {
 				}
 			}
 			// oldest/newest record
-			/*
-			$( '#pwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ipw.min.ifo.SCORE + ' on ' + ipw.min.map + '" data-original-title="" class="popthis">' + timediff( ipw.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ipw.min.ifo.PLAYER + ' </div>'  );
+			$( '#pwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ipw.min.ifo.SCORE + ' on ' + ipw.min.map + '" data-original-title="" class="popthis">' + timediff( ipw.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ipw.min.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			$( '#pwinfo' ).append( '<br>' );
-			$( '#pwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ipw.max.ifo.SCORE + ' on ' + ipw.max.map + '" data-original-title="" class="popthis">' + timediff( ipw.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ipw.max.ifo.PLAYER + ' </div>'  );
+			$( '#pwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ipw.max.ifo.SCORE + ' on ' + ipw.max.map + '" data-original-title="" class="popthis">' + timediff( ipw.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ipw.max.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			//
-			$( '#psinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ips.min.ifo.SCORE + ' on ' + ips.min.map + '" data-original-title="" class="popthis">' + timediff( ips.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ips.min.ifo.PLAYER + ' </div>'  );
+			$( '#psinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ips.min.ifo.SCORE + ' on ' + ips.min.map + '" data-original-title="" class="popthis">' + timediff( ips.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ips.min.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			$( '#psinfo' ).append( '<br>' );
-			$( '#psinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ips.max.ifo.SCORE + ' on ' + ips.max.map + '" data-original-title="" class="popthis">' + timediff( ips.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ips.max.ifo.PLAYER + ' </div>'  );
+			$( '#psinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ips.max.ifo.SCORE + ' on ' + ips.max.map + '" data-original-title="" class="popthis">' + timediff( ips.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ips.max.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			//
-			$( '#vwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivw.min.ifo.SCORE + ' on ' + ivw.min.map + '" data-original-title="" class="popthis">' + timediff( ivw.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ivw.min.ifo.PLAYER + ' </div>'  );
+			$( '#vwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivw.min.ifo.SCORE + ' on ' + ivw.min.map + '" data-original-title="" class="popthis">' + timediff( ivw.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ivw.min.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			$( '#vwinfo' ).append( '<br>' );
-			$( '#vwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivw.max.ifo.SCORE + ' on ' + ivw.max.map + '" data-original-title="" class="popthis">' + timediff( ivw.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ivw.max.ifo.PLAYER + ' </div>'  );
+			$( '#vwinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivw.max.ifo.SCORE + ' on ' + ivw.max.map + '" data-original-title="" class="popthis">' + timediff( ivw.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ivw.max.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			//
-			$( '#vsinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivs.min.ifo.SCORE + ' on ' + ivs.min.map + '" data-original-title="" class="popthis">' + timediff( ivs.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ivs.min.ifo.PLAYER + ' </div>'  );
+			$( '#vsinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivs.min.ifo.SCORE + ' on ' + ivs.min.map + '" data-original-title="" class="popthis">' + timediff( ivs.min.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ivs.min.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			$( '#vsinfo' ).append( '<br>' );
-			$( '#vsinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivs.max.ifo.SCORE + ' on ' + ivs.max.map + '" data-original-title="" class="popthis">' + timediff( ivs.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + ' ago by ' + ivs.max.ifo.PLAYER + ' </div>'  );
-			*/
+			$( '#vsinfo' ).append( '<div rel="popover" data-html="true" data-placement="top" data-content="' + ivs.max.ifo.SCORE + ' on ' + ivs.max.map + '" data-original-title="" class="popthis">' + timediff( ivs.max.ifo.GAME_TIMESTAMP*1000, new Date().getTime() ) + '<br>ago by ' + mkPlayerButton( ivs.max.ifo, 'PLAYER', 'COUNTRY' ) + ' </div>' );
 			//
 			for( var i in _pw ) { pw.push( { label: i, value: _pw[i] } ); }
 			for( var i in _ps ) { ps.push( { label: i, value: _ps[i] } ); }
@@ -3086,6 +3197,9 @@ function RaceCtrl( params ) {
 				formatter: function( y ) { return y + ' (' + ( y/data.data.maps.length*100 ).toFixed(1) + '%)'; },
 			} );
 			// dynatable
+			$( '#table_race' ).bind( 'dynatable:init', function( e, dynatable ) {
+				dynatable.sorts.add( 'MAP', 1 );
+			} );
 			$( '#table_race' ).dynatable( {
 				features: {
 					sort: false,
@@ -3110,6 +3224,7 @@ function RaceCtrl( params ) {
 		},
 	} );
 }
+
 function RaceMapCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -3163,6 +3278,7 @@ function RaceMapCtrl( params ) {
 	} );
 	onComplete();
 }
+
 function RacePlayerCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -3172,7 +3288,7 @@ function RacePlayerCtrl( params ) {
 	var r = parseHashParams()['ruleset'] || 'pql';
 	// set player link
 	$( '#player_link' ).html( p );
-	$( '#player_link' ).attr( 'href', '#/race/players/' + p );
+	$( '#player_link' ).attr( 'href', '#/' + parseHash().join( '/' ) + '/race' );
 	// set active tab button
 	$( '#btn_ruleset_' + r ).addClass( 'active' );
 	$( '#btn_weapons_' + w ).addClass( 'active' );
@@ -3180,15 +3296,15 @@ function RacePlayerCtrl( params ) {
 	_url = {};
 	_url.weapons = w;
 	console.warn( mkURL( _url ) );
-	$( '#btn_ruleset_pql' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&ruleset=pql' );
-	$( '#btn_ruleset_vql' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&ruleset=vql' );
+	$( '#btn_ruleset_pql' ).attr( 'href', '#/' + parseHash().join( '/' ) + '?' + mkURL( _url ) + '&ruleset=pql' );
+	$( '#btn_ruleset_vql' ).attr( 'href', '#/' + parseHash().join( '/' ) + '?' + mkURL( _url ) + '&ruleset=vql' );
 	delete _url.weapons;
 	_url.ruleset = r;
 	console.warn( mkURL( _url ) );
-	$( '#btn_weapons_on' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&weapons=on' );
-	$( '#btn_weapons_off' ).attr( 'href', '#/race/players/' + p + '?' + mkURL( _url ) + '&weapons=off' );
+	$( '#btn_weapons_on' ).attr( 'href', '#/' + parseHash().join( '/' ) + '?' + mkURL( _url ) + '&weapons=on' );
+	$( '#btn_weapons_off' ).attr( 'href', '#/' + parseHash().join( '/' ) + '?' + mkURL( _url ) + '&weapons=off' );
 	$.ajax( {
-		url: getApiURL() + 'api/race/players/' + p,
+		url: getApiURL() + 'api/' + parseHash().join( '/' ),
 		dataType: getAjaxDataType(),
 		data: {
 			weapons: w,
@@ -3273,6 +3389,7 @@ function RacePlayerCtrl( params ) {
 		},
 	} );
 }
+
 function TopCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -3305,6 +3422,112 @@ function TopCtrl( params ) {
 		},
 	} );
 }
+
+function WeaponsCtrl( params ) {
+	onLoading();
+	setNavbarActive();
+	// weapons list
+	for( var i in GUNS ) {
+		g = GUNS[i];
+		gql = GUNSql[i];
+		out = '';
+		out += '<a class="btn btn-xs btn-default popthis" data-placement="bottom" data-content="' + g + '" href="#/' + parseHash().join( '/' ) + '/' + i.toLowerCase() + '">';
+		out += '<span class="">';
+		out += '<img src="http://cdn.quakelive.com/web/2014120201/images/profile/weapons/sm/' + gql + '_v2014120201.0.gif" />';
+		out += '</span> ';
+		out += i;
+		out += '</a>';
+		$( '#weapons_list' ).append( out );
+	}
+	// fetch
+	$.ajax( {
+		url: getApiURL() + 'api/' + parseHash().join( '/' ),
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			console.log( data );
+			_shots = [];
+			_shotsTotal = 0;
+			_hits = [];
+			_hitsTotal = 0;
+			_kills = [];
+			_killsTotal = 0;
+			_acc = [];
+			_accTotal = 0;
+			for( var i in data.data ) {
+				// shots
+				if( /_S$/.test( i ) ) {
+					name = i.split('_')[0] + ' Shots';
+					_shots.push( { label: name, value: data.data[i] } );
+					_shotsTotal += data.data[i];
+				}
+				// hits
+				if( /_H$/.test( i ) ) {
+					name = i.split('_')[0] + ' Hits';
+					_hits.push( { label: name, value: data.data[i] } );
+					_hitsTotal += data.data[i];
+				}
+				// kills
+				if( /_K$/.test( i ) ) {
+					name = i.split('_')[0] + ' Kills';
+					_kills.push( { label: name, value: data.data[i] } );
+					_killsTotal += data.data[i];
+				}
+			}
+			// acc
+			_accTmp = [];
+			for( var i in _hits ) {
+				h = _hits[i];
+				weapon = h.label.split(' ')[0];
+				_accTmp[weapon] = h.value;
+			}
+			for( var i in _shots ) {
+				s = _shots[i];
+				weapon = s.label.split(' ')[0];
+				if( _accTmp[weapon] > 0 )
+					_accTmp[weapon] /= s.value/100;
+			}
+			for( var i in _accTmp ) {
+				_acc.push( { label: i, value: Math.round( _accTmp[i]*100 )/100 } );
+			}
+			_accTotal += data.data[i];
+			// totals
+			$( '#shots_total' ).html( 'Total shots: ' + thousandSeparator( _shotsTotal ) );
+			$( '#hits_total' ).html( 'Total hits: ' + thousandSeparator( _hitsTotal ) );
+			$( '#kills_total' ).html( 'Total kills: ' + thousandSeparator( _killsTotal ) );
+			$( '#acc_total' ).html( 'Average accuracy: ' + Math.round( (_hitsTotal/_shotsTotal)*100*100 )/100 + '%' );
+			// shots
+			Morris.Donut( {
+				element: 'shots',
+				data: _shots.sort( function( a, b ) { return b.value - a.value } ),
+				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_shotsTotal*100 ).toFixed(1) + '%)'; },
+			} );
+			// hits
+			Morris.Donut( {
+				element: 'hits',
+				data: _hits.sort( function( a, b ) { return b.value - a.value } ),
+				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_hitsTotal*100 ).toFixed(1) + '%)'; },
+			} );
+			// kills
+			Morris.Donut( {
+				element: 'kills',
+				data: _kills.sort( function( a, b ) { return b.value - a.value } ),
+				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_killsTotal*100 ).toFixed(1) + '%)'; },
+			} );
+			// acc
+			Morris.Donut( {
+				element: 'acc',
+				data: _acc.sort( function( a, b ) { return b.value - a.value } ),
+				formatter: function( y ) { return y + '%'; },
+			} );
+		},
+		error: function( data ) {
+		},
+		complete: function( data ) {
+			onComplete( data );
+		},
+	} );
+}
+
 function ActivityCtrl( params, context ) {
 	onLoading();
 	setNavbarActive();
@@ -3353,8 +3576,8 @@ function ActivityCtrl( params, context ) {
 					out.push( '</div>' );
 					return out.join( '' );;
 				},
-					//events: [ '2014-09-17 21:00' ],
-					//eventLabels: [ 'Steam release' ],
+				//events: [ '2014-09-17 21:00' ],
+				//eventLabels: [ 'Steam release' ],
 			} );
 			// matches/gametype
 			new Morris.Line( {
@@ -3539,8 +3762,8 @@ function ActivityCtrl( params, context ) {
 					}
 					return out.join( '' );;
 				},
-					//events: [ '2014-09-17 21:00' ],
-					//eventLabels: [ 'Steam release' ],
+				//events: [ '2014-09-17 21:00' ],
+				//eventLabels: [ 'Steam release' ],
 			} );
 		},
 		error: function( data ) {
@@ -3559,6 +3782,7 @@ function parseHash( array ) {
 	}
 	return url_params;
 }
+
 function parseHashParams() {
 	var url_params = location.hash.substring(2).split( '?' );
 	if( url_params.length > 1 ) {
@@ -3571,6 +3795,7 @@ function parseHashParams() {
 		return {};
 	}
 }
+
 function printLocations() {
 	var out = "";
 	var h = parseHash();
@@ -3582,6 +3807,7 @@ function printLocations() {
 	}
 	return out;
 }
+
 function convertTimestamp(timestamp) {
 	var d = new Date(timestamp * 1000), // Convert to milliseconds
 			yyyy = d.getFullYear(),
@@ -3603,9 +3829,11 @@ function convertTimestamp(timestamp) {
 	time = yyyy + '-' + mm + '-' + dd + ', ' + h + ':' + min + ' ' + ampm;
 	return time;
 }
+
 function shortenPID( pid ) {
 	return pid.split( '-' )[0];
 }
+
 function daysago( d1, d2 ) {
 	d1 = new Date( d1 );
 	//d1 = new Date( '2013-03-28T11:00:00' );
@@ -3616,6 +3844,7 @@ function daysago( d1, d2 ) {
 	return d;
 	//return _d + "d " + _h + "h " + _m + "m " + _s + "s " + "ago";
 }
+
 function timediff( d1, d2 ) {
 	var ms;
 	if( d2 ) {
@@ -3651,6 +3880,7 @@ function timediff( d1, d2 ) {
 	return y + M + w + d + h + m + s + "";
 	//return _d + "d " + _h + "h " + _m + "m " + _s + "s " + "ago";
 }
+
 function submitGameTag( tagId, game ) {
 	console.log( 'submitGameTag ' + tagId );
 	$.ajax( {
@@ -3669,6 +3899,7 @@ function submitGameTag( tagId, game ) {
 		},
 	} );
 }
+
 function onLoading() {
 	console.log( 'onLoading()' );
 	console.log( 'parseHash()' );
@@ -3681,6 +3912,7 @@ function onLoading() {
 	ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) + '?' + mkURL( parseHashParams() ) } );
 	//ga( 'send', 'event', 'tab4', 'clicked' );
 }
+
 function onComplete( d ) {
 	console.log( 'onComplete()' );
 	if( typeof d != 'undefined' && 'responseJSON' in d ) {
@@ -3734,6 +3966,7 @@ function onComplete( d ) {
 		$( '.admin' ).show();
 	}
 }
+
 function setNavbarActive() {
 	$( 'ul.navbar-nav' ).children().removeClass( 'active' );
 	$( 'ul.dropdown-menu' ).children().removeClass( 'active' );
@@ -3745,6 +3978,7 @@ function setNavbarActive() {
 		$( '#' + parseHash()[0] ).parent().addClass( 'active' );
 	}
 }
+
 function getCountry( c ) {
 	for( var i in Countries ) {
 		if( Countries[i].cca2 == c.toUpperCase() ) {
@@ -3753,12 +3987,14 @@ function getCountry( c ) {
 	}
 	return {};
 }
+
 function thousandSeparator( num ) {
 	if( num )
 		return num.toString().replace( /\B(?=(\d{3})+(?!\d))/g, "," );
 	else
 		return '';
 }
+
 function Weaponsz( self ) {
 	ga( 'send', {
 		'hitType': 'event',
@@ -3777,6 +4013,7 @@ function Weaponsz( self ) {
 	}
 	$( '.w' + item ).show();
 }
+
 function mkPlayerButton( obj, nickProperty, countryProperty ) {
 	countryBtn = mkCountryButton( obj[countryProperty] );
 	nickname = obj[nickProperty];
@@ -3791,13 +4028,16 @@ function mkPlayerButton( obj, nickProperty, countryProperty ) {
 	out.push( '<ul class="dropdown-menu" >' );
 	out.push( '<li><a href="#/players/' + nickname + '">Player profile</a></li>' );
 	out.push( '<li><a href="#/race/players/' + nickname + '">Race profile</a></li>' );
-	out.push( '<li><a href="#/owners/' + nickname + '">Owner profile</a></li></ul></div></a></div>' );
+	//out.push( '<li><a href="#/owners/' + nickname + '">Owner profile</a></li>' );
+	out.push( '</ul></div></a></div>' );
+	out.push( '</div>' );
 	if( nickProperty == 'PLAYER' ) {
 		out.push( mkPlayerClanLink( obj ) );
 	}
 	out.push( '</div>' );
 	return out.join( '' );
 }
+
 function mkCountryButton( c ) {
 	if( c !== null && typeof c != 'undefined' && c != '' ) {
 		var country = '';
@@ -3813,12 +4053,14 @@ function mkCountryButton( c ) {
 	}
 	return '';
 }
+
 function mkPlayerClanLink( obj ) {
 	var clan = '';
 	var clanlink = '';
 	if( 'CLAN_ID' in obj && obj.CLAN_ID !== null && obj.CLAN_ID != '' ) { clan = obj.CLAN; clanlink = '<small class="pull-right"><a href="#/clans/'+ obj.CLAN_ID +'">'+ obj.CLAN +'</a></small>'; }
 	return clanlink;
 }
+
 function mkGameType( obj ) {
 	var ranked = '';
 	var ruleset = '';
@@ -3854,6 +4096,7 @@ function mkGameType( obj ) {
 	else { gt = obj.GAME_TYPE.toLowerCase(); }
 	return '<div class="btn-group btn-group-xs"><div class="popthis btn btn-default" data-html="true" data-container="body" data-placement="left" data-content="' + GT[gt] + '" > <a title="' + gt + '" href="#/gametypes/' + obj.GAME_TYPE.toLowerCase() + '"><img src="http://cdn.quakelive.com/web/2014051402/images/gametypes/xsm/' + gt + '_v2014051402.0.png" title="' + gt + '" /> ' + '</a></div>' + ruleset + ranked + premium + '</div>';
 }
+
 function adminSettings() {
 	$( '#admin_settings' ).slideToggle();
 	ga( 'send', {
@@ -3863,11 +4106,18 @@ function adminSettings() {
 		'eventLabel': 'admin button',
 	} );
 }
+
 function mkURL( obj ) {
 	params = [];
 	for( var i in obj ) {
 		params.push(  i + '=' + obj[i] );
 	}
 	return params.join( '&' );
+}
+
+function getTeam( nr ) {
+	if( nr == 1 ) return 'Red';
+	else if( nr == 2 ) return 'Blue';
+	else return 'Spec';
 }
 
