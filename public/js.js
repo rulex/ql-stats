@@ -72,6 +72,15 @@ $( function() {
 				} );
 			} );
 		} );
+		this.get( '#/players/:player/weapons/:weapon', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'weapon.html' ).replace( $( '#tab_content' ) ).then( function() {
+					WeaponCtrl( params );
+				} );
+			} );
+		} );
 		this.get( '#/players/:player/maps', function( context ) {
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
@@ -176,23 +185,38 @@ $( function() {
 		} );
 		this.get( '#/gametypes/:gametype', function( context ) {
 			params = this.params;
-			context.render( 'overview.html', {} ).replace( $( '#content' ) ).then( function() {
-				OverviewCtrl( params );
+			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
+				//PlayerCtrl( params );
+				GametypeBaseCtrl( params );
+			} );
+		} );
+		this.get( '#/gametypes/:gametype/overview', function( context ) {
+			params = this.params;
+			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
+				context.render( 'overview.html' ).replace( $( '#tab_content' ) ).then( function() {
+					GametypeBaseCtrl( params );
+					OverviewCtrl( params );
+				} );
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/games', function( context ) {
 			params = this.params;
-			context.render( 'games.html', {} ).replace( $( '#content' ) ).then( function() {
-				GamesCtrl();
+			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
+				context.render( 'games.html' ).replace( $( '#tab_content' ) ).then( function() {
+					GametypeBaseCtrl( params );
+					GamesCtrl( params );
+				} );
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/maps', function( context ) {
 			params = this.params;
-			context.render( 'maps.html', {} ).replace( $( '#content' ) ).then( function() {
-				MapsCtrl( params );
+			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
+				context.render( 'maps.html' ).replace( $( '#tab_content' ) ).then( function() {
+					GametypeBaseCtrl( params );
+					MapsCtrl( params );
+				} );
 			} );
 		} );
-		//this.get( '#/gametypes/:gametype/top/all', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); GametypeTopAllCtrl( this.params ); } );
 		this.get( '#/gametypes/:gametype/players/:player', function( context ) {
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {;
@@ -411,11 +435,17 @@ $( function() {
 					} );
 				}
 			} );
+		} );
+		this.get( '#/weapons', function( context ) {
+			params = this.params;
+			context.render( 'weapons.html', {} ).replace( $( '#content' ) ).then( function() {
+				WeaponsCtrl( params );
+			} );
+		} );
 		this.get( '#*', function( context ) {
 			context.log( 'no such route' );
 			context.log( parseHash() );
 		} );
-		});
 	} );
 	$( function() { app.run( '#/' ) } );
 	// google analytics
@@ -499,7 +529,7 @@ $( function() {
 	$( document ).on( {
 		mouseenter: function() {
 			var title = $( this ).html();
-			var placement = $( this ).attr( 'data-placement' ) || 'right';
+			var placement = $( this ).attr( 'data-placement' ) || 'left';
 			var img = '<img src="http://cdn.quakelive.com/web/2014051402/images/levelshots/lg/' + $(this).html() + '_v2014051402.0.jpg" />';
 			$(this).popover( { placement: placement, title: title, content: img, html: true } );
 			$(this).popover( 'show' );
@@ -510,7 +540,7 @@ $( function() {
 	}, 'a.map-popup' );
 } );
 
-// _S, _H, _K
+// weapons/guns
 var GUNS = {
 	RL: 'Rocket Launcher',
 	RG: 'Rail Gun',
@@ -524,6 +554,14 @@ var GUNS = {
 	NG: 'Nailgun',
 	CG: 'Chaingun',
 	G: 'Gauntlet',
+}
+
+// weapons/guns alternatives
+var GUNalt = {
+	Shots: '_S',
+	Hits: '_H',
+	Kills: '_K',
+	Accuracy: '_A',
 }
 
 var GUNSql = {
@@ -546,6 +584,7 @@ var RULESETS = {
 	2: 'Turbo',
 	3: 'QL',
 }
+
 var GT = {
 	ca: 'Clan Arena',
 	duel: 'Duel',
@@ -635,7 +674,20 @@ var dynatable_writers = {
 		if( parseHash().indexOf( 'race' ) > -1 ) {
 			return '<a class="map-popup" href="#/race/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
 		}
-		return '<a class="map-popup" href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
+		var out = [];
+		out.push( '<div class="btn-group btn-group-xs">' );
+		out.push( '<a class="btn btn-default map-popup" href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>' );
+		out.push( '<div class="btn-group btn-group-xs">' );
+		out.push( '<a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>' );
+		out.push( '<ul class="dropdown-menu" >' );
+		out.push( '<li><a href="#/maps/' + obj.MAP + '">' + obj.MAP + ' map info</a></li>' );
+		out.push( '<li><a href="#/race/maps/' + obj.MAP + '">' + obj.MAP + ' race map</a></li>' );
+		out.push( '<li><a href="#/maps">maps</a></li>' );
+		out.push( '<li><a href="#/race/maps">race maps</a></li>' );
+		out.push( '</ul></div></a></div>' );
+		out.push( '</div>' );
+		//return '<a class="map-popup" href="#/maps/'+ obj.MAP +'">' + obj.MAP + '</a>';
+		return out.join('');
 	},
 	WIN: function( obj ) {
 		if( obj.WIN == 1 ) {
@@ -1990,6 +2042,47 @@ function PlayerBaseCtrl( params ) {
 	} );
 }
 
+function GametypeBaseCtrl( params ) {
+	console.debug( 'GametypeBaseCtrl' );
+	console.debug( params );
+	onLoading();
+	setNavbarActive();
+	$( '#current_url' ).html( printLocations() );
+	var t = params['gametype'];
+	// set button urls
+	$( '#tab_btn_info' ).attr( 'href', '#/gametypes/' + t );
+	$( '#tab_btn_overview' ).attr( 'href', '#/gametypes/' + t + '/overview' );
+	$( '#tab_btn_gametypes' ).attr( 'href', '#/gametypes/' + t + '/gametypes' );
+	$( '#tab_btn_games' ).attr( 'href', '#/gametypes/' + t + '/games' );
+	$( '#tab_btn_clans' ).attr( 'href', '#/gametypes/' + t + '/clans' );
+	$( '#tab_btn_hostedgames' ).attr( 'href', '#/gametypes/' + t + '/hostedgames' );
+	$( '#tab_btn_weapons' ).attr( 'href', '#/gametypes/' + t + '/weapons' );
+	$( '#tab_btn_players' ).attr( 'href', '#/gametypes/' + t + '/players' );
+	$( '#tab_btn_owners' ).attr( 'href', '#/gametypes/' + t + '/owners' );
+	$( '#tab_btn_maps' ).attr( 'href', '#/gametypes/' + t + '/maps' );
+	$( '#tab_btn_places' ).attr( 'href', '#/gametypes/' + t + '/places' );
+	$( '#tab_btn_race' ).attr( 'href', '#/gametypes/' + t + '/race' );
+	//ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
+	// set active submenu button
+	$( '#tab_btn_' + parseHash().pop() ).addClass( 'active' );
+	// player
+	$.ajax( {
+		url: getApiURL() + 'api/gametypes/' + t,
+		dataType: getAjaxDataType(),
+		success: function( data ) {
+			// set
+			console.log( data );
+			$( '#gametype' ).append( data.data.GAME_TYPE_LONG );
+		},
+		error: function( data ) {
+		},
+		complete: function( data ) {
+			onComplete( data );
+			//console.log( data );
+		},
+	} );
+}
+
 function PlayersCtrl( params ) {
 	onLoading();
 	setNavbarActive();
@@ -2412,10 +2505,17 @@ function MapsCtrl( params ) {
 					records: data.data
 				}
 			} );
+			total_matches = 0;
+			for( var i in data.data ) {
+				total_matches += data.data[i].MATCHES_PLAYED;
+			}
 			Morris.Bar( {
 				element: 'chart_maps',
 				data: data.data.sort( function( a, b ) { return b.MATCHES_PLAYED - a.MATCHES_PLAYED } ),
 				xkey: 'MAP',
+				hoverCallback: function (index, options, content, row) {
+					return 'Matches played on ' + row.MAP + ': ' + thousandSeparator( row.MATCHES_PLAYED ) + ' (' + ( row.MATCHES_PLAYED/total_matches*100 ).toFixed(1) + '%)'; 
+				},
 				ykeys: [ 'MATCHES_PLAYED' ],
 				labels: [ 'Matches played' ]
 			} );
@@ -3431,7 +3531,7 @@ function WeaponsCtrl( params ) {
 		g = GUNS[i];
 		gql = GUNSql[i];
 		out = '';
-		out += '<a class="btn btn-xs btn-default popthis" data-placement="bottom" data-content="' + g + '" href="#/' + parseHash().join( '/' ) + '/' + i.toLowerCase() + '">';
+		out += '<a id="btn_weapon_' + i + '" class="btn btn-xs btn-default popthis" data-placement="bottom" data-content="' + g + '" href="#/' + parseHash().join( '/' ) + '?' + mkURL2( { weapon: i } ) + '">';
 		out += '<span class="">';
 		out += '<img src="http://cdn.quakelive.com/web/2014120201/images/profile/weapons/sm/' + gql + '_v2014120201.0.gif" />';
 		out += '</span> ';
@@ -3439,93 +3539,184 @@ function WeaponsCtrl( params ) {
 		out += '</a>';
 		$( '#weapons_list' ).append( out );
 	}
-	// fetch
-	$.ajax( {
-		url: getApiURL() + 'api/' + parseHash().join( '/' ),
-		dataType: getAjaxDataType(),
-		success: function( data ) {
-			console.log( data );
-			_shots = [];
-			_shotsTotal = 0;
-			_hits = [];
-			_hitsTotal = 0;
-			_kills = [];
-			_killsTotal = 0;
-			_acc = [];
-			_accTotal = 0;
-			for( var i in data.data ) {
+	$( '#weapons_list' ).append( '<br>' );
+	// weapons alts
+	for( var i in GUNalt ) {
+		g = GUNalt[i];
+		out = '';
+		out += '<a class="btn btn-xs btn-default" id="btn_weaponalt_' + i + '" href="#/' + parseHash().join( '/' ) + '?' + mkURL2( { alt: i } ) + '">';
+		out += '<span class="">';
+		out += '</span> ';
+		out += i;
+		out += '</a>';
+		$( '#weapons_list' ).append( out );
+	}
+	_times = [ 'week', 'month', 'year' ];
+	for( var i in _times ) {
+		t = _times[i];
+		$( '#btn_times' ).append( '<a id="btn_times_' + t + '" class="btn btn-xs btn-default" href="#/' + parseHash().join( '/' ) + '?' + mkURL2( { time: t } ) + '">' + t + '</a>' );
+	}
+	//<a id="btn_cache" class="btn btn-default" href="#/status?tab=cache">Cache</a>
+	// set urls
+	_btns = [ 'default', 'graphs' ];
+	var activeTab = parseHashParams()['tab'] || _btns[0];
+	var selectedWeapon = parseHashParams()['weapon'] || 'RL';
+	var selectedWeaponAlt = parseHashParams()['alt'] || 'Kills';
+	var selectedTime = parseHashParams()['time'] || 'week';
+	// insert buttons
+	for( var i in _btns ) {
+		$( '#tab_btns' ).append( '<a id="tab_btn_' + _btns[i] + '" class="btn btn-xs btn-default" href="#/' + parseHash().join( '/' ) + '?tab=' + _btns[i] + '">' + _btns[i] + '</a>' );
+	}
+	// set active tab button
+	$( '#tab_btn_' + activeTab ).addClass( 'active' );
+	$( '#btn_weaponalt_' + selectedWeaponAlt ).addClass( 'active' );
+	$( '#btn_weapon_' + selectedWeapon ).addClass( 'active' );
+	$( '#btn_times_' + selectedTime ).addClass( 'active' );
+	$( '#' + activeTab ).show();
+	if( activeTab == 'default' ) {
+		// fetch
+		$.ajax( {
+			url: getApiURL() + 'api/' + parseHash().join( '/' ),
+			dataType: getAjaxDataType(),
+			success: function( data ) {
+				console.log( data );
+				_shots = [];
+				_shotsTotal = 0;
+				_hits = [];
+				_hitsTotal = 0;
+				_kills = [];
+				_killsTotal = 0;
+				_acc = [];
+				_accTotal = 0;
+				for( var i in data.data ) {
+					// shots
+					if( /_S$/.test( i ) ) {
+						name = i.split('_')[0] + ' Shots';
+						_shots.push( { label: name, value: data.data[i] } );
+						_shotsTotal += data.data[i];
+					}
+					// hits
+					if( /_H$/.test( i ) ) {
+						name = i.split('_')[0] + ' Hits';
+						_hits.push( { label: name, value: data.data[i] } );
+						_hitsTotal += data.data[i];
+					}
+					// kills
+					if( /_K$/.test( i ) ) {
+						name = i.split('_')[0] + ' Kills';
+						_kills.push( { label: name, value: data.data[i] } );
+						_killsTotal += data.data[i];
+					}
+				}
+				// acc
+				_accTmp = [];
+				for( var i in _hits ) {
+					h = _hits[i];
+					weapon = h.label.split(' ')[0];
+					_accTmp[weapon] = h.value;
+				}
+				for( var i in _shots ) {
+					s = _shots[i];
+					weapon = s.label.split(' ')[0];
+					if( _accTmp[weapon] > 0 )
+						_accTmp[weapon] /= s.value/100;
+				}
+				for( var i in _accTmp ) {
+					_acc.push( { label: i, value: Math.round( _accTmp[i]*100 )/100 } );
+				}
+				_accTotal += data.data[i];
+				// totals
+				$( '#shots_total' ).html( 'Total shots: ' + thousandSeparator( _shotsTotal ) );
+				$( '#hits_total' ).html( 'Total hits: ' + thousandSeparator( _hitsTotal ) );
+				$( '#kills_total' ).html( 'Total kills: ' + thousandSeparator( _killsTotal ) );
+				$( '#acc_total' ).html( 'Average accuracy: ' + Math.round( (_hitsTotal/_shotsTotal)*100*100 )/100 + '%' );
 				// shots
-				if( /_S$/.test( i ) ) {
-					name = i.split('_')[0] + ' Shots';
-					_shots.push( { label: name, value: data.data[i] } );
-					_shotsTotal += data.data[i];
-				}
+				Morris.Donut( {
+					element: 'shots',
+					data: _shots.sort( function( a, b ) { return b.value - a.value } ),
+					formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_shotsTotal*100 ).toFixed(1) + '%)'; },
+				} );
 				// hits
-				if( /_H$/.test( i ) ) {
-					name = i.split('_')[0] + ' Hits';
-					_hits.push( { label: name, value: data.data[i] } );
-					_hitsTotal += data.data[i];
-				}
+				Morris.Donut( {
+					element: 'hits',
+					data: _hits.sort( function( a, b ) { return b.value - a.value } ),
+					formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_hitsTotal*100 ).toFixed(1) + '%)'; },
+				} );
 				// kills
-				if( /_K$/.test( i ) ) {
-					name = i.split('_')[0] + ' Kills';
-					_kills.push( { label: name, value: data.data[i] } );
-					_killsTotal += data.data[i];
+				Morris.Donut( {
+					element: 'kills',
+					data: _kills.sort( function( a, b ) { return b.value - a.value } ),
+					formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_killsTotal*100 ).toFixed(1) + '%)'; },
+				} );
+				// acc
+				Morris.Donut( {
+					element: 'acc',
+					data: _acc.sort( function( a, b ) { return b.value - a.value } ),
+					formatter: function( y ) { return y + '%'; },
+				} );
+			},
+			error: function( data ) {
+			},
+			complete: function( data ) {
+				onComplete( data );
+			},
+		} );
+	}
+	else if( activeTab == 'graphs' ) {
+		$.ajax( {
+			url: getApiURL() + 'api/' + parseHash().join( '/' ) + '/graphs/per' + selectedTime,
+			dataType: getAjaxDataType(),
+			success: function( data ) {
+				console.log( data );
+				dt = [];
+				gunalt = GUNalt[selectedWeaponAlt];
+				// gauntlet only has Kills
+				if( selectedWeapon == 'G' ) {
+					gunalt = '_K';
+					selectedWeaponAlt = 'Kills';
 				}
-			}
-			// acc
-			_accTmp = [];
-			for( var i in _hits ) {
-				h = _hits[i];
-				weapon = h.label.split(' ')[0];
-				_accTmp[weapon] = h.value;
-			}
-			for( var i in _shots ) {
-				s = _shots[i];
-				weapon = s.label.split(' ')[0];
-				if( _accTmp[weapon] > 0 )
-					_accTmp[weapon] /= s.value/100;
-			}
-			for( var i in _accTmp ) {
-				_acc.push( { label: i, value: Math.round( _accTmp[i]*100 )/100 } );
-			}
-			_accTotal += data.data[i];
-			// totals
-			$( '#shots_total' ).html( 'Total shots: ' + thousandSeparator( _shotsTotal ) );
-			$( '#hits_total' ).html( 'Total hits: ' + thousandSeparator( _hitsTotal ) );
-			$( '#kills_total' ).html( 'Total kills: ' + thousandSeparator( _killsTotal ) );
-			$( '#acc_total' ).html( 'Average accuracy: ' + Math.round( (_hitsTotal/_shotsTotal)*100*100 )/100 + '%' );
-			// shots
-			Morris.Donut( {
-				element: 'shots',
-				data: _shots.sort( function( a, b ) { return b.value - a.value } ),
-				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_shotsTotal*100 ).toFixed(1) + '%)'; },
-			} );
-			// hits
-			Morris.Donut( {
-				element: 'hits',
-				data: _hits.sort( function( a, b ) { return b.value - a.value } ),
-				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_hitsTotal*100 ).toFixed(1) + '%)'; },
-			} );
-			// kills
-			Morris.Donut( {
-				element: 'kills',
-				data: _kills.sort( function( a, b ) { return b.value - a.value } ),
-				formatter: function( y ) { return thousandSeparator( y ) + ' (' + ( y/_killsTotal*100 ).toFixed(1) + '%)'; },
-			} );
-			// acc
-			Morris.Donut( {
-				element: 'acc',
-				data: _acc.sort( function( a, b ) { return b.value - a.value } ),
-				formatter: function( y ) { return y + '%'; },
-			} );
-		},
-		error: function( data ) {
-		},
-		complete: function( data ) {
-			onComplete( data );
-		},
-	} );
+				column = selectedWeapon + gunalt;
+				for( var i in data.data ) {
+					d = data.data[i];
+					if( selectedTime == 'week' ) {
+						_date = d.year + ' W' + d.week;
+					}
+					else if( selectedTime == 'month' ) {
+						_date = d.year + '-' + d.month;
+					}
+					else if( selectedTime == 'year' ) {
+						_date = '' + d.year;
+					}
+					if( gunalt == '_A' ) {
+						_s = d[selectedWeapon+'_S'];
+						_h = d[selectedWeapon+'_H'];
+						_res = ( _s == 0 || _h == 0 ) ? 0 : (_h/_s*100).toFixed(2);
+						dt.push( { date: _date, c: _res } );
+					}
+					else {
+						dt.push( { date: _date, c: d[column] } );
+					}
+				}
+				new Morris.Line( {
+					element: 'weaponsgraph',
+					data: dt,
+					xkey: 'date',
+					ykeys: [ 'c' ],
+					labels: [ GUNS[selectedWeapon] + ' ' + selectedWeaponAlt ],
+					pointSize: 2,
+					hideHover: 'auto',
+					events: morris_events,
+					eventLineColors: [ '#B78779', '#7580AF' ],
+					eventLabels: morris_eventLabels,
+				} );
+			},
+			error: function( data ) {
+			},
+			complete: function( data ) {
+				onComplete( data );
+			},
+		} );
+	}
 }
 
 function ActivityCtrl( params, context ) {
@@ -4026,8 +4217,15 @@ function mkPlayerButton( obj, nickProperty, countryProperty ) {
 	out.push( '<div class="btn-group btn-group-xs">' );
 	out.push( '<a class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></a>' );
 	out.push( '<ul class="dropdown-menu" >' );
-	out.push( '<li><a href="#/players/' + nickname + '">Player profile</a></li>' );
-	out.push( '<li><a href="#/race/players/' + nickname + '">Race profile</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '">Profile</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/overview">Overview</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/games">Games</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/clans">Clans</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/hostedgames">Hostedgames</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/maps">Maps</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/weapons">Weapons</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/race">Race</a></li>' );
+	//out.push( '<li><a href="#/race/players/' + nickname + '">Race profile</a></li>' );
 	//out.push( '<li><a href="#/owners/' + nickname + '">Owner profile</a></li>' );
 	out.push( '</ul></div></a></div>' );
 	out.push( '</div>' );
@@ -4111,6 +4309,22 @@ function mkURL( obj ) {
 	params = [];
 	for( var i in obj ) {
 		params.push(  i + '=' + obj[i] );
+	}
+	return params.join( '&' );
+}
+
+function mkURL2( obj ) {
+	params = [];
+	hashp = parseHashParams();
+	_obj = {};
+	for( var i in hashp ) {
+		_obj[i] = hashp[i];
+	}
+	for( var i in obj ) {
+		_obj[i] = obj[i];
+	}
+	for( var i in _obj ) {
+		params.push(  i + '=' + _obj[i] );
 	}
 	return params.join( '&' );
 }

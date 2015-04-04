@@ -56,6 +56,23 @@ if( program.nologin ) {
 	ldcore.loginToQuakeliveWebsite();
 }
 
+// gametypes
+var GT = {
+	ca: 'Clan Arena',
+	duel: 'Duel',
+	ctf: 'Capture the Flag',
+	race: 'Race',
+	tdm: 'Team Deathmatch',
+	ffa: 'Free For All',
+	ad: 'Attack & Defend',
+	dom: 'Domination',
+	ft: 'Freeze Tag',
+	rr: 'Red Rover',
+	harvester: 'Harvester',
+	harv: 'Harvester',
+	fctf: 'fctf',
+}
+
 // counter
 var requests_counter = 0;
 var requests_counter_api = 0;
@@ -343,7 +360,7 @@ app.get( '/api/players/:player/weapons', function( req, res ) {
 	if( _perPage > 100 ) { _perPage = 100; }
 	_offset = queryObject.offset || 0;
 	var owner = mysql_real_escape_string( req.params.player );
-  var sql = 'SELECT /*api/owners/X/games*/'
+  var sql = 'SELECT /*api/players/:p/weapons*/'
 	+ 'sum(gp.G_K) as G_K,'
 	+ 'sum(gp.BFG_S) as BFG_S,'
 	+ 'sum(gp.BFG_H) as BFG_H,'
@@ -380,7 +397,10 @@ app.get( '/api/players/:player/weapons', function( req, res ) {
 	+ 'sum(gp.SG_K) as SG_K,'
 	+ 'sum(gp.HMG_S) as HMG_S,'
 	+ 'sum(gp.HMG_H) as HMG_H,'
-	+ 'sum(gp.HMG_K) as HMG_K '
+	+ 'sum(gp.HMG_K) as HMG_K, '
+	+ 'sum(gp.IMPRESSIVE) as IMPRESSIVE, '
+	+ 'sum(gp.EXCELLENT) as EXCELLENT, '
+	+ 'count(1) as MATCHES_PLAYED '
   + 'FROM GamePlayer gp '
   + 'left join Player p on p.ID=gp.PLAYER_ID '
 	+ 'where p.NAME=? '
@@ -391,6 +411,212 @@ app.get( '/api/players/:player/weapons', function( req, res ) {
 			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: resulty[0] } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+
+app.get( '/api/players/:player/weapons/graphs/perweek', function( req, res ) {
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+	var owner = mysql_real_escape_string( req.params.player );
+  var sql = 'SELECT /*api/players/:p/weapons*/'
+	+ 'sum(gp.G_K) as G_K, '
+	+ 'sum(gp.BFG_S) as BFG_S, '
+	+ 'sum(gp.BFG_H) as BFG_H, '
+	+ 'sum(gp.BFG_K) as BFG_K, '
+	+ 'sum(gp.CG_S) as CG_S, '
+	+ 'sum(gp.CG_H) as CG_H, '
+	+ 'sum(gp.CG_K) as CG_K, '
+	+ 'sum(gp.GL_S) as GL_S, '
+	+ 'sum(gp.GL_H) as GL_H, '
+	+ 'sum(gp.GL_K) as GL_K, '
+	+ 'sum(gp.LG_S) as LG_S, '
+	+ 'sum(gp.LG_H) as LG_H, '
+	+ 'sum(gp.LG_K) as LG_K, '
+	+ 'sum(gp.MG_S) as MG_S, '
+	+ 'sum(gp.MG_H) as MG_H, '
+	+ 'sum(gp.MG_K) as MG_K, '
+	+ 'sum(gp.NG_S) as NG_S, '
+	+ 'sum(gp.NG_H) as NG_H, '
+	+ 'sum(gp.NG_K) as NG_K, '
+	+ 'sum(gp.PG_S) as PG_S, '
+	+ 'sum(gp.PG_H) as PG_H, '
+	+ 'sum(gp.PG_K) as PG_K, '
+	+ 'sum(gp.PM_S) as PM_S, '
+	+ 'sum(gp.PM_H) as PM_H, '
+	+ 'sum(gp.PM_K) as PM_K, '
+	+ 'sum(gp.RG_S) as RG_S, '
+	+ 'sum(gp.RG_H) as RG_H, '
+	+ 'sum(gp.RG_K) as RG_K, '
+	+ 'sum(gp.RL_S) as RL_S, '
+	+ 'sum(gp.RL_H) as RL_H, '
+	+ 'sum(gp.RL_K) as RL_K, '
+	+ 'sum(gp.SG_S) as SG_S, '
+	+ 'sum(gp.SG_H) as SG_H, '
+	+ 'sum(gp.SG_K) as SG_K, '
+	+ 'sum(gp.HMG_S) as HMG_S, '
+	+ 'sum(gp.HMG_H) as HMG_H, '
+	+ 'sum(gp.HMG_K) as HMG_K, '
+	+ 'sum(gp.IMPRESSIVE) as IMPRESSIVE, '
+	+ 'sum(gp.EXCELLENT) as EXCELLENT, '
+	+ 'year(FROM_UNIXTIME(g.GAME_TIMESTAMP)) as year, '
+	+ 'week(FROM_UNIXTIME(g.GAME_TIMESTAMP),1) as week, '
+	+ 'count(1) as MATCHES_PLAYED '
+  + 'FROM GamePlayer gp '
+  + 'left join Player p on p.ID=gp.PLAYER_ID '
+  + 'left join Game g on g.ID=gp.GAME_ID '
+	+ 'where p.NAME=? '
+	+ 'group by year, week ';
+	;
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+
+app.get( '/api/players/:player/weapons/graphs/permonth', function( req, res ) {
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+	var owner = mysql_real_escape_string( req.params.player );
+  var sql = 'SELECT /*api/players/:p/weapons*/'
+	+ 'sum(gp.G_K) as G_K, '
+	+ 'sum(gp.BFG_S) as BFG_S, '
+	+ 'sum(gp.BFG_H) as BFG_H, '
+	+ 'sum(gp.BFG_K) as BFG_K, '
+	+ 'sum(gp.CG_S) as CG_S, '
+	+ 'sum(gp.CG_H) as CG_H, '
+	+ 'sum(gp.CG_K) as CG_K, '
+	+ 'sum(gp.GL_S) as GL_S, '
+	+ 'sum(gp.GL_H) as GL_H, '
+	+ 'sum(gp.GL_K) as GL_K, '
+	+ 'sum(gp.LG_S) as LG_S, '
+	+ 'sum(gp.LG_H) as LG_H, '
+	+ 'sum(gp.LG_K) as LG_K, '
+	+ 'sum(gp.MG_S) as MG_S, '
+	+ 'sum(gp.MG_H) as MG_H, '
+	+ 'sum(gp.MG_K) as MG_K, '
+	+ 'sum(gp.NG_S) as NG_S, '
+	+ 'sum(gp.NG_H) as NG_H, '
+	+ 'sum(gp.NG_K) as NG_K, '
+	+ 'sum(gp.PG_S) as PG_S, '
+	+ 'sum(gp.PG_H) as PG_H, '
+	+ 'sum(gp.PG_K) as PG_K, '
+	+ 'sum(gp.PM_S) as PM_S, '
+	+ 'sum(gp.PM_H) as PM_H, '
+	+ 'sum(gp.PM_K) as PM_K, '
+	+ 'sum(gp.RG_S) as RG_S, '
+	+ 'sum(gp.RG_H) as RG_H, '
+	+ 'sum(gp.RG_K) as RG_K, '
+	+ 'sum(gp.RL_S) as RL_S, '
+	+ 'sum(gp.RL_H) as RL_H, '
+	+ 'sum(gp.RL_K) as RL_K, '
+	+ 'sum(gp.SG_S) as SG_S, '
+	+ 'sum(gp.SG_H) as SG_H, '
+	+ 'sum(gp.SG_K) as SG_K, '
+	+ 'sum(gp.HMG_S) as HMG_S, '
+	+ 'sum(gp.HMG_H) as HMG_H, '
+	+ 'sum(gp.HMG_K) as HMG_K, '
+	+ 'sum(gp.IMPRESSIVE) as IMPRESSIVE, '
+	+ 'sum(gp.EXCELLENT) as EXCELLENT, '
+	+ 'year(FROM_UNIXTIME(g.GAME_TIMESTAMP)) as year, '
+	+ 'month(FROM_UNIXTIME(g.GAME_TIMESTAMP)) as month, '
+	+ 'count(1) as MATCHES_PLAYED '
+  + 'FROM GamePlayer gp '
+  + 'left join Player p on p.ID=gp.PLAYER_ID '
+  + 'left join Game g on g.ID=gp.GAME_ID '
+	+ 'where p.NAME=? '
+	+ 'group by year, month ';
+	;
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+
+app.get( '/api/players/:player/weapons/graphs/peryear', function( req, res ) {
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+	var owner = mysql_real_escape_string( req.params.player );
+  var sql = 'SELECT /*api/players/:p/weapons*/'
+	+ 'sum(gp.G_K) as G_K, '
+	+ 'sum(gp.BFG_S) as BFG_S, '
+	+ 'sum(gp.BFG_H) as BFG_H, '
+	+ 'sum(gp.BFG_K) as BFG_K, '
+	+ 'sum(gp.CG_S) as CG_S, '
+	+ 'sum(gp.CG_H) as CG_H, '
+	+ 'sum(gp.CG_K) as CG_K, '
+	+ 'sum(gp.GL_S) as GL_S, '
+	+ 'sum(gp.GL_H) as GL_H, '
+	+ 'sum(gp.GL_K) as GL_K, '
+	+ 'sum(gp.LG_S) as LG_S, '
+	+ 'sum(gp.LG_H) as LG_H, '
+	+ 'sum(gp.LG_K) as LG_K, '
+	+ 'sum(gp.MG_S) as MG_S, '
+	+ 'sum(gp.MG_H) as MG_H, '
+	+ 'sum(gp.MG_K) as MG_K, '
+	+ 'sum(gp.NG_S) as NG_S, '
+	+ 'sum(gp.NG_H) as NG_H, '
+	+ 'sum(gp.NG_K) as NG_K, '
+	+ 'sum(gp.PG_S) as PG_S, '
+	+ 'sum(gp.PG_H) as PG_H, '
+	+ 'sum(gp.PG_K) as PG_K, '
+	+ 'sum(gp.PM_S) as PM_S, '
+	+ 'sum(gp.PM_H) as PM_H, '
+	+ 'sum(gp.PM_K) as PM_K, '
+	+ 'sum(gp.RG_S) as RG_S, '
+	+ 'sum(gp.RG_H) as RG_H, '
+	+ 'sum(gp.RG_K) as RG_K, '
+	+ 'sum(gp.RL_S) as RL_S, '
+	+ 'sum(gp.RL_H) as RL_H, '
+	+ 'sum(gp.RL_K) as RL_K, '
+	+ 'sum(gp.SG_S) as SG_S, '
+	+ 'sum(gp.SG_H) as SG_H, '
+	+ 'sum(gp.SG_K) as SG_K, '
+	+ 'sum(gp.HMG_S) as HMG_S, '
+	+ 'sum(gp.HMG_H) as HMG_H, '
+	+ 'sum(gp.HMG_K) as HMG_K, '
+	+ 'sum(gp.IMPRESSIVE) as IMPRESSIVE, '
+	+ 'sum(gp.EXCELLENT) as EXCELLENT, '
+	+ 'year(FROM_UNIXTIME(g.GAME_TIMESTAMP)) as year, '
+	+ 'count(1) as MATCHES_PLAYED '
+  + 'FROM GamePlayer gp '
+  + 'left join Player p on p.ID=gp.PLAYER_ID '
+  + 'left join Game g on g.ID=gp.GAME_ID '
+	+ 'where p.NAME=? '
+	+ 'group by year ';
+	;
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
 			res.end();
 			conn.release();
 		} );
@@ -422,7 +648,7 @@ app.get( '/api/players/:player/overview', function ( req, res ) {
 } );
 
 app.get( '/api/players/:player/games/graphs/perweek', function ( req, res ) {
-  var sql = 'select /*api/games/graphs/perweek*/';
+  var sql = 'select /*api/players/:player/games/graphs/perweek*/';
 	sql += 'year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, ';
 	sql += 'week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, ';
 	sql += 'count(GAME_TIMESTAMP) as c ';
@@ -1795,6 +2021,16 @@ app.get( '/api/gametypes', function ( req, res ) {
 	res.end();
 } );
 
+app.get( '/api/gametypes/:gametype', function ( req, res ) {
+	var gt = req.params.gametype;
+	_gt = {};
+	if( gt in GT ) {
+		_gt = { GAME_TYPE: gt, GAME_TYPE_LONG: GT[gt] };
+	}
+	res.jsonp( { data: _gt } );
+	res.end();
+} );
+
 app.get( '/api/gametypes/:gametype/overview', function ( req, res ) {
 	var gt = req.params.gametype;
 	var sql = 'select /*api/gametypes/X/overview*/ GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game where GAME_TYPE=? group by GAME_TYPE order by null';
@@ -1812,7 +2048,7 @@ app.get( '/api/gametypes/:gametype/games', function ( req, res ) {
 	if( _perPage > 100 ) { _perPage = 100; }
 	_offset = queryObject.offset || 0;
 	var sql = [];
-	sql.push( 'select /*api/games*/' );
+	sql.push( 'select /*api/gametypes/:gt/games*/' );
 	sql.push( 'g.PUBLIC_ID,' );
 	sql.push( 'g.GAME_TYPE,' );
 	sql.push( 'g.GAME_TIMESTAMP,' );
@@ -2005,6 +2241,67 @@ app.get( '/api/gametypes/:gametype/maps', function ( req, res ) {
 	res.jsonp( _dt );
 	res.end();
 } );
+
+/*
+// too slow
+app.get( '/api/gametypes/:gametype/weapons', function( req, res ) {
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+  var sql = 'SELECT '
+	+ 'sum(gp.G_K) as G_K,'
+	+ 'sum(gp.BFG_S) as BFG_S,'
+	+ 'sum(gp.BFG_H) as BFG_H,'
+	+ 'sum(gp.BFG_K) as BFG_K,'
+	+ 'sum(gp.CG_S) as CG_S,'
+	+ 'sum(gp.CG_H) as CG_H,'
+	+ 'sum(gp.CG_K) as CG_K,'
+	+ 'sum(gp.GL_S) as GL_S,'
+	+ 'sum(gp.GL_H) as GL_H,'
+	+ 'sum(gp.GL_K) as GL_K,'
+	+ 'sum(gp.LG_S) as LG_S,'
+	+ 'sum(gp.LG_H) as LG_H,'
+	+ 'sum(gp.LG_K) as LG_K,'
+	+ 'sum(gp.MG_S) as MG_S,'
+	+ 'sum(gp.MG_H) as MG_H,'
+	+ 'sum(gp.MG_K) as MG_K,'
+	+ 'sum(gp.NG_S) as NG_S,'
+	+ 'sum(gp.NG_H) as NG_H,'
+	+ 'sum(gp.NG_K) as NG_K,'
+	+ 'sum(gp.PG_S) as PG_S,'
+	+ 'sum(gp.PG_H) as PG_H,'
+	+ 'sum(gp.PG_K) as PG_K,'
+	+ 'sum(gp.PM_S) as PM_S,'
+	+ 'sum(gp.PM_H) as PM_H,'
+	+ 'sum(gp.PM_K) as PM_K,'
+	+ 'sum(gp.RG_S) as RG_S,'
+	+ 'sum(gp.RG_H) as RG_H,'
+	+ 'sum(gp.RG_K) as RG_K,'
+	+ 'sum(gp.RL_S) as RL_S,'
+	+ 'sum(gp.RL_H) as RL_H,'
+	+ 'sum(gp.RL_K) as RL_K,'
+	+ 'sum(gp.SG_S) as SG_S,'
+	+ 'sum(gp.SG_H) as SG_H,'
+	+ 'sum(gp.SG_K) as SG_K,'
+	+ 'sum(gp.HMG_S) as HMG_S,'
+	+ 'sum(gp.HMG_H) as HMG_H,'
+	+ 'sum(gp.HMG_K) as HMG_K, '
+	+ 'sum(gp.IMPRESSIVE) as IMPRESSIVE, '
+	+ 'sum(gp.EXCELLENT) as EXCELLENT, '
+	+ 'count(1) as MATCHES_PLAYED '
+  + 'FROM GamePlayer gp '
+  + 'left join Game g on g.ID=gp.GAME_ID'
+  + ' where g.GAME_TYPE=? ';
+	_dt = qlscache.doCache( req, sql, [req.params.gametype], { time: 7*24*60*60*1000 } );
+	_out = {};
+	_out.data = _dt.data[0];
+	res.jsonp( _out );
+	res.end();
+} );
+*/
 
 app.get( '/api/overview', function ( req, res ) {
 	var sql = 'select /*api/overview*/ GAME_TYPE, count(1) as MATCHES_PLAYED, sum(GAME_LENGTH) as GAME_LENGTH, sum(TOTAL_KILLS) as TOTAL_KILLS from Game group by GAME_TYPE order by null';
@@ -2916,18 +3213,6 @@ var GUNS = {
 	G: 'Gauntlet',
 }
 
-app.get( '/api/weapons', function( req, res ) {
-  sql = "select sum(RL_S) as RL_S, sum(RG_S) as RG_S, sum(LG_S) as LG_S, sum(GL_S) as GL_S, sum(PG_S) as PG_S, sum(MG_S) as MG_S, sum(HMG_S) as HMG_S, sum(SG_S) as SG_S, sum(BFG_S) as BFG_S, sum(NG_S) as NG_S, sum(CG_S) as CG_S from GamePlayer";
-	var sql = [];
-	sql.push( 'select' );
-	sql.push( 'sum(RL_S) as RL_S, sum(RG_S) as RG_S, sum(LG_S) as LG_S, sum(GL_S) as GL_S, sum(PG_S) as PG_S, sum(MG_S) as MG_S, sum(HMG_S) as HMG_S, sum(SG_S) as SG_S, sum(BFG_S) as BFG_S, sum(NG_S) as NG_S, sum(CG_S) as CG_S ' );
-	sql.push( 'from GamePlayer' );
-	sql = sql.join( ' ' );
-	_dt = qlscache.doCache( req, sql, [], { time: 7*24*60*60*1000 } );
-	res.jsonp( _dt );
-	res.end();
-} );
-
 app.get( '/api/activity/week/matches', function( req, res ) {
 	var sql = [];
 	sql.push( 'select' );
@@ -3098,6 +3383,62 @@ app.get( '/api/activity/month/players', function( req, res ) {
 	sql = sql.join( ' ' );
 	_dt = qlscache.doCache( req, sql, [], { time: 2*24*60*60*1000 } );
 	res.jsonp( _dt );
+	res.end();
+} );
+
+app.get( '/api/weapons', function( req, res ) {
+	_start = new Date().getTime();
+	var queryObject = url.parse( req.url, true ).query;
+	_page = queryObject.page || 1;
+	_perPage = queryObject.perPage || 10;
+	if( _perPage > 100 ) { _perPage = 100; }
+	_offset = queryObject.offset || 0;
+  var sql = 'SELECT /*api/weapons*/'
+	+ 'sum(gp.G_K) as G_K,'
+	+ 'sum(gp.BFG_S) as BFG_S,'
+	+ 'sum(gp.BFG_H) as BFG_H,'
+	+ 'sum(gp.BFG_K) as BFG_K,'
+	+ 'sum(gp.CG_S) as CG_S,'
+	+ 'sum(gp.CG_H) as CG_H,'
+	+ 'sum(gp.CG_K) as CG_K,'
+	+ 'sum(gp.GL_S) as GL_S,'
+	+ 'sum(gp.GL_H) as GL_H,'
+	+ 'sum(gp.GL_K) as GL_K,'
+	+ 'sum(gp.LG_S) as LG_S,'
+	+ 'sum(gp.LG_H) as LG_H,'
+	+ 'sum(gp.LG_K) as LG_K,'
+	+ 'sum(gp.MG_S) as MG_S,'
+	+ 'sum(gp.MG_H) as MG_H,'
+	+ 'sum(gp.MG_K) as MG_K,'
+	+ 'sum(gp.NG_S) as NG_S,'
+	+ 'sum(gp.NG_H) as NG_H,'
+	+ 'sum(gp.NG_K) as NG_K,'
+	+ 'sum(gp.PG_S) as PG_S,'
+	+ 'sum(gp.PG_H) as PG_H,'
+	+ 'sum(gp.PG_K) as PG_K,'
+	+ 'sum(gp.PM_S) as PM_S,'
+	+ 'sum(gp.PM_H) as PM_H,'
+	+ 'sum(gp.PM_K) as PM_K,'
+	+ 'sum(gp.RG_S) as RG_S,'
+	+ 'sum(gp.RG_H) as RG_H,'
+	+ 'sum(gp.RG_K) as RG_K,'
+	+ 'sum(gp.RL_S) as RL_S,'
+	+ 'sum(gp.RL_H) as RL_H,'
+	+ 'sum(gp.RL_K) as RL_K,'
+	+ 'sum(gp.SG_S) as SG_S,'
+	+ 'sum(gp.SG_H) as SG_H,'
+	+ 'sum(gp.SG_K) as SG_K,'
+	+ 'sum(gp.HMG_S) as HMG_S,'
+	+ 'sum(gp.HMG_H) as HMG_H,'
+	+ 'sum(gp.HMG_K) as HMG_K, '
+	+ 'sum(gp.IMPRESSIVE) as IMPRESSIVE, '
+	+ 'sum(gp.EXCELLENT) as EXCELLENT, '
+	+ 'count(1) as MATCHES_PLAYED '
+  + 'FROM GamePlayer gp ';
+	_dt = qlscache.doCache( req, sql, [], { time: 7*24*60*60*1000 } );
+	_out = {};
+	_out.data = _dt.data[0];
+	res.jsonp( _out );
 	res.end();
 } );
 
