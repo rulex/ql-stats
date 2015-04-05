@@ -117,6 +117,15 @@ $( function() {
 				} );
 			} );
 		} );
+		this.get( '#/players/:player/top', function( context ) {
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'top.html' ).replace( $( '#tab_content' ) ).then( function() {
+					TopCtrl( params );
+				} );
+			} );
+		} );
 		this.get( '#/owners', function( context ) {
 			context.render( 'owners.html', {} ).replace( $( '#content' ) ).then( function() {
 				OwnersCtrl();
@@ -131,7 +140,6 @@ $( function() {
 		//this.get( '#/owners/:owner/players', function( context ) { context.render( 'players.html', {} ).replace( $( '#content' ) ); OwnerPlayersCtrl( this.params ); } );
 		//this.get( '#/owners/:owner/games', function( context ) { context.render( 'games.html', {} ).replace( $( '#content' ) ); OwnerGamesCtrl( this.params ); } );
 		//this.get( '#/owners/:owner/players/:player', function( context ) { context.render( 'player.html', {} ).replace( $( '#content' ) ); OwnerPlayerCtrl( this.params ); } );
-		//this.get( '#/owners/:owner/top/last30days', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); OwnerTop30Ctrl( this.params ); } );
 		this.get( '#/clans', function( context ) {
 			context.render( 'clans.html', {} ).replace( $( '#content' ) ).then( function() {
 				ClansCtrl();
@@ -248,8 +256,6 @@ $( function() {
 				} );
 			} );
 		} );
-		//this.get( '#/tags/:tag/top/last30days', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); TagTop30daysCtrl( this.params ) } );
-		//this.get( '#/tags/:tag/top/all', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); TagTopAllCtrl( this.params ); } );
 		this.get( '#/tags/:tag/players', function( context ) {
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
@@ -314,9 +320,6 @@ $( function() {
 				RacePlayerCtrl( params );
 			} );
 		} );
-		//this.get( '#/top/last30days', function( context ) { context.render( 'top.html', {} ).replace( $( '#content' ) ); TopCtrl( this.params ); } );
-		//this.get( '#/duelvs/:nicks', function( context ) { context.render( 'duelvs.html', {} ).replace( $( '#content' ) ); DuelVsCtrl( this.params ); } );
-		//this.get( '#/duelvs/:nicks/:map', function( context ) { context.render( 'duelvs.html', {} ).replace( $( '#content' ) ); DuelVsCtrl( this.params ); } );
 		this.get( '#/rulesets/:ruleset/games', function( context ) {
 			params = this.params;
 			context.render( 'games.html', {} ).replace( $( '#content' ) ).then( function() {
@@ -333,6 +336,12 @@ $( function() {
 			params = this.params;
 			context.render( 'activity.html', {} ).replace( $( '#content' ) ).then( function() {
 				ActivityCtrl( params, context );
+			} );
+		} );
+		this.get( '#/top', function( context ) {
+			params = this.params;
+			context.render( 'top.html', {} ).replace( $( '#content' ) ).then( function() {
+				TopCtrl( params, context );
 			} );
 		} );
 		this.get( '#/status', function( context ) {
@@ -3494,11 +3503,71 @@ function TopCtrl( params ) {
 	onLoading();
 	setNavbarActive();
 	$( '#current_url' ).html( printLocations() );
+	gt = parseHashParams()['gt'] || 'all';
+	col = parseHashParams()['col'] || 'PLAY_TIME';
+	colFunc = parseHashParams()['colFunc'] || 'sum';
+	// append col to table
+	$( '#top_table_headers' ).append( '<th data-dynatable-column="' + col + '">' + col + '</th>' );
+	// buttons
+	// gametype btns
+	gts = [ 'all' ];
+	for( var i in GT ) {
+		gts.push( i );
+	}
+	for( var i in gts ) {
+		_gt = gts[i];
+		out = '';
+		out += '<a class="btn btn-xs btn-default" id="btn_gt_' + _gt + '" href="#/' + parseHash().join( '/' ) + '?' + mkURL2( { gt: _gt } ) + '">';
+		out += '<span class="">';
+		out += '</span> ';
+		out += _gt;
+		out += '</a>';
+		$( '#btn_gts' ).append( out );
+	}
+	// col btns
+	_cols = [
+		{ name: 'Play time', col: 'PLAY_TIME' },
+		{ name: 'Impressives', col: 'IMPRESSIVE' },
+		{ name: 'Excellents', col: 'EXCELLENT' },
+		{ name: 'Humiliations', col: 'G_K' },
+		{ name: 'Score', col: 'SCORE' },
+		{ name: 'Quits', col: 'QUIT' },
+		{ name: 'Kills', col: 'KILLS' },
+		{ name: 'Deaths', col: 'DEATHS' },
+		{ name: 'Shots fired', col: 'SHOTS' },
+	];
+	for( var i in _cols ) {
+		c = _cols[i];
+		if( c.col == col ) {
+			$( '#top_table_header' ).append( 'Top ' + c.name );
+		}
+		out = '';
+		out += '<a class="btn btn-xs btn-default" id="btn_col_' + c.col + '" href="#/' + parseHash().join( '/' ) + '?' + mkURL2( { col: c.col } ) + '">';
+		out += '<span class="">';
+		out += '</span> ';
+		out += c.name;
+		out += '</a>';
+		$( '#btn_cols' ).append( out );
+	}
+	// active btns
+	$( '#btn_gt_' + gt ).addClass( 'active' );
+	$( '#btn_col_' + col ).addClass( 'active' );
+	$( '#top_table' ).bind( 'dynatable:init', function( e, dynatable ) {
+		dynatable.sorts.add( col, -1 );
+	} );
+	// fetch it
 	$.ajax( {
-		url: getApiURL() + 'api/top/last30days/kills',
+		url: getApiURL() + 'api/' + parseHash().join( '/' ).replace( 'top', 'top50' ) + '/' + gt + '/' + colFunc + '/' + col,
 		dataType: getAjaxDataType(),
 		success: function( data ) {
-			$( '#table_top_kills' ).dynatable( {
+			list = [];
+			nr = 0;
+			for( var i in data.data ) {
+				d = data.data[i];
+				d.NR = ++nr;
+				list.push( d );
+			}
+			$( '#top_table' ).dynatable( {
 				features: {
 					sort: true,
 					perPageSelect: false,

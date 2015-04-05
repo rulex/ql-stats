@@ -810,6 +810,59 @@ app.get( '/api/players/:player/race', function( req, res ) {
 	});
 });
 
+app.get( '/api/players/:player/top50/:gametype/:colFunc/:col', function( req, res ) {
+	var queryObject = url.parse( req.url, true ).query;
+	//alt = mysql_real_escape_string( req.params.alt );
+	//col = queryObject.col || 'PLAY_TIME';
+	//colFunc = queryObject.colFunc || 'sum';
+	gt = mysql_real_escape_string( req.params.gametype ) || 'all';
+	col = mysql_real_escape_string( req.params.col ) || 'PLAY_TIME';
+	colFunc = mysql_real_escape_string( req.params.colFunc ) || 'sum';
+	//interval = queryObject.interval || 30;
+	allowedGt = [ 'all' ];
+	for( var i in GT ) {
+		allowedGt.push( i );
+	}
+	allowedCols = [ 'PLAY_TIME', 'IMPRESSIVE', 'EXCELLENT', 'KILLS', 'DEATHS', 'SHOTS', 'G_K', 'SCORE', 'QUIT' ];
+	allowedColFuncs = [ 'sum' ];
+	allowedIntervals = [ 30, 7, 1 ];
+	if( allowedGt.indexOf( gt ) == -1 || allowedCols.indexOf( col ) == -1 || allowedColFuncs.indexOf( colFunc ) == -1 ) {
+		res.jsonp( { data: [], msg: 'invalid gametype, col, colFunc' } );
+		res.end();
+	}
+	gametypeWhere = '';
+	if( gt != 'all' ) {
+		gametypeWhere = ' and g.GAME_TYPE="' + gt + '" ';
+	}
+	var sql = 'select x.*, ' +
+		'p.NAME as PLAYER, ' +
+		'p.COUNTRY as COUNTRY ' +
+		'from ' +
+		'( select ' +
+		'gp.PLAYER_ID, ' +
+		'count(1) as MATCHES_PLAYED, ' +
+		colFunc + '( ' + col + ' ) as ' + col +
+		//'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		' from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'where PLAYER_ID=(SELECT ID FROM Player WHERE NAME=?) AND g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
+		gametypeWhere +
+		'group by gp.PLAYER_ID ' +
+		'order by ' + col + ' desc limit 50 ) ' +
+		'x left join Player p on p.ID=x.PLAYER_ID ' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			conn.release();
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
+			res.end();
+		} );
+	} );
+} );
+
 app.get( '/api/games', function ( req, res ) {
 	_start = new Date().getTime();
 	var queryObject = url.parse( req.url, true ).query;
@@ -1125,65 +1178,6 @@ app.get( '/api/owners/:owner/games', function ( req, res ) {
 		} );
 	} );
 } );
-
-/*
-app.get( '/api/owners/:owner/top/last30days/kills', function ( req, res ) {
-	var owner = mysql_real_escape_string( req.params.owner );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'gp.PLAYER_ID, ' +
-		'sum(gp.KILLS) as KILLS, ' +
-		'sum(gp.DEATHS) as DEATHS, ' +
-		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
-		'sum(gp.EXCELLENT) as EXCELLENT, ' +
-		'sum(gp.G_K) as HUMILIATION, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join Player o on o.ID=g.OWNER_ID ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'where o.NAME="'+ owner +'" and g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
-		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-app.get( '/api/owners/:owner/top/last30days/ranks', function ( req, res ) {
-	var owner = mysql_real_escape_string( req.params.owner );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'gp.PLAYER_ID, ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'avg(gp.RANK) as RANK, ' +
-		'avg(gp.RANK+gp.TEAM_RANK) as RANK_TEAM_RANK, ' +
-		'avg(gp.TEAM_RANK) as TEAM_RANK, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join Player o on o.ID=g.OWNER_ID ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'where o.NAME="'+ owner +'" and g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
-		' and RANK > 0 and TEAM_RANK > 0 ' +
-		' group by gp.PLAYER_ID having MATCHES_PLAYED > 5 ' +
-		'order by RANK asc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-*/
 
 app.get( '/api/owners/:owner', function ( req, res ) {
 	var sql;
@@ -2101,62 +2095,6 @@ app.get( '/api/gametypes/:gametype/games/graphs/perweek', function( req, res ) {
 } );
 
 /*
-app.get( '/api/gametypes/:gametype/top/all/kills', function ( req, res ) {
-	var gametype = mysql_real_escape_string( req.params.gametype );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'gp.PLAYER_ID, ' +
-		'sum(gp.KILLS) as KILLS, ' +
-		'sum(gp.DEATHS) as DEATHS, ' +
-		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
-		'sum(gp.EXCELLENT) as EXCELLENT, ' +
-		'sum(gp.G_K) as HUMILIATION, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'where g.GAME_TYPE="'+ gametype +'" ' +
-		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-app.get( '/api/gametypes/:gametype/top/all/ranks', function ( req, res ) {
-	var gametype = mysql_real_escape_string( req.params.gametype );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'gp.PLAYER_ID, ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'avg(gp.RANK) as RANK, ' +
-		'avg(gp.TEAM_RANK) as TEAM_RANK, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'where g.GAME_TYPE="'+ gametype +'" ' +
-		' and RANK > 0 and TEAM_RANK > 0 ' +
-		'group by gp.PLAYER_ID having MATCHES_PLAYED > 5 ' + 
-		'order by RANK asc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-*/
-
-/*
 app.get( '/api/gametypes/:gametype/players/:player', function (req, res) {
 	var gametype = mysql_real_escape_string( req.params.gametype );
   var nick = mysql_real_escape_string( req.params.player );
@@ -2728,120 +2666,6 @@ app.get( '/api/tags/:tag/activity/month/players', function( req, res ) {
 	res.end();
 } );
 
-/*
-app.get( '/api/tags/:tag/top/last30days/kills', function ( req, res ) {
-	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'gp.PLAYER_ID, ' +
-		'sum(gp.KILLS) as KILLS, ' +
-		'sum(gp.DEATHS) as DEATHS, ' +
-		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
-		'sum(gp.EXCELLENT) as EXCELLENT, ' +
-		'sum(gp.G_K) as HUMILIATION, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
-		'where gt.TAG_ID="'+ tag +'" and g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
-		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-app.get( '/api/tags/:tag/top/last30days/ranks', function ( req, res ) {
-	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'gp.PLAYER_ID, ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'avg(gp.RANK+gp.TEAM_RANK) as RANK_TEAM_RANK, ' +
-		'avg(gp.RANK) as RANK, ' +
-		'avg(gp.TEAM_RANK) as TEAM_RANK, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
-		'where gt.TAG_ID="'+ tag +'" and g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
-		' and RANK > 0 and TEAM_RANK > 0 ' +
-		'group by gp.PLAYER_ID having MATCHES_PLAYED > 5 ' + 
-		'order by RANK asc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-app.get( '/api/tags/:tag/top/all/kills', function ( req, res ) {
-	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'gp.PLAYER_ID, ' +
-		'sum(gp.KILLS) as KILLS, ' +
-		'sum(gp.DEATHS) as DEATHS, ' +
-		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
-		'sum(gp.EXCELLENT) as EXCELLENT, ' +
-		'sum(gp.G_K) as HUMILIATION, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
-		'where gt.TAG_ID="'+ tag +'" ' +
-		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-app.get( '/api/tags/:tag/top/all/ranks', function ( req, res ) {
-	var tag = mysql_real_escape_string( req.params.tag );
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'gp.PLAYER_ID, ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'avg(gp.RANK) as RANK, ' +
-		'avg(gp.TEAM_RANK) as TEAM_RANK, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'join GameTag gt on gt.PUBLIC_ID=g.PUBLIC_ID ' +
-		'where gt.TAG_ID="'+ tag +'" ' +
-		' and RANK > 0 and TEAM_RANK > 0 ' +
-		'group by gp.PLAYER_ID having MATCHES_PLAYED > 5 ' + 
-		'order by RANK asc limit 50) x left join Player p on p.ID=x.PLAYER_ID' +
-		'';
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-} );
-*/
-
 app.get( '/api/maps/:map', function( req, res ) {
   var map = mysql_real_escape_string( req.params.map );
 	var sql = 'select /*api/maps/X*/ GAME_TYPE, count(GAME_TYPE) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where m.NAME="'+ map +'" group by GAME_TYPE';
@@ -2967,41 +2791,50 @@ app.get( '/api/clans/:clan/players', function( req, res ) {
 	} );
 } );
 
-app.get( '/api/top/last30days/kills', function( req, res ) {
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'count(*) as MATCHES_PLAYED, ' +
+app.get( '/api/top50/:gametype/:colFunc/:col', function( req, res ) {
+	var queryObject = url.parse( req.url, true ).query;
+	console.log( 'queryObject' );
+	console.log( queryObject );
+	//alt = mysql_real_escape_string( req.params.alt );
+	//col = queryObject.col || 'PLAY_TIME';
+	//colFunc = queryObject.colFunc || 'sum';
+	gt = mysql_real_escape_string( req.params.gametype ) || 'all';
+	col = mysql_real_escape_string( req.params.col ) || 'PLAY_TIME';
+	colFunc = mysql_real_escape_string( req.params.colFunc ) || 'sum';
+	//interval = queryObject.interval || 30;
+	allowedGt = [ 'all' ];
+	for( var i in GT ) {
+		allowedGt.push( i );
+	}
+	allowedCols = [ 'PLAY_TIME', 'IMPRESSIVE', 'EXCELLENT', 'KILLS', 'DEATHS', 'SHOTS', 'G_K', 'SCORE', 'QUIT' ];
+	allowedColFuncs = [ 'sum' ];
+	allowedIntervals = [ 30, 7, 1 ];
+	if( allowedGt.indexOf( gt ) == -1 || allowedCols.indexOf( col ) == -1 || allowedColFuncs.indexOf( colFunc ) == -1 ) {
+		res.jsonp( { data: [], msg: 'invalid gametype, col, colFunc' } );
+		res.end();
+	}
+	gametypeWhere = '';
+	if( gt != 'all' ) {
+		gametypeWhere = ' and g.GAME_TYPE="' + gt + '" ';
+	}
+	var sql = 'select x.*, ' +
+		'p.NAME as PLAYER, ' +
+		'p.COUNTRY as COUNTRY ' +
+		'from ' +
+		'( select ' +
 		'gp.PLAYER_ID, ' +
-		'sum(gp.KILLS) as KILLS, ' +
-		'sum(gp.DEATHS) as DEATHS, ' +
-		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
-		'sum(gp.EXCELLENT) as EXCELLENT, ' +
-		'sum(gp.G_K) as HUMILIATION, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
+		'count(1) as MATCHES_PLAYED, ' +
+		colFunc + '( ' + col + ' ) as ' + col +
+		//'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		' from Game g ' +
 		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
 		'where g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
-		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID ' +
+		gametypeWhere +
+		'group by gp.PLAYER_ID ' +
+		'order by ' + col + ' desc limit 50 ) ' +
+		'x left join Player p on p.ID=x.PLAYER_ID ' +
 		'';
-	_dt = qlscache.doCache( req, sql, [], { time: 7*24*60*60*1000 } );
-	res.jsonp( _dt );
-	res.end();
-} );
-
-app.get( '/api/top/all/kills', function( req, res ) {
-	var sql = 'select x.*, p.NAME as PLAYER from (select ' +
-		'count(*) as MATCHES_PLAYED, ' +
-		'gp.PLAYER_ID, ' +
-		'sum(gp.KILLS) as KILLS, ' +
-		'sum(gp.DEATHS) as DEATHS, ' +
-		'sum(gp.IMPRESSIVE) as IMPRESSIVE, ' +
-		'sum(gp.EXCELLENT) as EXCELLENT, ' +
-		'sum(gp.G_K) as HUMILIATION, ' +
-		'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
-		'from Game g ' +
-		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
-		'group by gp.PLAYER_ID order by KILLS desc limit 50) x left join Player p on p.ID=x.PLAYER_ID ' +
-		'';
-	_dt = qlscache.doCache( req, sql, [], { time: 7*24*60*60*1000 } );
+	_dt = qlscache.doCache( req, sql, [], { time: 24*60*60*1000 } );
 	res.jsonp( _dt );
 	res.end();
 } );
