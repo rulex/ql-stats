@@ -12,7 +12,6 @@ var zlib = require( 'zlib' );
 var Q = require( 'q' );
 var log4js = require( 'log4js' );
 var race = require('./racecache.js');
-var allow_update = false;
 var bodyParser = require( 'body-parser' );
 var program = require( 'commander' );
 var compress = require( 'compression' );
@@ -22,9 +21,12 @@ var logger = require ( 'morgan' );
 program
 	.version( '0.0.3' )
 	.option( '-c, --config <file>', 'Use a different config file. Default ./cfg.json' )
+	.option( '-u, --allow-update', 'Allow api/players/X/update route' )
 	.option( '-l, --loglevel <LEVEL>', 'Default is DEBUG. levels: TRACE, DEBUG, INFO, WARN, ERROR, FATAL' )
 	.option( '-n, --nologin', 'Don\'t log in to quakelive.com. For use with */update & */get routes' )
 	.parse( process.argv );
+
+var allow_update = program['allow-update'] || false;
 
 _logger = log4js.getLogger( 'api' );
 _logger.setLevel( log4js.levels[program.level] || log4js.levels.DEBUG );
@@ -73,6 +75,9 @@ var GT = {
 	fctf: 'fctf',
 }
 
+var allowedCols = [ 'PLAY_TIME', 'IMPRESSIVE', 'EXCELLENT', 'ACC', 'KILLS', 'DEATHS', 'SHOTS', 'G_K', 'SCORE', 'QUIT', 'RL_K', 'LG_K', 'RG_K', 'RG_A', 'LG_A', 'DAMAGE_DEALT', 'DAMAGE_TAKEN', 'RATIO', 'NET_DAMAGE', 'DPS', 'RANK' ];
+var allowedColFuncs = [ 'sum', 'avg' ];
+
 // counter
 var requests_counter = 0;
 var requests_counter_api = 0;
@@ -93,7 +98,6 @@ if( 'development' == env ) {
 	http_cache_time = 0;
 }
 if( 'production' == env ) {
-	allow_update    = true;
 	maxAge_public   = 24*60*60*1000;
 	maxAge_api      = 60*1000;
 	maxAge_api_long = 60*60*1000;
@@ -324,19 +328,6 @@ app.get( '/api/players/:player/hostedgames', function( req, res ) {
   + 'order by g.GAME_TIMESTAMP desc '
   + 'limit ' + _offset + ', ' + _perPage + ''
 	;
-	/*
-	dbpool.getConnection( function( err, conn ) {
-		if( err ) { _logger.error( err ); }
-		conn.query( sql, [owner], function( err, rows ) {
-			if( err ) { _logger.error( err ); }
-			if( err ) { _logger.error( err ); }
-			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
-			res.jsonp( { data: rows } );
-			res.end();
-			conn.release();
-		} );
-	} );
-	*/
 	sql2 = 'select count(OWNER_ID) as totalRecordCount from Game where OWNER_ID=( select ID from Player where NAME="' + req.params.player + '" )';
 	//sql2 = 'select count(ID) as totalRecordCount from Game';
 	//sql = sql.join( ' ' );
@@ -346,6 +337,56 @@ app.get( '/api/players/:player/hostedgames', function( req, res ) {
 			if( err ) { _logger.error( err ); }
 			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
 			res.jsonp( { data: resulty[0], queryRecordCount: resulty[1][0].totalRecordCount, totalRecordCount: resulty[1][0].totalRecordCount, ms: ( new Date().getTime() - _start ) } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+
+app.get( '/api/players/:player/hostedgames/maps', function( req, res ) {
+	var sql = 'select /*api/maps*/ m.NAME as MAP, g.MAP_ID, count(g.ID) as MATCHES_PLAYED from Game g left join Map m on m.ID=g.MAP_ID where OWNER_ID=(select ID from Player where NAME=?) group by MAP_ID';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+
+app.get( '/api/players/:player/hostedgames/overview', function ( req, res ) {
+	var sql = 'select /*api/players/:player/hostedgames/overview*/';
+	sql += 'GAME_TYPE, ';
+	sql += 'count(1) as MATCHES_PLAYED, ';
+	sql += 'sum(GAME_LENGTH) as GAME_LENGTH, ';
+	sql += 'sum(TOTAL_KILLS) as TOTAL_KILLS ';
+	sql += 'from Game g ';
+	sql += 'where g.OWNER_ID=( select ID from Player where NAME=? ) ';
+	sql += 'group by GAME_TYPE ';
+	sql += 'order by null ';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
+			res.end();
+			conn.release();
+		} );
+	} );
+} );
+
+app.get( '/api/players/:player/hostedgames/games/graphs/perweek', function( req, res ) {
+	var sql = 'select year(FROM_UNIXTIME(GAME_TIMESTAMP)) as year, week(FROM_UNIXTIME(GAME_TIMESTAMP),1) as week, count(GAME_TIMESTAMP) as c from Game where OWNER_ID=( select ID from Player where NAME=? ) group by year, week';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
 			res.end();
 			conn.release();
 		} );
@@ -820,11 +861,10 @@ app.get( '/api/players/:player/top50/:gametype/:colFunc/:col', function( req, re
 	colFunc = mysql_real_escape_string( req.params.colFunc ) || 'sum';
 	//interval = queryObject.interval || 30;
 	allowedGt = [ 'all' ];
+	sort = queryObject.sort || 'desc';
 	for( var i in GT ) {
 		allowedGt.push( i );
 	}
-	allowedCols = [ 'PLAY_TIME', 'IMPRESSIVE', 'EXCELLENT', 'KILLS', 'DEATHS', 'SHOTS', 'G_K', 'SCORE', 'QUIT' ];
-	allowedColFuncs = [ 'sum' ];
 	allowedIntervals = [ 30, 7, 1 ];
 	if( allowedGt.indexOf( gt ) == -1 || allowedCols.indexOf( col ) == -1 || allowedColFuncs.indexOf( colFunc ) == -1 ) {
 		res.jsonp( { data: [], msg: 'invalid gametype, col, colFunc' } );
@@ -834,6 +874,19 @@ app.get( '/api/players/:player/top50/:gametype/:colFunc/:col', function( req, re
 	if( gt != 'all' ) {
 		gametypeWhere = ' and g.GAME_TYPE="' + gt + '" ';
 	}
+	mingamesWhere = '';
+	if( colFunc == 'avg' ) {
+		mingamesWhere = ' having MATCHES_PLAYED > 5 ';
+	}
+	col_name = col;
+	// col rewrites
+	if( col == 'ACC' ) { col = 'HITS/SHOTS*100'; }
+	else if( col == 'RG_A' ) { col = 'RG_H/RG_S*100'; }
+	else if( col == 'LG_A' ) { col = 'LG_H/LG_S*100'; }
+	else if( col == 'RATIO' ) { col = 'KILLS/DEATHS'; }
+	else if( col == 'NET_DAMAGE' ) { col = 'DAMAGE_DEALT-DAMAGE_TAKEN'; }
+	else if( col == 'DPS' ) { col = 'DAMAGE_DEALT/PLAY_TIME'; }
+	else if( col == 'RANK' ) { col = 'case when RANK = -1 then 16 else RANK end '; }
 	var sql = 'select x.*, ' +
 		'p.NAME as PLAYER, ' +
 		'p.COUNTRY as COUNTRY ' +
@@ -841,14 +894,82 @@ app.get( '/api/players/:player/top50/:gametype/:colFunc/:col', function( req, re
 		'( select ' +
 		'gp.PLAYER_ID, ' +
 		'count(1) as MATCHES_PLAYED, ' +
-		colFunc + '( ' + col + ' ) as ' + col +
+		'round(' + colFunc + '( ' + col + ' ),2) as ' + col_name +
 		//'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
 		' from Game g ' +
 		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
 		'where PLAYER_ID=(SELECT ID FROM Player WHERE NAME=?) AND g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
 		gametypeWhere +
+		additionalWhere +
 		'group by gp.PLAYER_ID ' +
-		'order by ' + col + ' desc limit 50 ) ' +
+		mingamesWhere +
+		'order by ' + col_name + ' ' + sort + ' limit 50 ) ' +
+		'x left join Player p on p.ID=x.PLAYER_ID ' +
+		'';
+	dbpool.getConnection( function( err, conn ) {
+		if( err ) { _logger.error( err ); }
+		conn.query( sql, [req.params.player], function( err, resulty ) {
+			if( err ) { _logger.error( err ); }
+			conn.release();
+			res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+			res.jsonp( { data: resulty } );
+			res.end();
+		} );
+	} );
+} );
+
+app.get( '/api/players/:player/hostedgames/top50/:gametype/:colFunc/:col', function( req, res ) {
+	var queryObject = url.parse( req.url, true ).query;
+	//alt = mysql_real_escape_string( req.params.alt );
+	//col = queryObject.col || 'PLAY_TIME';
+	//colFunc = queryObject.colFunc || 'sum';
+	gt = mysql_real_escape_string( req.params.gametype ) || 'all';
+	col = mysql_real_escape_string( req.params.col ) || 'PLAY_TIME';
+	colFunc = mysql_real_escape_string( req.params.colFunc ) || 'sum';
+	//interval = queryObject.interval || 30;
+	sort = queryObject.sort || 'desc';
+	allowedGt = [ 'all' ];
+	for( var i in GT ) {
+		allowedGt.push( i );
+	}
+	allowedIntervals = [ 30, 7, 1 ];
+	if( allowedGt.indexOf( gt ) == -1 || allowedCols.indexOf( col ) == -1 || allowedColFuncs.indexOf( colFunc ) == -1 ) {
+		res.jsonp( { data: [], msg: 'invalid gametype, col, colFunc' } );
+		res.end();
+	}
+	gametypeWhere = '';
+	if( gt != 'all' ) {
+		gametypeWhere = ' and g.GAME_TYPE="' + gt + '" ';
+	}
+	mingamesWhere = '';
+	if( colFunc == 'avg' ) {
+		mingamesWhere = ' having MATCHES_PLAYED > 5 ';
+	}
+	col_name = col;
+	// col rewrites
+	if( col == 'ACC' ) { col = 'HITS/SHOTS*100'; }
+	else if( col == 'RG_A' ) { col = 'RG_H/RG_S*100'; }
+	else if( col == 'LG_A' ) { col = 'LG_H/LG_S*100'; }
+	else if( col == 'RATIO' ) { col = 'KILLS/DEATHS'; }
+	else if( col == 'NET_DAMAGE' ) { col = 'DAMAGE_DEALT-DAMAGE_TAKEN'; }
+	else if( col == 'DPS' ) { col = 'DAMAGE_DEALT/PLAY_TIME'; }
+	else if( col == 'RANK' ) { col = 'case when RANK = -1 then 16 else RANK end '; }
+	var sql = 'select x.*, ' +
+		'p.NAME as PLAYER, ' +
+		'p.COUNTRY as COUNTRY ' +
+		'from ' +
+		'( select ' +
+		'gp.PLAYER_ID, ' +
+		'count(1) as MATCHES_PLAYED, ' +
+		'round(' + colFunc + '( ' + col + ' ),2) as ' + col_name +
+		//'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
+		' from Game g ' +
+		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
+		'where OWNER_ID=(SELECT ID FROM Player WHERE NAME=?) AND g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
+		gametypeWhere +
+		'group by gp.PLAYER_ID ' +
+		mingamesWhere +
+		'order by ' + col_name + ' ' + sort + ' limit 50 ) ' +
 		'x left join Player p on p.ID=x.PLAYER_ID ' +
 		'';
 	dbpool.getConnection( function( err, conn ) {
@@ -1277,6 +1398,7 @@ app.get( '/api/places/countries/:country/activity/week/matches', function( req, 
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/countries/:country/activity/week/players', function( req, res ) {
 	var sql = [];
 	sql.push( 'select /*api/places/countries/X/activity/week/players*/' );
@@ -1330,6 +1452,7 @@ app.get( '/api/places/countries/:country/activity/week/players', function( req, 
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/countries/:country/activity/month/matches', function( req, res ) {
 	var sql = [];
 	sql.push( 'select /*api/places/countries/X/activity/month/matches*/' );
@@ -1368,6 +1491,7 @@ app.get( '/api/places/countries/:country/activity/month/matches', function( req,
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/countries/:country/activity/month/players', function( req, res ) {
 	var sql = [];
 	sql.push( 'select /*api/places/countries/X/activity/month/players*/' );
@@ -1419,6 +1543,7 @@ app.get( '/api/places/countries/:country/activity/month/players', function( req,
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/regions/:region/activity/week/matches', function( req, res ) {
 	regions = [];
 	r = req.params.region;
@@ -1466,6 +1591,7 @@ app.get( '/api/places/regions/:region/activity/week/matches', function( req, res
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/regions/:region/activity/week/players', function( req, res ) {
 	regions = [];
 	r = req.params.region;
@@ -1527,6 +1653,7 @@ app.get( '/api/places/regions/:region/activity/week/players', function( req, res
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/regions/:region/activity/month/matches', function( req, res ) {
 	regions = [];
 	r = req.params.region;
@@ -1573,6 +1700,7 @@ app.get( '/api/places/regions/:region/activity/month/matches', function( req, re
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/regions/:region/activity/month/players', function( req, res ) {
 	regions = [];
 	r = req.params.region;
@@ -1632,6 +1760,7 @@ app.get( '/api/places/regions/:region/activity/month/players', function( req, re
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/subregions/:subregion/activity/week/matches', function( req, res ) {
 	subregions = [];
 	r = req.params.subregion.replace( /\+/g, ' ' );
@@ -1680,6 +1809,7 @@ app.get( '/api/places/subregions/:subregion/activity/week/matches', function( re
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/subregions/:subregion/activity/week/players', function( req, res ) {
 	subregions = [];
 	r = req.params.subregion.replace( /\+/g, ' ' );
@@ -1741,6 +1871,7 @@ app.get( '/api/places/subregions/:subregion/activity/week/players', function( re
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/subregions/:subregion/activity/month/matches', function( req, res ) {
 	subregions = [];
 	r = req.params.subregion.replace( /\+/g, ' ' );
@@ -1788,6 +1919,7 @@ app.get( '/api/places/subregions/:subregion/activity/month/matches', function( r
 	res.jsonp( _dt );
 	res.end();
 } );
+
 app.get( '/api/places/subregions/:subregion/activity/month/players', function( req, res ) {
 	subregions = [];
 	r = req.params.subregion.replace( /\+/g, ' ' );
@@ -1852,10 +1984,10 @@ app.get( '/api/places/subregions/:subregion/activity/month/players', function( r
 app.get( '/api/places/countries/:country/overview', function ( req, res ) {
 	sql = [];
 	sql.push( 'select' );
-	sql.push( '	g.GAME_TYPE,' );
-	sql.push( '	count(1) as MATCHES_PLAYED,' );
-	sql.push( '	sum(GAME_LENGTH) as GAME_LENGTH,' );
-	sql.push( '	sum(TOTAL_KILLS) as TOTAL_KILLS' );
+	sql.push( ' g.GAME_TYPE,' );
+	sql.push( ' count(1) as MATCHES_PLAYED,' );
+	sql.push( ' sum(GAME_LENGTH) as GAME_LENGTH,' );
+	sql.push( ' sum(TOTAL_KILLS) as TOTAL_KILLS' );
 	sql.push( 'from Game g' );
 	sql.push( 'left join GamePlayer gp' );
 	sql.push( 'on gp.GAME_ID=g.ID' );
@@ -2803,11 +2935,10 @@ app.get( '/api/top50/:gametype/:colFunc/:col', function( req, res ) {
 	colFunc = mysql_real_escape_string( req.params.colFunc ) || 'sum';
 	//interval = queryObject.interval || 30;
 	allowedGt = [ 'all' ];
+	sort = queryObject.sort || 'desc';
 	for( var i in GT ) {
 		allowedGt.push( i );
 	}
-	allowedCols = [ 'PLAY_TIME', 'IMPRESSIVE', 'EXCELLENT', 'KILLS', 'DEATHS', 'SHOTS', 'G_K', 'SCORE', 'QUIT' ];
-	allowedColFuncs = [ 'sum' ];
 	allowedIntervals = [ 30, 7, 1 ];
 	if( allowedGt.indexOf( gt ) == -1 || allowedCols.indexOf( col ) == -1 || allowedColFuncs.indexOf( colFunc ) == -1 ) {
 		res.jsonp( { data: [], msg: 'invalid gametype, col, colFunc' } );
@@ -2817,6 +2948,19 @@ app.get( '/api/top50/:gametype/:colFunc/:col', function( req, res ) {
 	if( gt != 'all' ) {
 		gametypeWhere = ' and g.GAME_TYPE="' + gt + '" ';
 	}
+	mingamesWhere = '';
+	if( colFunc == 'avg' ) {
+		mingamesWhere = ' having MATCHES_PLAYED > 5 ';
+	}
+	col_name = col;
+	// col rewrites
+	if( col == 'ACC' ) { col = 'HITS/SHOTS*100'; }
+	else if( col == 'RG_A' ) { col = 'RG_H/RG_S*100'; }
+	else if( col == 'LG_A' ) { col = 'LG_H/LG_S*100'; }
+	else if( col == 'RATIO' ) { col = 'KILLS/DEATHS'; }
+	else if( col == 'NET_DAMAGE' ) { col = 'DAMAGE_DEALT-DAMAGE_TAKEN'; }
+	else if( col == 'DPS' ) { col = 'DAMAGE_DEALT/PLAY_TIME'; }
+	else if( col == 'RANK' ) { col = 'case when RANK = -1 then 16 else RANK end'; }
 	var sql = 'select x.*, ' +
 		'p.NAME as PLAYER, ' +
 		'p.COUNTRY as COUNTRY ' +
@@ -2824,14 +2968,15 @@ app.get( '/api/top50/:gametype/:colFunc/:col', function( req, res ) {
 		'( select ' +
 		'gp.PLAYER_ID, ' +
 		'count(1) as MATCHES_PLAYED, ' +
-		colFunc + '( ' + col + ' ) as ' + col +
+		'round(' + colFunc + '( ' + col + ' ),2) as ' + col_name +
 		//'round(avg(gp.HITS/gp.SHOTS)*100,2) as ACC ' +
 		' from Game g ' +
 		'join GamePlayer gp on gp.GAME_ID=g.ID ' +
 		'where g.GAME_TIMESTAMP > UNIX_TIMESTAMP( DATE_SUB( NOW(), INTERVAL 30 day ) ) ' +
 		gametypeWhere +
 		'group by gp.PLAYER_ID ' +
-		'order by ' + col + ' desc limit 50 ) ' +
+		mingamesWhere +
+		'order by ' + col_name + ' ' + sort + ' limit 50 ) ' +
 		'x left join Player p on p.ID=x.PLAYER_ID ' +
 		'';
 	_dt = qlscache.doCache( req, sql, [], { time: 24*60*60*1000 } );
@@ -2980,7 +3125,6 @@ app.get( '/api/race/players/:player', function (req, res) {
   var _ruleset = queryObject.ruleset == "vql" ? 2 : 0;
   var _weapons = queryObject.weapons == "off" ? 1 : 0;
   var _mapName = queryObject.map;
-
   sql = "select m.NAME MAP,p.NAME PLAYER_NICK,p.NAME PLAYER,r.SCORE,from_unixtime(r.GAME_TIMESTAMP) GAME_TIMESTAMP,r.RANK,g.PUBLIC_ID, " +
     " leader.NAME LEADER_NICK,best.SCORE LEADER_SCORE" +
     " from Race r inner join Player p on p.ID=r.PLAYER_ID inner join Map m on m.ID=r.MAP_ID left outer join Game g on g.ID=r.GAME_ID " +
@@ -2989,11 +3133,10 @@ app.get( '/api/race/players/:player', function (req, res) {
   if (queryObject.map)
     sql += " and m.NAME=?";
   sql += " order by m.NAME";
-
   dbpool.getConnection(function(err, conn) {
     conn.query(sql, [_playerNick, _ruleset + _weapons, _mapName], function(err2, rows) {
-      res.set('Cache-Control', 'public, max-age=' + http_cache_time);
-      res.jsonp({ data: { ruleset: _ruleset ? "vql" : "pql", weapons: _weapons ? "off" : "on", scores: rows } });
+      res.set( 'Cache-Control', 'public, max-age=' + http_cache_time );
+      res.jsonp( { data: { ruleset: _ruleset ? "vql" : "pql", weapons: _weapons ? "off" : "on", scores: rows } } );
       conn.release();
       res.end();
     });
@@ -3275,6 +3418,24 @@ app.get( '/api/weapons', function( req, res ) {
 	res.end();
 } );
 
+app.get( '/api/players/:player/currentgame', function( req, res ) {
+	player = (req.params.player);
+	var u = 'http://www.quakelive.com/browser/list?filter=';
+	var s1 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":0,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
+	var s2 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":1,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
+	var b1 = Buffer(s1).toString('base64');
+	var b2 = Buffer(s2).toString('base64');
+	var searchpublicreq;
+	searchpublicreq = (u) + (b1);
+	searchprivatereq = (u) + (b2);
+	searchpublic(searchpublicreq , res);
+});
+
+app.get( '*', function( req, res ) {
+	res.jsonp( { data: [], msg: 'no such route, bro' } );
+	res.end();
+});
+
 app.listen( cfg.api.port );
 
 // escape chars
@@ -3318,133 +3479,129 @@ function get_game( ldcore, game_public_id ) {
 }
 
 // currentgame function and route
-app.get('/api/players/:player/currentgame', function (req, res) {
-    player = (req.params.player);
-    var u = 'http://www.quakelive.com/browser/list?filter=';
-    var s1 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":0,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
-    var s2 = '{\"arena_type\":\"\",\"filters\":{\"arena\":\"\",\"difficulty\":\"any\",\"game_type\":\"any\",\"group\":\"all\",\"invitation_only\":0,\"location\":\"ALL\",\"premium_only\":0,\"private\":1,\"ranked\":\"any\",\"state\":\"any\"},\"game_types\":[5,4,3,0,1,9,10,11,8,6],\"ig\":0,\"players\":[\"' + (req.params.player) + '\"]}';
-    var b1 = Buffer(s1).toString('base64');
-    var b2 = Buffer(s2).toString('base64');
-    var searchpublicreq;
-    searchpublicreq = (u) + (b1);
-    searchprivatereq = (u) + (b2);
-    searchpublic(searchpublicreq , res);
-});
 
 function searchpublic(searchpublicreq, res) {
-    request(searchpublicreq, function (error, response, body) {
-        if(!error && response.statusCode == 200) {
-            var x = (body);
-            var playergame = JSON.parse(x);
-            var a = JSON.parse(x);
-            var str = JSON.stringify(a);
-            //todo ALTER THIS with better method eg /public_id":(\d+)
-            var regexp = /public_id/ig;
-            var matches_array = str.match(regexp);
-						if(matches_array == null) {
-							searchprivate(searchprivatereq, res);
-						}
-						else {
-							var getcurrentgame;
-							getcurrentgame = (a.servers[0].public_id);
-							getmatchdetails(getcurrentgame, res);
-						}
-        }
-    });
+	//console.log( 'searchpublic' );
+	request( searchpublicreq, function( error, response, body ) {
+		if( !error && response.statusCode == 200 ) {
+			var x = (body);
+			var playergame = JSON.parse(x);
+			var a = JSON.parse(x);
+			var str = JSON.stringify(a);
+			//todo ALTER THIS with better method eg /public_id":(\d+)
+			var regexp = /public_id/ig;
+			var matches_array = str.match( regexp );
+			if( matches_array == null ) {
+				searchprivate( searchprivatereq, res );
+			}
+			else {
+				var getcurrentgame;
+				getcurrentgame = (a.servers[0].public_id);
+				getmatchdetails( getcurrentgame, res );
+			}
+		}
+	});
 };
 
-function searchprivate (searchprivatereq, res) {
-    request(searchprivatereq, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            var x = (body);
-            var playergame = JSON.parse(x);
-            var a = JSON.parse(x);
-            var str = JSON.stringify(a);
-            //todo ALTER THIS with better method /public_id":(\d+)
-            var regexp = /public_id/ig;
-            var matches_array = str.match(regexp);
-            if(matches_array == null) {
-								res.set( 'Cache-Control', 'public, max-age=120' );
-								res.jsonp( { data: { } } );
-								res.end();
-            }
-						else {
-                var getcurrentgame;
-                getcurrentgame = (a.servers[0].public_id);
-                getmatchdetails(getcurrentgame, res);
-            }
-        }
-    });
+function searchprivate( searchprivatereq, res ) {
+	//console.log( 'searchprivate' );
+	request(searchprivatereq, function( error, response, body ) {
+		if( !error && response.statusCode == 200 ) {
+			var x = (body);
+			var playergame = JSON.parse(x);
+			var a = JSON.parse(x);
+			var str = JSON.stringify(a);
+			//todo ALTER THIS with better method /public_id":(\d+)
+			var regexp = /public_id/ig;
+			var matches_array = str.match(regexp);
+			if( matches_array == null ) {
+				res.set( 'Cache-Control', 'public, max-age=240' );
+				res.jsonp( { data: { } } );
+				res.end();
+			}
+			else {
+				var getcurrentgame;
+				getcurrentgame = (a.servers[0].public_id);
+				getmatchdetails( getcurrentgame, res );
+			}
+		}
+	});
 };
 
+function getCountry( c ) {
+	for( var i in Countries ) {
+		if( Countries[i].cca2 == c.toUpperCase() ) {
+			return Countries[i];
+		}
+	}
+	return {};
+}
 
 // use on sucess of search
 // TODO add error check and for usuage outside currentgame route
 function getmatchdetails( getcurrentgame, res ) {
-    var pid = 'http://quakelive.com/browser/details?ids=' + ( getcurrentgame );
-    request(pid, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            var x = (body);
-            var a = x.substring(1, x.length - 1);  // i don't like arrays :)
-            var b = JSON.parse(a);
-/*
- TODO Add player(s) score(s): can use b.players.PLAYERNAME.score Change to set vars via loop
-*/
-            // setup vars
-            var insta = (b.g_instagib);
-            var gtype = (b.game_type_title);
-            var ruleset = (b.ruleset);
-            var map = (b.map_title);
-            var location = (b.location_id);
-            var red = (b.g_redscore);
-            var blue = (b.g_bluescore);
-            var pubid = (b.public_id);
-            var host = (b.host_name);
-            var ip = (b.host_address);
-            var owner = (b.owner);
-            var gamestate = (b.g_gamestate);
-            var numplayers = (b.num_players);
-            var fraglimit = (b.fraglimit);
-            var caplimit = (b.capturelimit);
-            var timelimit = (b.timelimit);
-            var premium = (b.premium);
-            var pass = (b.g_needpass);
-            var teamsize = (b.teamsize);
-            var scorelimit = (b.scorelimit);
-            var needpass = '';
-            var needprem ='';
-            var rulesettype ='';
-            var maxclients = (b.max_clients);
-            var num_clients = (b.num_clients);
-            var slotsfree = (maxclients) - (num_clients);
-            if (gamestate != 'IN_PROGRESS') {var gamestate = 'Not Started'}
-            if (ruleset = '0') {var rulesettype = 'VQL';}
-            if (ruleset != '0' ) { var rulesettype = ' PQL';}
-            if (insta != '0' ) { var gtype = 'Insta ' + gtype;}
-            if (pass != '0' ) {var needpass = ' Need Pass';}
-            if (premium != '0' ) { var needprem = ' Need Prem' ;}
-            var starttime = (b.g_levelstarttime);
-//use?  var currenttime = Math.round(+new Date()/1000); //unixtime
-            var expectedendtime = (b.g_levelstarttime) + (timelimit * 60 )  ;
-// todo change to better method
-            var newstarttime = new Date(starttime * 1000 );
-            var newhours = newstarttime.getHours();
-            var newmins  = newstarttime.getMinutes();
-            var newsec   = newstarttime.getSeconds();
-            var newstarttimeformat = newhours + ':' + newmins + ':' + newsec;
-            var newendtime = new Date(expectedendtime * 1000 );
-            var newendhours = newendtime.getHours();
-            var newendmins  = newendtime.getMinutes();
-            var newendsec   = newendtime.getSeconds();
-            var newendtimeformat = newendhours + ':' + newendmins + ':' + newendsec;
-            var startendtime = ' Start: ' + newstarttimeformat + ' End: ' + newendtimeformat;
-// todo fix output
-            foundgamedata = (player + ' at: /connect ' + ip + ' GameType: ' + gtype + ' ' + startendtime + ' Free Slots: ' + slotsfree + needpass + needprem + ' join them at: http://www.quakelive.com/#!join/' + pubid) ;
-						res.set( 'Cache-Control', 'public, max-age=120' );
-						res.jsonp( b );
-						res.end();
-        }
-    });
+	console.log( 'getmatchdetails' );
+	var pid = 'http://quakelive.com/browser/details?ids=' + ( getcurrentgame );
+	request(pid, function( error, response, body ) {
+		if( !error && response.statusCode == 200 ) {
+			var x = (body);
+			var a = x.substring(1, x.length - 1);
+			var b = JSON.parse(a);
+			// setup vars
+			var insta = (b.g_instagib);
+			var gtype = (b.game_type_title);
+			var ruleset = (b.ruleset);
+			var map = (b.map_title);
+			var location = (b.location_id);
+			var red = (b.g_redscore);
+			var blue = (b.g_bluescore);
+			var pubid = (b.public_id);
+			var host = (b.host_name);
+			var ip = (b.host_address);
+			var owner = (b.owner);
+			var gamestate = (b.g_gamestate);
+			var numplayers = (b.num_players);
+			var fraglimit = (b.fraglimit);
+			var caplimit = (b.capturelimit);
+			var timelimit = (b.timelimit);
+			var premium = (b.premium);
+			var pass = (b.g_needpass);
+			var teamsize = (b.teamsize);
+			var scorelimit = (b.scorelimit);
+			var needpass = '';
+			var needprem ='';
+			var rulesettype ='';
+			var maxclients = (b.max_clients);
+			var num_clients = (b.num_clients);
+			var slotsfree = (maxclients) - (num_clients);
+			if (gamestate != 'IN_PROGRESS') {var gamestate = 'Not Started'}
+			if (ruleset = '0') {var rulesettype = 'VQL';}
+			if (ruleset != '0' ) { var rulesettype = ' PQL';}
+			if (insta != '0' ) { var gtype = 'Insta ' + gtype;}
+			if (pass != '0' ) {var needpass = ' Need Pass';}
+			if (premium != '0' ) { var needprem = ' Need Prem' ;}
+			var starttime = (b.g_levelstarttime);
+			//use?  var currenttime = Math.round(+new Date()/1000); //unixtime
+			var expectedendtime = (b.g_levelstarttime) + (timelimit * 60 )  ;
+			// todo change to better method
+			var newstarttime = new Date(starttime * 1000 );
+			var newhours = newstarttime.getHours();
+			var newmins  = newstarttime.getMinutes();
+			var newsec   = newstarttime.getSeconds();
+			var newstarttimeformat = newhours + ':' + newmins + ':' + newsec;
+			var newendtime = new Date(expectedendtime * 1000 );
+			var newendhours = newendtime.getHours();
+			var newendmins  = newendtime.getMinutes();
+			var newendsec   = newendtime.getSeconds();
+			var newendtimeformat = newendhours + ':' + newendmins + ':' + newendsec;
+			var startendtime = ' Start: ' + newstarttimeformat + ' End: ' + newendtimeformat;
+			// todo fix output
+			foundgamedata = (player + ' at: /connect ' + ip + ' GameType: ' + gtype + ' ' + startendtime + ' Free Slots: ' + slotsfree + needpass + needprem + ' join them at: http://www.quakelive.com/#!join/' + pubid) ;
+			res.set( 'Cache-Control', 'public, max-age=240' );
+			res.jsonp( b );
+			res.end();
+		}
+	});
 }
 
 

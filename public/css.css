@@ -26,7 +26,8 @@
 }
 .loading {
 	background: url( 'loading.gif' ) no-repeat;
-	padding: 20px;
+	padding: 15px;
+	padding-top: 10px;
 }
 .col-center{
 	float: none;

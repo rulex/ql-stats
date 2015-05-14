@@ -1,9 +1,7 @@
 
-//var apiurl = '/';
-//var apiurl = 'http://ql.leeto.fi/';
-//var apiurl = 'http://ql.l.leeto.fi/';
 var Countries = [];
 var adminPassword;
+var ajaxCount = 0;
 function getApiURL() {
 	return $( '#apiurl' ).val();
 }
@@ -12,33 +10,46 @@ function getAjaxDataType() {
 }
 
 $( function() {
+	// ajax stuff
+	$( document ).ajaxSend( function( event, jqxhr, settings ) {
+		$( '#current_url' ).append( '<span id="loading" class="loading" title="Fetching ' + settings.url + '"></span>' );
+	});
+	$( document ).ajaxComplete( function() {
+		$( '#loading' ).remove();
+	});
 	// sammyjs
 	var app = $.sammy( function() {
 		this.get( '#/settings', function( context ) {
+			onLoading();
 			SettingsCtrl();
 		} );
 		this.get( '#/', function( context ) {
+			onLoading();
 			context.render( 'overview.html', {} ).replace( $( '#content' ) ).then( function() {
 				OverviewCtrl();
 			} );
 		} );
 		this.get( '#/games', function( context ) {
+			onLoading();
 			context.render( 'games.html', {} ).replace( $( '#content' ) ).then( function() {
 				GamesCtrl();
 			} );
 		} );
 		this.get( '#/games/:game', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'game.html', {} ).replace( $( '#content' ) ).then( function() {
 				GameCtrl( params );
 			} );
 		} );
 		this.get( '#/players', function( context ) {
+			onLoading();
 			context.render( 'players.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayersCtrl();
 			} );
 		} );
 		this.get( '#/players/:player', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerCtrl( params );
@@ -46,6 +57,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/games', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -55,6 +67,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/clans', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -64,6 +77,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/weapons', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -73,6 +87,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/weapons/:weapon', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -82,6 +97,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/maps', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -91,6 +107,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/race', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -100,6 +117,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/overview', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -109,6 +127,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/players/:player/hostedgames', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -117,7 +136,38 @@ $( function() {
 				} );
 			} );
 		} );
+		this.get( '#/players/:player/hostedgames/top', function( context ) {
+			onLoading();
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'top.html' ).replace( $( '#tab_content' ) ).then( function() {
+					TopCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/players/:player/hostedgames/maps', function( context ) {
+			onLoading();
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'maps.html' ).replace( $( '#tab_content' ) ).then( function() {
+					MapsCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/players/:player/hostedgames/overview', function( context ) {
+			onLoading();
+			params = this.params;
+			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
+				PlayerBaseCtrl( params );
+				context.render( 'overview.html' ).replace( $( '#tab_content' ) ).then( function() {
+					OverviewCtrl( params );
+				} );
+			} );
+		} );
 		this.get( '#/players/:player/top', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlayerBaseCtrl( params );
@@ -127,11 +177,13 @@ $( function() {
 			} );
 		} );
 		this.get( '#/owners', function( context ) {
+			onLoading();
 			context.render( 'owners.html', {} ).replace( $( '#content' ) ).then( function() {
 				OwnersCtrl();
 			} );
 		} );
 		this.get( '#/owners/:owner', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'owner.html', {} ).replace( $( '#content' ) ).then( function() {
 				OwnerCtrl( params );
@@ -141,57 +193,95 @@ $( function() {
 		//this.get( '#/owners/:owner/games', function( context ) { context.render( 'games.html', {} ).replace( $( '#content' ) ); OwnerGamesCtrl( this.params ); } );
 		//this.get( '#/owners/:owner/players/:player', function( context ) { context.render( 'player.html', {} ).replace( $( '#content' ) ); OwnerPlayerCtrl( this.params ); } );
 		this.get( '#/clans', function( context ) {
+			onLoading();
 			context.render( 'clans.html', {} ).replace( $( '#content' ) ).then( function() {
 				ClansCtrl();
 			} );
 		} );
 		this.get( '#/clans/:clan', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'players.html', {} ).replace( $( '#content' ) ).then( function() {
 				ClanCtrl( params );
 			} );
 		} );
 		this.get( '#/maps', function( context ) {
+			onLoading();
 			context.render( 'maps.html', {} ).replace( $( '#content' ) ).then( function() {
 				MapsCtrl();
 			} );
 		} );
 		this.get( '#/maps/:map', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'map.html', {} ).replace( $( '#content' ) ).then( function() {
 				MapCtrl( params );
 			} );
 		} );
 		this.get( '#/places', function( context ) {
+			onLoading();
 			context.render( 'places.html', {} ).replace( $( '#content' ) ).then( function() {
 				PlacesCtrl();
 			} );
 		} );
-		this.get( '#/places/countries/:country/activity', function( context ) {
+		this.get( '#/places/countries/:country', function( context ) {
+			onLoading();
 			params = this.params;
-			context.render( 'activity.html', {} ).replace( $( '#content' ) ).then( function() {
-				ActivityCtrl( params, context );
+			context.render( 'country.html', {} ).replace( $( '#content' ) ).then( function() {
+				CountryBaseCtrl( params );
+				/*
+				context.render( 'country.html' ).replace( $( '#tab_content' ) ).then( function() {
+					TopCtrl( params );
+				} );
+				*/
+			} );
+		} );
+		this.get( '#/places/countries/:country/activity', function( context ) {
+			onLoading();
+			params = this.params;
+			context.render( 'country.html', {} ).replace( $( '#content' ) ).then( function() {
+				CountryBaseCtrl( params );
+				context.render( 'activity.html' ).replace( $( '#tab_content' ) ).then( function() {
+					ActivityCtrl( params );
+				} );
 			} );
 		} );
 		this.get( '#/places/countries/:country/players', function( context ) {
+			onLoading();
 			params = this.params;
-			context.render( 'players.html', {} ).replace( $( '#content' ) ).then( function() {
-				PlayersCtrl( params );
+			context.render( 'country.html', {} ).replace( $( '#content' ) ).then( function() {
+				CountryBaseCtrl( params );
+				context.render( 'players.html' ).replace( $( '#tab_content' ) ).then( function() {
+					PlayersCtrl( params );
+				} );
+			} );
+		} );
+		this.get( '#/places/countries/:country/top', function( context ) {
+			onLoading();
+			params = this.params;
+			context.render( 'country.html', {} ).replace( $( '#content' ) ).then( function() {
+				CountryBaseCtrl( params );
+				context.render( 'top.html' ).replace( $( '#tab_content' ) ).then( function() {
+					TopCtrl( params );
+				} );
 			} );
 		} );
 		this.get( '#/places/regions/:region/activity', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'activity.html', {} ).replace( $( '#content' ) ).then( function() {
 				ActivityCtrl( params, context );
 			} );
 		} );
 		this.get( '#/places/subregions/:subregion/activity', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'activity.html', {} ).replace( $( '#content' ) ).then( function() {
 				ActivityCtrl( params, context );
 			} );
 		} );
 		this.get( '#/gametypes/:gametype', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
 				//PlayerCtrl( params );
@@ -199,6 +289,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/overview', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
 				context.render( 'overview.html' ).replace( $( '#tab_content' ) ).then( function() {
@@ -208,6 +299,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/games', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
 				context.render( 'games.html' ).replace( $( '#tab_content' ) ).then( function() {
@@ -217,6 +309,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/maps', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'gametype.html', {} ).replace( $( '#content' ) ).then( function() {
 				context.render( 'maps.html' ).replace( $( '#tab_content' ) ).then( function() {
@@ -226,12 +319,14 @@ $( function() {
 			} );
 		} );
 		this.get( '#/gametypes/:gametype/players/:player', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {;
 				PlayerCtrl( params );
 			} );
 		} );
 		this.get( '#/tags/:tag', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagCtrl( params );
@@ -239,6 +334,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/tags/:tag/overview', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
@@ -248,6 +344,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/tags/:tag/games', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
@@ -257,6 +354,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/tags/:tag/players', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
@@ -266,6 +364,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/tags/:tag/owners', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
@@ -275,6 +374,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/tags/:tag/maps', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
@@ -284,6 +384,7 @@ $( function() {
 			} );
 		} );
 		this.get( '#/tags/:tag/places', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'tag.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagBaseCtrl( params );
@@ -293,63 +394,71 @@ $( function() {
 			} );
 		} );
 		this.get( '#/tags/:tag/players/:player', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'player.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagPlayerCtrl( params );
 			} );
 		} );
 		this.get( '#/tags', function( context ) {
+			onLoading();
 			context.render( 'tags.html', {} ).replace( $( '#content' ) ).then( function() {
 				TagsCtrl();
 			} );
 		} );
 		this.get( '#/race', function( context ) {
+			onLoading();
 			context.render( 'race.html', {} ).replace( $( '#content' ) ).then( function() {
 				RaceCtrl();
 			} );
 		} );
 		this.get( '#/race/maps/:map', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'racemap.html', {} ).replace( $( '#content' ) ).then( function() {
 				RaceMapCtrl( params );
 			} );
 		} );
 		this.get( '#/race/players/:player', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'raceplayer.html', {} ).replace( $( '#content' ) ).then( function() {
 				RacePlayerCtrl( params );
 			} );
 		} );
 		this.get( '#/rulesets/:ruleset/games', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'games.html', {} ).replace( $( '#content' ) ).then( function() {
 				RulesetGamesCtrl( params );
 			} );
 		} );
 		this.get( '#/rulesets/:ruleset', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'overview.html', {} ).replace( $( '#content' ) ).then( function() {
 				RulesetOverviewCtrl( params );
 			} );
 		} );
 		this.get( '#/activity', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'activity.html', {} ).replace( $( '#content' ) ).then( function() {
 				ActivityCtrl( params, context );
 			} );
 		} );
 		this.get( '#/top', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'top.html', {} ).replace( $( '#content' ) ).then( function() {
 				TopCtrl( params, context );
 			} );
 		} );
 		this.get( '#/status', function( context ) {
+			onLoading();
 			context.render( 'status.html', {} ).replace( $( '#content' ) ).then( function() {
 				context.log( 'yoooo' );
-				onLoading();
 				setNavbarActive();
-				$( '#current_url' ).html( printLocations() );
 				var activeTab = parseHashParams()['tab'] || 'db_rows';
 				context.log( 'activeTab', activeTab );
 				// set active tab button
@@ -397,6 +506,7 @@ $( function() {
 						onComplete();
 					} );
 					// cache
+					onLoading(2);
 					$.ajax( {
 						url: getApiURL() + 'api/status/cache',
 						cache: false,
@@ -446,12 +556,14 @@ $( function() {
 			} );
 		} );
 		this.get( '#/weapons', function( context ) {
+			onLoading();
 			params = this.params;
 			context.render( 'weapons.html', {} ).replace( $( '#content' ) ).then( function() {
 				WeaponsCtrl( params );
 			} );
 		} );
 		this.get( '#*', function( context ) {
+			onLoading();
 			context.log( 'no such route' );
 			context.log( parseHash() );
 		} );
@@ -605,7 +717,7 @@ var GT = {
 	dom: 'Domination',
 	ft: 'Freeze Tag',
 	rr: 'Red Rover',
-	harvester: 'Harvester',
+	//harvester: 'Harvester',
 	harv: 'Harvester',
 	fctf: 'fctf',
 }
@@ -650,7 +762,7 @@ var dynatable_writers = {
 			c = obj.COUNTRY.toLowerCase();
 		}
 		if( countryobj ) {
-			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ c +'_v2013071601.0.gif" class="playerflag" /> <a href="#/places/countries/' + c + '/activity">' + countryobj.name + '</a><small class="pull-right"><a href="#/places/regions/' + countryobj.region + '/activity">' + countryobj.region + '</a></small>';
+			return '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ c +'_v2013071601.0.gif" class="playerflag" /> <a href="#/places/countries/' + c + '">' + countryobj.name + '</a><small class="pull-right"><a href="#/places/regions/' + countryobj.region + '/activity">' + countryobj.region + '</a></small>';
 		}
 		else {
 			return '';
@@ -767,7 +879,21 @@ var dynatable_writers = {
 		return mkPlayerButton( obj, 'OWNER', 'OWNER_COUNTRY' );
 	},
 	PUBLIC_ID: function( obj ) {
-		return '<a href="#/games/'+ obj.PUBLIC_ID +'">' + shortenPID( obj.PUBLIC_ID ) + '</a>';
+		winLoss = '';
+		succ = '';
+		if( 'WIN' in obj ) {
+			if( obj.WIN == 1 ) {
+				//winLoss = '<span  rel="popover" data-html="true" data-placement="top" data-content="WIN" class="btn btn-xs btn-success popthis pull-right" >W</span>';
+				winLoss = '<span class="label label-success popthis pull-right">win</span>';
+				//succ = 'btn-success';
+			}
+			else {
+				//succ = 'btn-danger';
+				//winLoss = '<span  rel="popover" data-html="true" data-placement="top" data-content="LOSS" class="btn btn-xs btn-danger popthis pull-right" >L</span>';
+				winLoss = '<span class="label label-danger popthis pull-right" >loss</span>';
+			}
+		}
+		return '<a href="#/games/'+ obj.PUBLIC_ID +'">' + shortenPID( obj.PUBLIC_ID ) + '</a>' + winLoss;
 	},
 	PLAYER_NICK: function( obj ) {
 		return '<a href="#/players/'+ obj.PLAYER_NICK +'">' + obj.PLAYER_NICK + '</a>';
@@ -839,7 +965,7 @@ var dynatable_writers = {
 		else if( 'HITS_SUM' in obj && 'SHOTS_SUM' in obj )
 			return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="top" data-content="'+ obj.HITS_SUM + ' hits of ' + obj.SHOTS_SUM + ' shots"><i>'+ ( obj.HITS_SUM / obj.SHOTS_SUM * 100 ).toFixed(1) +'%</i></span>';
 		else if( 'ACC' in obj )
-			return '<span><i>'+ obj.ACC +'%</i></span>';
+			return '<span><i>'+ (obj.ACC).toFixed(2) +'%</i></span>';
 	},
 	RL: function( obj ) {
 		return '<span rel="popover" <div rel="popover" class="popthis" data-html="true" data-placement="right" data-content="' + obj.RL_K + ' kills '+ obj.RL_H + ' hits of ' + obj.RL_S + ' shots">'+ ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) +'%</span>';
@@ -886,8 +1012,8 @@ var dynatable_writers = {
 	BFG_H: function( obj ) { return ( obj.BFG_H > 0 ) ? thousandSeparator( obj.BFG_H ) : '-'; },
 	// acc
 	RL_A: function( obj ) { return ( obj.RL_S > 0 ) ? ( obj.RL_H / obj.RL_S * 100 ).toFixed(1) + '%' : '-'; },
-	RG_A: function( obj ) { return ( obj.RG_S > 0 ) ? ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) + '%' : '-'; },
-	LG_A: function( obj ) { return ( obj.LG_S > 0 ) ? ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%' : '-'; },
+	RG_A: function( obj ) { if( 'RG_A' in obj ) { return (obj.RG_A).toFixed(2); } return ( obj.RG_S > 0 ) ? ( obj.RG_H / obj.RG_S * 100 ).toFixed(1) + '%' : '-'; },
+	LG_A: function( obj ) { if( 'LG_A' in obj ) { return (obj.LG_A).toFixed(2); } return ( obj.LG_S > 0 ) ? ( obj.LG_H / obj.LG_S * 100 ).toFixed(1) + '%' : '-'; },
 	SG_A: function( obj ) { return ( obj.SG_S > 0 ) ? ( obj.SG_H / obj.SG_S * 100 ).toFixed(1) + '%' : '-'; },
 	GL_A: function( obj ) { return ( obj.GL_S > 0 ) ? ( obj.GL_H / obj.GL_S * 100 ).toFixed(1) + '%' : '-'; },
 	PG_A: function( obj ) { return ( obj.PG_S > 0 ) ? ( obj.PG_H / obj.PG_S * 100 ).toFixed(1) + '%' : '-'; },
@@ -911,15 +1037,12 @@ function EmptyCtrl( params ) {
 function SettingsCtrl( params ) {
 	//$( '#loading' ).addClass( 'loading' );
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	adminPassword = $( 'admin_password' ).val();
 	$( '#admin_settings' ).slideToggle();
 }
 
 function OverviewCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var activeTab = parseHashParams()['tab'] || 'week';
 	// api url
 	_url = parseHash().join( '/' );
@@ -1038,9 +1161,7 @@ function OverviewCtrl( params ) {
 function RulesetOverviewCtrl( params ) {
 	var g = params['game'];
 	var ruleset = params['ruleset'];
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: getApiURL() + 'api/rulesets/' + ruleset + '/games/graphs/perweek',
 		dataType: getAjaxDataType(),
@@ -1136,7 +1257,6 @@ function RulesetOverviewCtrl( params ) {
 }
 
 function AllCtrl( params ) {
-	onLoading();
 	setNavbarActive();
 	var lol = theLiz.all();
 	$scope.overview = lol;
@@ -1209,7 +1329,6 @@ var _weapons = [
 var _weaponMore = [ '_S', '_H', '_K' ];
 function inDuelVsAfter() {
 	onComplete();
-	$( '#current_url' ).html( printLocations() );
 	$( document ).on( {
 		mouseenter: function() {
 			$(this).find( 'span' ).fadeIn( 'fast' );
@@ -1410,13 +1529,11 @@ function inDuelVs( nr, d ) {
 }
 
 function DuelVsCtrl( params ) {
-	onLoading();
 	setNavbarActive();
 	var ns = params['nicks'].split( '+' );
 	var map = params['map'];
 	_duelVsMap = map;
 	console.log( ns );
-	$( '#current_url' ).html( printLocations() );
 	// player1
 	$.ajax( {
 		url: getApiURL() + 'api/gametypes/duel/players/' + ns[0] + '/games',
@@ -1449,9 +1566,7 @@ function DuelVsCtrl( params ) {
 
 function RulesetGamesCtrl( params ) {
 	var ruleset = params['ruleset'];
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: getApiURL() + 'api/rulesets/' + ruleset + '/games',
 		dataType: getAjaxDataType(),
@@ -1480,10 +1595,8 @@ function RulesetGamesCtrl( params ) {
 }
 
 function GamesCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
-	$( '#table_games' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
+	$( '#table_games' ).bind( 'dynatable:ajax:complete', function( e, dynatable ) {
 		onComplete();
 	} );
 	$( '#table_games' ).dynatable( {
@@ -1514,9 +1627,7 @@ function GamesCtrl( params ) {
 }
 
 function GameCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var g = params['game'];
 	$.ajax( {
 		url: getApiURL() + 'api/games/' + g,
@@ -1825,8 +1936,6 @@ function PlayerCtrl( params ) {
 	// ---------
 	/*
 	setNavbarActive();
-	onLoading();
-	$( '#current_url' ).html( printLocations() );
 	var gt = params['gametype'];
 	var p = params['player'];
 	var t = params['tag'];
@@ -1968,9 +2077,7 @@ function PlayerCtrl( params ) {
 function PlayerBaseCtrl( params ) {
 	console.debug( 'PlayerBaseCtrl' );
 	console.debug( params );
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var t = params['player'];
 	// set tag name
 	$( '#tag_id' ).html( t );
@@ -1981,6 +2088,9 @@ function PlayerBaseCtrl( params ) {
 	$( '#tab_btn_games' ).attr( 'href', '#/players/' + t + '/games' );
 	$( '#tab_btn_clans' ).attr( 'href', '#/players/' + t + '/clans' );
 	$( '#tab_btn_hostedgames' ).attr( 'href', '#/players/' + t + '/hostedgames' );
+	$( '#tab_btn_hostedgames_top' ).attr( 'href', '#/players/' + t + '/hostedgames/top' );
+	$( '#tab_btn_hostedgames_maps' ).attr( 'href', '#/players/' + t + '/hostedgames/maps' );
+	$( '#tab_btn_hostedgames_overview' ).attr( 'href', '#/players/' + t + '/hostedgames/overview' );
 	$( '#tab_btn_weapons' ).attr( 'href', '#/players/' + t + '/weapons' );
 	$( '#tab_btn_players' ).attr( 'href', '#/players/' + t + '/players' );
 	$( '#tab_btn_owners' ).attr( 'href', '#/players/' + t + '/owners' );
@@ -1989,7 +2099,8 @@ function PlayerBaseCtrl( params ) {
 	$( '#tab_btn_race' ).attr( 'href', '#/players/' + t + '/race' );
 	//ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
 	// set active submenu button
-	$( '#tab_btn_' + parseHash().pop() ).addClass( 'active' );
+	pPos = parseHash().indexOf( params.player );
+	$( '#tab_btn_' + parseHash()[pPos+1] ).addClass( 'active' );
 	// player
 	$.ajax( {
 		url: getApiURL() + 'api/players/' + t,
@@ -2054,9 +2165,7 @@ function PlayerBaseCtrl( params ) {
 function GametypeBaseCtrl( params ) {
 	console.debug( 'GametypeBaseCtrl' );
 	console.debug( params );
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var t = params['gametype'];
 	// set button urls
 	$( '#tab_btn_info' ).attr( 'href', '#/gametypes/' + t );
@@ -2092,10 +2201,29 @@ function GametypeBaseCtrl( params ) {
 	} );
 }
 
-function PlayersCtrl( params ) {
-	onLoading();
+function CountryBaseCtrl( params ) {
+	console.debug( 'CountryBaseCtrl' );
+	console.debug( params );
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
+	var t = params['country'];
+	// set name
+	c = getCountry( params.country );
+	flag = '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ params.country +'_v2013071601.0.gif" alt="'+ params.country.toUpperCase() +'" />';
+	$( '#country' ).html( '<a href="#/places/countries/'+ params.country + '">' + c.name + '</a> ' + flag );
+	// buttons
+	_btnz = [ 'players', 'activity' ];
+	for( var i in _btnz ) {
+		b = _btnz[i];
+		$( '#tab_btns' ).append( '<a id="tab_btn_' + b + '" class="btn btn-xs btn-default" href="#/places/countries/'+ params.country + '/' + b + '">' + b + '</a>' );
+	}
+	//ajaxUrl: getApiURL() + 'api/' + parseHash().join( '/' ),
+	// set active submenu button
+	$( '#tab_btn_' + parseHash().pop() ).addClass( 'active' );
+	onComplete();
+}
+
+function PlayersCtrl( params ) {
+	setNavbarActive();
 	$( '#table_players' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
 		onComplete();
 	} );
@@ -2126,9 +2254,7 @@ function PlayersCtrl( params ) {
 }
 
 function OwnersCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	$( '#table_owners' ).bind( 'dynatable:init', function( e, dynatable ) {
 		dynatable.sorts.add( 'MATCHES_PLAYED', -1 );
 	} );
@@ -2162,9 +2288,7 @@ function OwnersCtrl( params ) {
 }
 
 function OwnerTop30Ctrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var o = params['owner'];
 	$.ajax( {
 		url: getApiURL() + 'api/owners/' + o + '/top/last30days/kills',
@@ -2230,9 +2354,7 @@ function OwnerTop30Ctrl( params ) {
 }
 
 function OwnerCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var o = params['owner'];
 	$.ajax( {
 		url: getApiURL() + 'api/owners/' + o + '/games',
@@ -2359,9 +2481,7 @@ function OwnerCtrl( params ) {
 }
 
 function OwnerPlayerCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var o = params['owner'];
 	var p = params['player'];
 	var lol = theLiz.ownerplayer( o, p );
@@ -2375,9 +2495,7 @@ function OwnerPlayerCtrl( params ) {
 }
 
 function OwnerPlayersCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	if( params['owner'] ) {
 		$scope.theurl = 'owner/' + params['owner'] + '/';
 	}
@@ -2390,9 +2508,7 @@ function OwnerPlayersCtrl( params ) {
 }
 
 function OwnerGamesCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var o = params['owner'];
 	$.ajax( {
 		url: getApiURL() + 'api/owners/' + o + '/games',
@@ -2433,9 +2549,7 @@ function OwnerGamesCtrl( params ) {
 }
 
 function ClansCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	$( '#table_clans' ).bind( 'dynatable:ajax:success', function( e, dynatable ) {
 		onComplete();
 	} );
@@ -2466,11 +2580,9 @@ function ClansCtrl( params ) {
 }
 
 function ClanCtrl( params ) {
-	onLoading();
 	setNavbarActive();
 	//onComplete();
 	var c = params['clan'];
-	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: getApiURL() + 'api/clans/' + c + '/players',
 		dataType: getAjaxDataType(),
@@ -2494,9 +2606,7 @@ function ClanCtrl( params ) {
 }
 
 function MapsCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: getApiURL() + 'api/' + parseHash().join( '/' ),
 		dataType: getAjaxDataType(),
@@ -2538,9 +2648,7 @@ function MapsCtrl( params ) {
 }
 
 function MapCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var m = params['map'];
 	$.ajax( {
 		url: getApiURL() + 'api/maps/' + m + '/graphs/permonth',
@@ -2629,9 +2737,7 @@ function MapCtrl( params ) {
 }
 
 function GametypeOverviewCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var gt = params['gametype'];
 	$.ajax( {
 		url: getApiURL() + 'api/gametypes/' + gt + '/games/graphs/perweek',
@@ -2728,9 +2834,7 @@ function GametypeOverviewCtrl( params ) {
 }
 
 function GametypeTopAllCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var gt = params['gametype'];
 	$.ajax( {
 		url: getApiURL() + 'api/gametypes/' + gt + '/top/all/kills',
@@ -2795,9 +2899,7 @@ function GametypeTopAllCtrl( params ) {
 }
 
 function PlacesCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: getApiURL() + 'api/' + parseHash().join( '/' ) + '/countries',
 		dataType: getAjaxDataType(),
@@ -2961,7 +3063,6 @@ function PlacesCtrl( params ) {
 }
 
 function EloDuelCtrl( params ) {
-	onLoading();
 	setNavbarActive();
 	var lol = theLiz.eloduel();
 	$scope.players = lol;
@@ -2971,9 +3072,7 @@ function EloDuelCtrl( params ) {
 }
 
 function TagBaseCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var t = params['tag'];
 	// set tag name
 	$( '#tag_id' ).html( t );
@@ -2985,6 +3084,7 @@ function TagBaseCtrl( params ) {
 	$( '#tab_btn_owners' ).attr( 'href', '#/tags/' + t + '/owners' );
 	$( '#tab_btn_maps' ).attr( 'href', '#/tags/' + t + '/maps' );
 	$( '#tab_btn_places' ).attr( 'href', '#/tags/' + t + '/places' );
+	$( '#tab_btn_' + parseHash().pop() ).addClass( 'active' );
 }
 
 function TagCtrl( params ) {
@@ -3007,9 +3107,7 @@ function TagCtrl( params ) {
 }
 
 function TagsCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	$.ajax( {
 		url: getApiURL() + 'api/tags',
 		dataType: getAjaxDataType(),
@@ -3057,9 +3155,7 @@ function TagsCtrl( params ) {
 }
 
 function TagTop30daysCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var t = params['tag'];
 	$.ajax( {
 		url: getApiURL() + 'api/tags/' + t + '/top/last30days/kills',
@@ -3124,9 +3220,7 @@ function TagTop30daysCtrl( params ) {
 }
 
 function TagTopAllCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var t = params['tag'];
 	$.ajax( {
 		url: getApiURL() + 'api/tags/' + t + '/top/all/kills',
@@ -3191,16 +3285,12 @@ function TagTopAllCtrl( params ) {
 }
 
 function TagPlayersCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var t = params['tag'];
 }
 
 function TagPlayerCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var t = params['tag'];
 	var p = params['player'];
 	var lol = theLiz.tagplayer( t, p );
@@ -3209,9 +3299,7 @@ function TagPlayerCtrl( params ) {
 }
 
 function RaceCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-  $('#current_url').html(printLocations());
 	$.ajax( {
 		url: getApiURL() + 'api/race',
 		dataType: getAjaxDataType(),
@@ -3231,35 +3319,31 @@ function RaceCtrl( params ) {
 			var ivs = { max: { ts: ( ( new Date().getTime()/1000 ) - 60*60*24*30 ), ifo: {} }, min: { ts: ( new Date().getTime()/1000 ), ifo: {} } };
 			for( var i in data.data.maps ) {
 				d = data.data.maps[i];
-				if( d.LEADERS[0] !== null && typeof d.LEADERS[0] != 'undefined' &&
-						d.LEADERS[1] !== null && typeof d.LEADERS[1] != 'undefined' &&
-						d.LEADERS[2] !== null && typeof d.LEADERS[2] != 'undefined' &&
-						d.LEADERS[3] !== null && typeof d.LEADERS[3] != 'undefined'
-					) {
+				if( d.LEADERS[0] != null && typeof d.LEADERS[0] !== 'undefined' ) {
 					if( ipw.max.ts < d.LEADERS[0].GAME_TIMESTAMP && d.LEADERS[0] ) { ipw.max.ts = d.LEADERS[0].GAME_TIMESTAMP; ipw.max.ifo = d.LEADERS[0]; ipw.max.map = d.MAP; }
 					if( ipw.min.ts > d.LEADERS[0].GAME_TIMESTAMP && d.LEADERS[0] ) { ipw.min.ts = d.LEADERS[0].GAME_TIMESTAMP; ipw.min.ifo = d.LEADERS[0]; ipw.min.map = d.MAP; }
-					if( ips.max.ts < d.LEADERS[1].GAME_TIMESTAMP && d.LEADERS[1] ) { ips.max.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.max.ifo = d.LEADERS[1]; ips.max.map = d.MAP; }
-					if( ips.min.ts > d.LEADERS[1].GAME_TIMESTAMP && d.LEADERS[1] ) { ips.min.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.min.ifo = d.LEADERS[1]; ips.min.map = d.MAP; }
-					if( ivw.max.ts < d.LEADERS[2].GAME_TIMESTAMP && d.LEADERS[2] ) { ivw.max.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.max.ifo = d.LEADERS[2]; ivw.max.map = d.MAP; }
-					if( ivw.min.ts > d.LEADERS[2].GAME_TIMESTAMP && d.LEADERS[2] ) { ivw.min.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.min.ifo = d.LEADERS[2]; ivw.min.map = d.MAP; }
-					if( ivs.max.ts < d.LEADERS[3].GAME_TIMESTAMP && d.LEADERS[3] ) { ivs.max.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.max.ifo = d.LEADERS[3]; ivs.max.map = d.MAP; }
-					if( ivs.min.ts > d.LEADERS[3].GAME_TIMESTAMP && d.LEADERS[3] ) { ivs.min.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.min.ifo = d.LEADERS[3]; ivs.min.map = d.MAP; }
-					n = d.LEADERS[0].PLAYER;
-					if( n in _pw ) { _pw[n]++ }
+					n = d.LEADERS[0].PLAYER.toLowerCase();
+					if( n in _pw ) { _pw[n]++; }
 					else { _pw[n] = 1; }
 				}
-				if( d.LEADERS[1] !== null && typeof d.LEADERS[1] != 'undefined' ) {
-					n = d.LEADERS[1].PLAYER;
+				if( d.LEADERS[1] != null && typeof d.LEADERS[1] !== 'undefined' ) {
+					if( ips.max.ts < d.LEADERS[1].GAME_TIMESTAMP && d.LEADERS[1] ) { ips.max.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.max.ifo = d.LEADERS[1]; ips.max.map = d.MAP; }
+					if( ips.min.ts > d.LEADERS[1].GAME_TIMESTAMP && d.LEADERS[1] ) { ips.min.ts = d.LEADERS[1].GAME_TIMESTAMP; ips.min.ifo = d.LEADERS[1]; ips.min.map = d.MAP; }
+					n = d.LEADERS[1].PLAYER.toLowerCase();
 					if( n in _ps ) { _ps[n]++ }
 					else { _ps[n] = 1; }
 				}
-				if( d.LEADERS[2] !== null && typeof d.LEADERS[2] != 'undefined' ) {
-					n = d.LEADERS[2].PLAYER;
+				if( d.LEADERS[2] != null && typeof d.LEADERS[2] !== 'undefined' ) {
+					if( ivw.max.ts < d.LEADERS[2].GAME_TIMESTAMP && d.LEADERS[2] ) { ivw.max.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.max.ifo = d.LEADERS[2]; ivw.max.map = d.MAP; }
+					if( ivw.min.ts > d.LEADERS[2].GAME_TIMESTAMP && d.LEADERS[2] ) { ivw.min.ts = d.LEADERS[2].GAME_TIMESTAMP; ivw.min.ifo = d.LEADERS[2]; ivw.min.map = d.MAP; }
+					n = d.LEADERS[2].PLAYER.toLowerCase();
 					if( n in _vw ) { _vw[n]++ }
 					else { _vw[n] = 1; }
 				}
-				if( d.LEADERS[3] !== null && typeof d.LEADERS[3] != 'undefined' ) {
-					n = d.LEADERS[3].PLAYER;
+				if( d.LEADERS[3] != null && typeof d.LEADERS[3] !== 'undefined' ) {
+					if( ivs.max.ts < d.LEADERS[3].GAME_TIMESTAMP && d.LEADERS[3] ) { ivs.max.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.max.ifo = d.LEADERS[3]; ivs.max.map = d.MAP; }
+					if( ivs.min.ts > d.LEADERS[3].GAME_TIMESTAMP && d.LEADERS[3] ) { ivs.min.ts = d.LEADERS[3].GAME_TIMESTAMP; ivs.min.ifo = d.LEADERS[3]; ivs.min.map = d.MAP; }
+					n = d.LEADERS[3].PLAYER.toLowerCase();
 					if( n in _vs ) { _vs[n]++ }
 					else { _vs[n] = 1; }
 				}
@@ -3335,9 +3419,7 @@ function RaceCtrl( params ) {
 }
 
 function RaceMapCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var w = parseHashParams()['weapons'] || 'on';
 	var r = parseHashParams()['ruleset'] || 'pql';
 	var m = params['map'];
@@ -3389,9 +3471,7 @@ function RaceMapCtrl( params ) {
 }
 
 function RacePlayerCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-  $( '#current_url' ).html(printLocations());
   var p = params['player'];
 	var w = parseHashParams()['weapons'] || 'on';
 	var r = parseHashParams()['ruleset'] || 'pql';
@@ -3500,9 +3580,7 @@ function RacePlayerCtrl( params ) {
 }
 
 function TopCtrl( params ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	gt = parseHashParams()['gt'] || 'all';
 	col = parseHashParams()['col'] || 'PLAY_TIME';
 	colFunc = parseHashParams()['colFunc'] || 'sum';
@@ -3526,38 +3604,53 @@ function TopCtrl( params ) {
 	}
 	// col btns
 	_cols = [
-		{ name: 'Play time', col: 'PLAY_TIME' },
-		{ name: 'Impressives', col: 'IMPRESSIVE' },
-		{ name: 'Excellents', col: 'EXCELLENT' },
-		{ name: 'Humiliations', col: 'G_K' },
-		{ name: 'Score', col: 'SCORE' },
-		{ name: 'Quits', col: 'QUIT' },
-		{ name: 'Kills', col: 'KILLS' },
-		{ name: 'Deaths', col: 'DEATHS' },
-		{ name: 'Shots fired', col: 'SHOTS' },
+		{ name: 'Total play time', col: 'PLAY_TIME', sort: 'desc', colFunc: 'sum' },
+		{ name: 'Average K/D Ratio', col: 'RATIO', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Score', col: 'SCORE', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Rank', col: 'RANK', sort: 'asc', colFunc: 'avg' },
+		{ name: 'Average Damage Dealt', col: 'DAMAGE_DEALT', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Damage Dealt per second', col: 'DPS', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Net Damage', col: 'NET_DAMAGE', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Damage Taken', col: 'DAMAGE_TAKEN', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Kills', col: 'KILLS', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Deaths', col: 'DEATHS', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Impressives', col: 'IMPRESSIVE', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Excellents', col: 'EXCELLENT', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Humiliations', col: 'G_K', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Quits', col: 'QUIT', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Shots fired', col: 'SHOTS', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average RL Kills', col: 'RL_K', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average LG Kills', col: 'LG_K', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average RG Kills', col: 'RG_K', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average Accuracy', col: 'ACC', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average LG Accuracy', col: 'LG_A', sort: 'desc', colFunc: 'avg' },
+		{ name: 'Average RG Accuracy', col: 'RG_A', sort: 'desc', colFunc: 'avg' },
 	];
 	for( var i in _cols ) {
 		c = _cols[i];
 		if( c.col == col ) {
-			$( '#top_table_header' ).append( 'Top ' + c.name );
+			$( '#top_table_header' ).append( '' + c.name );
 		}
 		out = '';
-		out += '<a class="btn btn-xs btn-default" id="btn_col_' + c.col + '" href="#/' + parseHash().join( '/' ) + '?' + mkURL2( { col: c.col } ) + '">';
+		out += '<a class="btn btn-xs btn-default" id="btn_col_' + c.col + '" href="#/' + parseHash().join( '/' ) + '?' + mkURL2( { col: c.col, colFunc: c.colFunc, sort: c.sort } ) + '">';
 		out += '<span class="">';
 		out += '</span> ';
 		out += c.name;
 		out += '</a>';
+		out += '<br>';
 		$( '#btn_cols' ).append( out );
 	}
 	// active btns
 	$( '#btn_gt_' + gt ).addClass( 'active' );
 	$( '#btn_col_' + col ).addClass( 'active' );
+	_sort = parseHashParams()['sort'] || 'desc';
+	_dynSort = ( _sort == 'desc' ) ? -1 : 1;
 	$( '#top_table' ).bind( 'dynatable:init', function( e, dynatable ) {
-		dynatable.sorts.add( col, -1 );
+		dynatable.sorts.add( col, _dynSort );
 	} );
 	// fetch it
 	$.ajax( {
-		url: getApiURL() + 'api/' + parseHash().join( '/' ).replace( 'top', 'top50' ) + '/' + gt + '/' + colFunc + '/' + col,
+		url: getApiURL() + 'api/' + parseHash().join( '/' ).replace( 'top', 'top50' ) + '/' + gt + '/' + colFunc + '/' + col + '?sort=' + _sort,
 		dataType: getAjaxDataType(),
 		success: function( data ) {
 			list = [];
@@ -3578,7 +3671,7 @@ function TopCtrl( params ) {
 				},
 				writers: dynatable_writers,
 				dataset: {
-					perPageDefault: 10,
+					perPageDefault: 50,
 					perPageOptions: [10,20,50,100,200],
 					records: data.data
 				}
@@ -3593,7 +3686,6 @@ function TopCtrl( params ) {
 }
 
 function WeaponsCtrl( params ) {
-	onLoading();
 	setNavbarActive();
 	// weapons list
 	for( var i in GUNS ) {
@@ -3789,11 +3881,8 @@ function WeaponsCtrl( params ) {
 }
 
 function ActivityCtrl( params, context ) {
-	onLoading();
 	setNavbarActive();
-	$( '#current_url' ).html( printLocations() );
 	var activeTab = parseHashParams()['tab'] || 'week';
-	context.log( 'activeTab', activeTab );
 	$( '#tab_btn_' + activeTab ).addClass( 'active' );
 	// set urls
 	$( '#tab_btn_week' ).attr( 'href', '#/' + parseHash().join( '/' ) + '?tab=week' );
@@ -4060,11 +4149,14 @@ function printLocations() {
 	var out = "";
 	var h = parseHash();
 	var url = "";
+	//out += '<ol class="breadcrumb">';
+	// remove old url
+	$( '#current_url il' ).remove();
 	for( var i in h ) {
 		url += '/' + h[i];
-		out += '<span class=""> / </span>';
-		out += '<a class="btn btn-xs btn-default" href="#'+ url +'">'+ h[i] +'</a> ';
+		out += '<li><a href="#' + url + '">' + h[i] + '</a></li>';
 	}
+	//out += '</ol>';
 	return out;
 }
 
@@ -4160,47 +4252,63 @@ function submitGameTag( tagId, game ) {
 	} );
 }
 
-function onLoading() {
+
+function onLoading( nr ) {
 	console.log( 'onLoading()' );
+	$( '#current_url' ).html( printLocations() );
+	/*
 	console.log( 'parseHash()' );
 	console.log( parseHash() );
 	console.log( 'parseHashParams()' );
 	console.log( parseHashParams() );
+	*/
 	console.log( 'clearing footer' );
 	$( '#footer' ).empty();
-	$( '#loading' ).addClass( 'loading' );
 	ga( 'send', 'pageview', { page: '/#/' + parseHash().join( '/' ) + '?' + mkURL( parseHashParams() ) } );
 	//ga( 'send', 'event', 'tab4', 'clicked' );
 }
 
 function onComplete( d ) {
-	console.log( 'onComplete()' );
+	console.log( 'onComplete() !' );
+	console.log( d );
 	if( typeof d != 'undefined' && 'responseJSON' in d ) {
 		console.log( 'data' );
 		console.log( d.responseJSON );
 	}
-	// error
+	// http error
+	if( typeof d != 'undefined' && d.status != 200 ) {
+		$( '#current_url' ).append( d.status + ': ' + d.statusText );
+	}
+	// data response error
 	if( typeof d != 'undefined' && 'responseJSON' in d && 'error' in d.responseJSON && d.responseJSON.error !== null ) {
 		console.log( d );
 		txt = [];
-		txt.push( '<div class="alert alert-danger">' );
+		txt.push( '<div class="label label-danger">' );
 		txt.push( '<span class="glyphicon glyphicon-warning-sign"></span>' );
 		txt.push( d.responseJSON.error );
 		txt.push( '<span class="btn pull-right" onclick="$(this).parent().remove();">x</span>' );
 		txt.push( '</div>' );
 		txt.push( '' );
-		$( '#message' ).append( txt.join( ' ' ) );
+		$( '#current_url' ).append( txt.join( ' ' ) );
+	}
+	// empty data
+	if( typeof d != 'undefined' && 'responseJSON' in d && 'data' in d.responseJSON && Array.isArray( d.responseJSON.data ) && d.responseJSON.data.length == 0 ) {
+		console.log( 'data is empty array!' );
+		out = '';
+		out += '<span class="label label-info>Nothing here!</span>';
+		$( '#current_url' ).append( out );
 	}
 	// msg
 	if( typeof d != 'undefined' && 'responseJSON' in d && 'msg' in d.responseJSON ) {
 		txt = [];
-		txt.push( '<div class="alert alert-info">' );
-		txt.push( '<span class="glyphicon glyphicon-info-sign"></span>' );
+		txt.push( '<div style="margin-left: 40px;" class="label label-info">' );
+		//txt.push( '<span class="glyphicon glyphicon-info-sign"></span> ' );
 		txt.push( d.responseJSON.msg );
-		txt.push( '<span class="btn pull-right" onclick="$(this).parent().remove();">x</span>' );
+		//txt.push( '<span class="btn btn-xs" onclick="$(this).parent().remove();"><span class="glyphicon glyphicon-remove"</span></span>' );
+		txt.push( '<span class="btn btn-xs" onclick="$(this).parent().remove();"><span class="glyphicon glyphicon-remove"></span></span>' );
 		txt.push( '</div>' );
 		txt.push( '' );
-		$( '#message' ).append( txt.join( ' ' ) );
+		$( '#current_url' ).append( txt.join( ' ' ) );
 	}
 	// footer
 	if( typeof d != 'undefined' && 'responseJSON' in d ) {
@@ -4220,7 +4328,6 @@ function onComplete( d ) {
 			$( '#footer' ).append( out.join( '' ) );
 		}
 	}
-	$( '#loading' ).removeClass( 'loading' );
 	// show admin stuff
 	if( $( '#admin_password' ).val().length > 0 ) {
 		$( '.admin' ).show();
@@ -4290,12 +4397,10 @@ function mkPlayerButton( obj, nickProperty, countryProperty ) {
 	out.push( '<li><a href="#/players/' + nickname + '/overview">Overview</a></li>' );
 	out.push( '<li><a href="#/players/' + nickname + '/games">Games</a></li>' );
 	out.push( '<li><a href="#/players/' + nickname + '/clans">Clans</a></li>' );
-	out.push( '<li><a href="#/players/' + nickname + '/hostedgames">Hostedgames</a></li>' );
 	out.push( '<li><a href="#/players/' + nickname + '/maps">Maps</a></li>' );
 	out.push( '<li><a href="#/players/' + nickname + '/weapons">Weapons</a></li>' );
 	out.push( '<li><a href="#/players/' + nickname + '/race">Race</a></li>' );
-	//out.push( '<li><a href="#/race/players/' + nickname + '">Race profile</a></li>' );
-	//out.push( '<li><a href="#/owners/' + nickname + '">Owner profile</a></li>' );
+	out.push( '<li><a href="#/players/' + nickname + '/hostedgames">Hostedgames</a></li>' );
 	out.push( '</ul></div></a></div>' );
 	out.push( '</div>' );
 	if( nickProperty == 'PLAYER' ) {
@@ -4312,7 +4417,7 @@ function mkCountryButton( c ) {
 		var countryobj = getCountry( c );
 		country = c.toLowerCase();
 		countrylink.push( '<div class="btn btn-default playerflag popthis" data-html="true" data-placement="left" data-container="body" data-content="' + countryobj.name + '" >' );
-		countrylink.push( '<a href="#/places/countries/' + country + '/activity">' );
+		countrylink.push( '<a href="#/places/countries/' + country + '">' );
 		countrylink.push( '<img src="http://cdn.quakelive.com/web/2013071601/images/flags/'+ country +'_v2013071601.0.gif" alt="'+ country.toUpperCase() +'" />' );
 		countrylink.push( '</a>' );
 		countrylink.push( '</div>' );
